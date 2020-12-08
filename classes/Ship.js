@@ -65,7 +65,7 @@ function isDiagNeighbour(b1, b2) {
 
 function drawShips() {
   if (shipsToAddP.length > 0) {
-    drawText("Players ships to add:", BOXSIZE * 5, BOXSIZE * 11.5, BOXSIZE)
+    drawText("Players ships to add:", BOXSIZE * 5, BOXSIZE * 11.7, BOXSIZE)
     for (var i = Math.min(...shipsToAddP); i < Math.max(...shipsToAddP) + 1; i++) {
       drawToAddShip(0, BOXSIZE * 10 + i * (BOXSIZE + BOXSIZE / 4), i, [...shipsToAddP])
     }
@@ -74,7 +74,7 @@ function drawShips() {
   }
 
   if (shipsToAddO.length > 0) {
-    drawText("Opponents ships to add:", BOXSIZE * 16, BOXSIZE * 11.5, BOXSIZE)
+    drawText("Opponents ships to add:", BOXSIZE * 16, BOXSIZE * 11.7, BOXSIZE)
     for (var i = Math.min(...shipsToAddO); i < Math.max(...shipsToAddO) + 1; i++) {
       drawToAddShip(BOXSIZE * 12, BOXSIZE * 10 + i * (BOXSIZE + 10), i, [...shipsToAddO])
     }

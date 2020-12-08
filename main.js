@@ -14,106 +14,83 @@ var showShips = autoplay = false
 
 var smartReturnComputer, smartReturnPlayer
 let showB, autoButton, randomShips, restartB
+function scaling() {
+  const size = windowWidth / 25
+  if (size <= 40) {
+    BOXSIZE = size
+  }
+  cnv = createCanvas(BOXSIZE * 22, BOXSIZE * 20)
+  cnv.mouseWheel(autoGame)
 
+  randomShips.position(cnv.position().x, cnv.position().y + BOXSIZE * 10.2)
+  autoButton.position(cnv.position().x + BOXSIZE * 10, cnv.position().y + BOXSIZE * 1.1)
+  showB.position(cnv.position().x + BOXSIZE * 12, cnv.position().y + BOXSIZE * 10.2)
+  restartB.position(cnv.position().x + BOXSIZE * 10, cnv.position().y)
+
+  autoButton.size(BOXSIZE * 2, BOXSIZE)
+  randomShips.size(BOXSIZE * 10, BOXSIZE)
+  restartB.size(BOXSIZE * 2, BOXSIZE)
+  showB.size(BOXSIZE * 10, BOXSIZE)
+
+  autoButton.style('font-size', BOXSIZE / 3 + "px")
+  randomShips.style('font-size', BOXSIZE / 3 + "px")
+  restartB.style('font-size', BOXSIZE / 3 + "px")
+  showB.style('font-size', BOXSIZE / 3 + "px")
+}
 function start() {
   console.log("Starting..")
-  if (rounds !== undefined && rounds !== 0 && rounds > 0) {
+  if (rounds !== undefined && rounds !== 0 && rounds > 0 && (grid1.hasWon() || grid2.hasWon())) {
     avgRounds.push(rounds)
   }
   rounds = 0
-  shipsToAddP = [2,3,3,4,5]
+  shipsToAddP = [2, 3, 3, 4, 5]
   shipsToAddO = [...shipsToAddP]
   infiniteLoop = false
   grid1 = new Grid(0, 0)
   grid2 = new Grid(12, 0)
-  if (autoplay) {
-    grid1.addRandomShips(shipsToAddP)
-  }
+  autoplay && grid1.addRandomShips(shipsToAddP)
   grid2.addRandomShips(shipsToAddO)
   smartReturnPlayer = smartReturnComputer = undefined
 }
 function windowResized() {
-  const size = windowWidth/25
-  if(size <= 40){
-    BOXSIZE = size
-  }
-  
-  
-  cnv = createCanvas(BOXSIZE * 22, BOXSIZE * 20)
-  cnv.mouseWheel(autoGame)
-  
-  randomShips.position(cnv.position().x, cnv.position().y + BOXSIZE * 10)
-  autoButton.position(cnv.position().x + BOXSIZE * 10, cnv.position().y + BOXSIZE * 1.1)
-  showB.position(cnv.position().x + BOXSIZE * 12, cnv.position().y + BOXSIZE * 10)
-  restartB.position(cnv.position().x + BOXSIZE * 10, cnv.position().y)
-
-  autoButton.size(BOXSIZE * 2, BOXSIZE)
-  randomShips.size(BOXSIZE * 10, BOXSIZE)
-  restartB.size(BOXSIZE * 2, BOXSIZE)
-  showB.size(BOXSIZE * 10, BOXSIZE)
-
-  autoButton.style('font-size',BOXSIZE/3+"px")
-  randomShips.style('font-size',BOXSIZE/3+"px")
-  restartB.style('font-size',BOXSIZE/3+"px")
-  showB.style('font-size',BOXSIZE/3+"px")
-  
+  scaling()
 }
 function setup() {
-  const size = windowWidth/25
-  if(size <= 40){
-    BOXSIZE = size
-  }
-  cnv = createCanvas(BOXSIZE * 22, BOXSIZE * 20)
-  cnv.mouseWheel(autoGame)
-  
   showB = createButton("Show ships")
   restartB = createButton("Restart")
   randomShips = createButton("Add random ships")
   autoButton = createButton("Toggle autoplay")
-  
-  randomShips.position(cnv.position().x, cnv.position().y + BOXSIZE * 10)
-  autoButton.position(cnv.position().x + BOXSIZE * 10, cnv.position().y + BOXSIZE * 1.1)
-  showB.position(cnv.position().x + BOXSIZE * 12, cnv.position().y + BOXSIZE * 10)
-  restartB.position(cnv.position().x + BOXSIZE * 10, cnv.position().y)
+  scaling()
 
-  autoButton.style('font-size',BOXSIZE/3+"px")
-  randomShips.style('font-size',BOXSIZE/3+"px")
-  restartB.style('font-size',BOXSIZE/3+"px")
-  showB.style('font-size',BOXSIZE/3+"px")
-  
-  autoButton.mousePressed(() => {
-    autoplay = !autoplay
-    if (shipsToAddP !== 0) {
-      grid1.addRandomShips(shipsToAddP)
-    }
-    //start()
-    loop()
-  })
-  autoButton.size(BOXSIZE * 2, BOXSIZE)
-  randomShips.size(BOXSIZE * 10, BOXSIZE)
-  restartB.size(BOXSIZE * 2, BOXSIZE)
-  showB.size(BOXSIZE * 10, BOXSIZE)
-  
   autoButton.style('background-color', color(25, 23, 200, 50))
-
-  randomShips.mousePressed(() => { grid1.addRandomShips(shipsToAddP) })
-  
+  showB.style('background-color', color(25, 23, 200, 50))
   randomShips.style('background-color', color(25, 23, 200, 50))
+  restartB.style('background-color', color(25, 23, 200, 50))
+
+  randomShips.mousePressed(() => {
+    grid1.addRandomShips(shipsToAddP)
+  })
+
+  showB.mousePressed(() => {
+    showShips = !showShips
+  })
 
   restartB.mousePressed(() => {
     start()
     loop()
   })
-  
-  restartB.style('background-color', color(25, 23, 200, 50))
 
-  showB.mousePressed(() => { showShips = !showShips })
-  
-  showB.style('background-color', color(25, 23, 200, 50))
+  autoButton.mousePressed(() => {
+    autoplay = !autoplay
+    shipsToAddP && grid1.addRandomShips(shipsToAddP)
+    loop()
+  })
+
   start()
 }
 
 function autoGame() {
+  if (grid1.hasWon() || grid2.hasWon()) return
   if (shipsToAddO.length === 0 && shipsToAddP.length === 0) {
     if (!grid1.hasWon()) {
       smartReturnPlayer = grid2.clickSmart(smartReturnPlayer)
@@ -128,7 +105,7 @@ function autoGame() {
 }
 
 function mouseClicked(e) {
-  if (autoplay) return
+  if (grid1.hasWon() || grid2.hasWon() || autoplay) return
   if (wasInGrid2() && !grid2.hasWon()) {
     if (shipsToAddP.length === 0 && !grid1.hasWon() && grid2.click() && !grid2.hasWon()) {
       smartReturnComputer = grid1.clickSmart(smartReturnComputer)
@@ -138,7 +115,7 @@ function mouseClicked(e) {
 }
 
 function draw() {
-  if (frameCount === 1) windowResized()
+  if (frameCount === 1) scaling()
   const sum = avgRounds.reduce((a, b) => a + b, 0);
   const avg = Math.floor((sum / avgRounds.length)) || 0;
   background(80);
@@ -154,25 +131,34 @@ function draw() {
     autoGame()
   }
 
-  drawText("Stats:", BOXSIZE * 11, BOXSIZE * 4, BOXSIZE * 0.6)
-  drawText(stats[1] + " / " + stats[0], BOXSIZE * 11, BOXSIZE * 5, BOXSIZE * 0.4)
-  drawText("avg rounds:", BOXSIZE * 11, BOXSIZE * 6, BOXSIZE * 0.3)
-  drawText(avg, BOXSIZE * 11, BOXSIZE * 7, BOXSIZE * 0.6)
+  drawText("Stats:", BOXSIZE * 11, BOXSIZE * 2.6, BOXSIZE * 0.5)
+  drawText(stats[1] + " / " + stats[0], BOXSIZE * 11, BOXSIZE * 3.4, BOXSIZE * 0.4)
+  drawText("avg rounds:", BOXSIZE * 11, BOXSIZE * 7, BOXSIZE * 0.3)
+  drawText(avg, BOXSIZE * 11, BOXSIZE * 7.7, BOXSIZE * 0.5)
 
   if (wasInGrid1()) {
-    drawText(mX % 12 + "," + mY, width / 2, BOXSIZE*9, BOXSIZE)
+    drawText(mX % 12 + "," + mY, width / 2, BOXSIZE * 9.5, BOXSIZE)
     grid1.hover()
   }
   if (wasInGrid2()) {
-    drawText(mX % 12 + "," + mY, width / 2, BOXSIZE*9, BOXSIZE)
+    drawText(mX % 12 + "," + mY, width / 2, BOXSIZE * 9.5, BOXSIZE)
     grid2.hover()
   }
 
   if (grid2.hasWon() || grid1.hasWon()) {
+    grid1.draw(true)
+    grid2.draw(true)
+
     if (grid2.hasWon()) {
+      fill(140, 140, 140, 150)
+      rect(width / 2 - BOXSIZE * 5.5, height / 4 - BOXSIZE - BOXSIZE / 3, BOXSIZE * 11, BOXSIZE * 2.5)
+      noFill()
       drawText('Player won!', width / 2, height / 4, BOXSIZE * 2)
       stats[1]++
     } else if (grid1.hasWon()) {
+      fill(140, 140, 140, 150)
+      rect(width / 2 - BOXSIZE * 7, height / 4 - BOXSIZE - BOXSIZE / 3, BOXSIZE * 14, BOXSIZE * 2.5)
+      noFill()
       drawText('Opponent won!', width / 2, height / 4, BOXSIZE * 2)
       stats[0]++
     }
@@ -189,7 +175,6 @@ function draw() {
     drawText("Could not set opponent ships", width / 2, height / 3, BOXSIZE)
     noLoop()
   }
-
 }
 
 function drawText(txt, x, y, size) {
