@@ -1,5 +1,5 @@
-const defaultBoxSize = 40
-const defaultCanvasSize = 40 * 24
+const defaultBoxSize = 30
+const defaultCanvasSize = defaultBoxSize * 24
 var BOXSIZE = defaultBoxSize
 //                0         1         2           3         4
 const states = ["hidden", "open", "hiddenMine", "openMine", "flag"]
