@@ -22,7 +22,7 @@ var firstClick
 function scaling() {
   // size >= defaultBoxSize ? BOXSIZE = defaultBoxSize : BOXSIZE = size
   // 
-  Math.min(windowWidth,windowHeight) < defaultCanvasSize ? 
+  Math.min(windowWidth ,windowHeight) < defaultCanvasSize ? 
   BOXSIZE = Math.min(windowWidth,windowHeight)/W : 
   BOXSIZE = defaultCanvasSize / W
   // cnv = createCanvas(defaultCanvasSize, defaultCanvasSize + BOXSIZE*0.4*H*0.4)
@@ -38,41 +38,23 @@ function scaling() {
   showB.position(cnv.position().x + BOXSIZE*W* 0.220, cnv.position().y + BOXSIZE * H + BOXSIZE*0.4*H*0.1)
   showB.size(W * BOXSIZE *0.2, BOXSIZE*0.4*H*0.2)
   showB.style('font-size', BOXSIZE*0.4*H*0.2 *0.3 + "px")
-  showB.mousePressed(()=> {
-    showMines = !showMines
-  })
-
+  
   restartB.position(cnv.position().x + BOXSIZE*W* 0.01, cnv.position().y + BOXSIZE * H + BOXSIZE*0.4*H*0.1)
   restartB.size(W * BOXSIZE *0.2, BOXSIZE*0.4*H*0.2)
   restartB.style('font-size', BOXSIZE*0.4*H*0.2 *0.3 + "px")
-  restartB.mousePressed(start)
-
+  
   easyB.position(cnv.position().x + BOXSIZE * W*0.58, cnv.position().y + BOXSIZE * H + BOXSIZE*0.4*H*0.1)
   easyB.size(W * 0.1* BOXSIZE, BOXSIZE*0.4*H*0.2)
   easyB.style('font-size', BOXSIZE*0.4*H*0.2 *0.3 + "px")
-  easyB.mousePressed(() => {
-    if(difficulty === 0 ) return
-    difficulty = 0
-    start()
-  })
-
+  
   mediumB.position(cnv.position().x + BOXSIZE * W*0.71, cnv.position().y + BOXSIZE * H + BOXSIZE*0.4*H*0.1)
   mediumB.size(W * 0.1*BOXSIZE, BOXSIZE*0.4*H*0.2)
   mediumB.style('font-size', BOXSIZE*0.4*H*0.2 *0.3 + "px")
-  mediumB.mousePressed(() => {
-    if(difficulty === 1 ) return
-    difficulty = 1
-    start()
-  })
-
+  
   hardB.position(cnv.position().x + BOXSIZE * W*0.84, cnv.position().y + BOXSIZE * H + BOXSIZE*0.4*H*0.1)
   hardB.size(W * 0.1*BOXSIZE, BOXSIZE*0.4*H*0.2)
   hardB.style('font-size', BOXSIZE*0.4*H*0.2 *0.3 + "px")
-  hardB.mousePressed(() => {
-    if(difficulty === 2 ) return
-    difficulty = 2
-    start()
-  })
+  
 }
 function setup() {
   cnv = createCanvas(defaultCanvasSize, defaultCanvasSize + BOXSIZE*0.4*H*0.4)
@@ -81,6 +63,27 @@ function setup() {
   easyB = createButton("Easy")
   mediumB = createButton("Medium")
   hardB = createButton("Hard")
+
+  restartB.mousePressed(start)
+
+  showB.mousePressed(()=> {
+    showMines = !showMines
+  })
+  easyB.mousePressed(() => {
+    if(difficulty === 0 ) return
+    difficulty = 0
+    start()
+  })
+  mediumB.mousePressed(() => {
+    if(difficulty === 1 ) return
+    difficulty = 1
+    start()
+  })
+  hardB.mousePressed(() => {
+    if(difficulty === 2 ) return
+    difficulty = 2
+    start()
+  })
   start()
 }
 function start() {

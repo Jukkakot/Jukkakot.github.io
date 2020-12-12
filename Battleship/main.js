@@ -33,13 +33,14 @@ function start() {
   smartReturnPlayer = smartReturnComputer = undefined
 }
 function windowResized() {
-  const size = windowWidth/25
+  const size =  Math.min(windowWidth,windowHeight)/25
   if(size <= 40){
     BOXSIZE = size
   }
   
   
-  cnv = createCanvas(BOXSIZE * 22, BOXSIZE * 20)
+  // cnv = createCanvas(BOXSIZE * 22, BOXSIZE * 20)
+  cnv.resize(BOXSIZE * 22, BOXSIZE * 20)
   cnv.mouseWheel(autoGame)
   
   randomShips.position(cnv.position().x, cnv.position().y + BOXSIZE * 10)
@@ -59,7 +60,7 @@ function windowResized() {
   
 }
 function setup() {
-  const size = windowWidth/25
+  const size =  Math.min(windowWidth,windowHeight)/25
   if(size <= 40){
     BOXSIZE = size
   }
@@ -194,8 +195,3 @@ function drawText(txt, x, y, size) {
   text(txt, x, y);
   noFill()
 }
-function touchMoved() {
-  // do some stuff
-  return false;
-}
-
