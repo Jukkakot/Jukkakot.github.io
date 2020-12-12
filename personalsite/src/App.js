@@ -5,7 +5,7 @@ import "./resources/css/app.css"
 function App() {
   return (
     <div className="App">
-      <h1>Welcome to my website</h1>
+      <h1>Welcome!</h1>
       <button 
         className="imgButton" 
         onClick={()=>window.location="/Minesweeper/index.html"}>
