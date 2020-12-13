@@ -32,10 +32,55 @@ class Grid {
         this.getBlock(mX, mY).rightClick()
       }
     }
+    //Flags any 100% certain mines it can find according to the open block values
+    this.getHint = (isAutoPlay) => {
+      for (var row of this.blocks) {
+        for (var block of row) {
+          //is open and has value higher than 0
+          if (block.isState(1) && block.value > 0) {
+          //Open non flagged block count
+            var hiddenCount = 0
+            var flagCount = 0
+            for (var n of block.neighbours) {
+              if ((n.isState(0) || n.isState(2))) {
+                hiddenCount++
+              }
+              if (n.isFlag) {
+                flagCount++
+              }
+            }
+            if (hiddenCount === block.value) {
+              //Found possible moves
+              for (var n of block.neighbours) {
+                if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
+                  n.isFlag = true
+                  if(isAutoPlay){
+                    return true
+                  }
+                }
+              }
+              continue
+            }
+            if (flagCount === block.value) {
+              //Found possible moves
+              for (var n of block.neighbours) {
+                if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
+                  n.click()
+                  if(isAutoPlay){
+                    return true
+                  }
+                }
+              }
+            }
+            // break
+          }
+        }
+      }
+      return false
+    }
     this.randomMines = (num) => {
       var mCount = num
       while (mCount > 0) {
-        
         const rX = Math.floor(random(0, W))
         const rY = Math.floor(random(0, H))
         var block = this.getBlock(rX, rY)

@@ -104,7 +104,7 @@ function drawMine(x, y) {
     noStroke()
 }
 function drawValue(x, y, value) {
-    // textAlign(CENTER, CENTER);
+    textAlign(CENTER, CENTER);
 
     switch (value) {
         case (1):
