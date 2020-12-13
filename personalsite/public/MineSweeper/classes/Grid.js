@@ -2,8 +2,18 @@ class Grid {
   constructor() {
     this.blocks = createBlocks()
     this.gameOver = false
+    this.getGameOver =() => {
+      for (var row of this.blocks) {
+        for (var block of row) {
+         if(block.isState(3)) {
+           this.gameOver = true
+           return this.gameOver
+         }
+        }
+      }
+      return this.gameOver
+    }
     this.gameWon = () => {
-
       for (var row of this.blocks) {
         for (var block of row) {
           if (block.isState(0)) return false
