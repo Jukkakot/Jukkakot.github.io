@@ -2,13 +2,13 @@ class Grid {
   constructor() {
     this.blocks = createBlocks()
     this.gameOver = false
-    this.getGameOver =() => {
+    this.getGameOver = () => {
       for (var row of this.blocks) {
         for (var block of row) {
-         if(block.isState(3)) {
-           this.gameOver = true
-           return this.gameOver
-         }
+          if (block.isState(3)) {
+            this.gameOver = true
+            return this.gameOver
+          }
         }
       }
       return this.gameOver
@@ -142,41 +142,14 @@ function createBlocks() {
 
 function giveNeighbours(x, y, blocks) {
   var neighbours = []
-  //Top
-  if (y - 1 >= 0) {
-    neighbours.push(blocks[y - 1][x])
-    //Top left
-    if (x - 1 >= 0) {
-      neighbours.push(blocks[y - 1][x - 1])
-    }
-    //Top right
-    if (x + 1 < W) {
-      neighbours.push(blocks[y - 1][x + 1])
-    }
-  }
 
-  //Bottom
-  if (y + 1 < H) {
-    neighbours.push(blocks[y + 1][x])
-    //Bottom left
-    if (x - 1 >= 0) {
-      neighbours.push(blocks[y + 1][x - 1])
-    }
-    //Bottom right
-    if (x + 1 < W) {
-      neighbours.push(blocks[y + 1][x + 1])
+  for (var i = y - 1; i < y + 2; i++) {
+    for (var j = x - 1; j < x + 2; j++) {
+      if (blocks[i] !== undefined && blocks[i][j] !== undefined) {
+        neighbours.push(blocks[i][j])
+      }
     }
   }
-
-  //Left
-  if (x - 1 >= 0) {
-    neighbours.push(blocks[y][x - 1])
-  }
-  //Right
-  if (x + 1 < W) {
-    neighbours.push(blocks[y][x + 1])
-  }
-  // console.log(x,y,neighbours)
   return neighbours
 }
 function wasInGrid() {
