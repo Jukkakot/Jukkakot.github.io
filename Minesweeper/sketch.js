@@ -18,6 +18,7 @@ var mX, mY
 var wasRightClick = false
 var showMines = false
 var firstClick
+
 function scaling() {
   // size >= defaultBoxSize ? BOXSIZE = defaultBoxSize : BOXSIZE = size
   // 
@@ -135,7 +136,7 @@ function draw() {
   background(80)
   mX = Math.floor(mouseX / BOXSIZE)
   mY = Math.floor(mouseY / BOXSIZE)
-  grid.draw(grid.gameOver || showMines || grid.gameWon())
+  grid.draw(grid.getGameOver() || showMines || grid.gameWon())
   // grid.draw(true)
 
   if (wasInGrid()) {

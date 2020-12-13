@@ -2,8 +2,18 @@ class Grid {
   constructor() {
     this.blocks = createBlocks()
     this.gameOver = false
+    this.getGameOver =() => {
+      for (var row of this.blocks) {
+        for (var block of row) {
+         if(block.isState(3)) {
+           this.gameOver = true
+           return this.gameOver
+         }
+        }
+      }
+      return this.gameOver
+    }
     this.gameWon = () => {
-
       for (var row of this.blocks) {
         for (var block of row) {
           if (block.isState(0)) return false
@@ -36,43 +46,41 @@ class Grid {
     this.getHint = (isAutoPlay) => {
       for (var row of this.blocks) {
         for (var block of row) {
-          //is open and has value higher than 0
-          if (block.isState(1) && block.value > 0) {
-          //Open non flagged block count
-            var hiddenCount = 0
-            var flagCount = 0
+          //isnt open or value is 0 -> skip
+          if (!block.isState(1) || block.value === 0) continue
+
+          var hiddenCount = 0
+          var flagCount = 0
+          for (var n of block.neighbours) {
+            if ((n.isState(0) || n.isState(2))) {
+              hiddenCount++
+            }
+            if (n.isFlag) {
+              flagCount++
+            }
+          }
+          if (hiddenCount === block.value) {
+            //Found possible moves
             for (var n of block.neighbours) {
-              if ((n.isState(0) || n.isState(2))) {
-                hiddenCount++
-              }
-              if (n.isFlag) {
-                flagCount++
-              }
-            }
-            if (hiddenCount === block.value) {
-              //Found possible moves
-              for (var n of block.neighbours) {
-                if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
-                  n.isFlag = true
-                  if(isAutoPlay){
-                    return true
-                  }
-                }
-              }
-              continue
-            }
-            if (flagCount === block.value) {
-              //Found possible moves
-              for (var n of block.neighbours) {
-                if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
-                  n.click()
-                  if(isAutoPlay){
-                    return true
-                  }
+              if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
+                n.isFlag = true
+                if (isAutoPlay) {
+                  return true
                 }
               }
             }
-            // break
+            continue
+          }
+          if (flagCount === block.value) {
+            //Found possible moves
+            for (var n of block.neighbours) {
+              if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
+                n.click()
+                if (isAutoPlay) {
+                  return true
+                }
+              }
+            }
           }
         }
       }
