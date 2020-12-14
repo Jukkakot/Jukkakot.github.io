@@ -63,7 +63,7 @@ class Grid {
             //Found possible moves
             for (var n of block.neighbours) {
               if ((n.isState(0) || n.isState(2)) && !n.isFlag) {
-                n.isFlag = true
+                n.rightClick()
                 if (isAutoPlay) {
                   return true
                 }
