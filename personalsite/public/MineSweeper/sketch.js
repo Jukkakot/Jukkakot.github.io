@@ -92,7 +92,7 @@ function setup() {
   })
   hintB.mousePressed(() => {
     if (!grid.gameOver && !grid.gameWon()) {
-      grid.getHint()
+      grid.getHint(true)
     }
   })
   start()
