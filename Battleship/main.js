@@ -109,6 +109,7 @@ function setup() {
 }
 
 function autoGame() {
+  if(grid1.hasWon() || grid2.hasWon()) return
   if (shipsToAddO.length === 0 && shipsToAddP.length === 0) {
     if (!grid1.hasWon()) {
       smartReturnPlayer = grid2.clickSmart(smartReturnPlayer)
@@ -123,7 +124,7 @@ function autoGame() {
 }
 
 function mouseClicked(e) {
-  if (autoplay) return
+  if (autoplay || grid1.hasWon() || grid2.hasWon()) return
   if (wasInGrid2() && !grid2.hasWon()) {
     if (shipsToAddP.length === 0 && !grid1.hasWon() && grid2.click() && !grid2.hasWon()) {
       smartReturnComputer = grid1.clickSmart(smartReturnComputer)
