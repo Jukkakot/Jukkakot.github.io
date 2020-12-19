@@ -64,12 +64,12 @@ function scaling() {
 function setup() {
   cnv = createCanvas(defaultCanvasSize, defaultCanvasSize + BOXSIZE * 0.4 * H * 0.4)
   cnv.mouseWheel(scrollGame)
-  restartB = createButton("Restart")
-  showB = createButton("Show mines")
-  easyB = createButton("Easy")
-  mediumB = createButton("Medium")
-  hardB = createButton("Hard")
-  hintB = createButton("Give hint")
+  restartB = createButton("Restart\n(r)")
+  showB = createButton("Show mines\n(m)")
+  easyB = createButton("Easy\n(1)")
+  mediumB = createButton("Medium\n(2)")
+  hardB = createButton("Hard\n(3)")
+  hintB = createButton("Give hint\n(h)")
   restartB.mousePressed(start)
 
   showB.mousePressed(() => {
@@ -129,6 +129,31 @@ function mouseClicked() {
   if (wasInGrid()) {
     grid.click(firstClick)
     if (firstClick) firstClick = false
+  }
+}
+function keyPressed(e) {
+  //Spacebar
+  if (e.key === "r") {
+    start()
+  } else if (e.key === "m") {
+    showMines = !showMines
+  }  else if (e.key === "h") {
+      grid.getHint(true)
+  } else if (e.key === "1" ) {
+    if (difficulty !== 1){
+      difficulty = 0
+      start()
+    } 
+  } else if (e.key === "2" ) {
+    if (difficulty !== 1){
+      difficulty = 1
+      start()
+    } 
+  } else if (e.key === "3" ) {
+    if (difficulty !== 2){
+      difficulty = 2
+      start()
+    } 
   }
 }
 function draw() {
