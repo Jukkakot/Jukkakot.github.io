@@ -1,6 +1,7 @@
 import React from "react"
 import mineImg from "./resources/img/minesweeper.png"
 import battleImg from "./resources/img/Battleship.png"
+import connectImg from "./resources/img/connect4.png"
 import "./resources/css/app.css"
 function App() {
   return (
@@ -15,7 +16,12 @@ function App() {
         className="imgButton" 
         onClick={()=>window.location="/Battleship/index.html"}>
         <img src={battleImg}  alt="Battleship" title="Battleship"/>
-      </button>    
+      </button> 
+      <button 
+        className="imgButton" 
+        onClick={()=>window.location="/Connectfour/index.html"}>
+        <img src={connectImg}  alt="Connectfour" title="Connectfour"/>
+      </button>     
     </div>
   )
 }
