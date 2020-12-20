@@ -1,5 +1,5 @@
 const { Engine, World, Bodies, Body, Events, Vector } = Matter;
-const defaultCanvasSize = 800
+// const defaultCanvasSize = 800
 let engine
 let world
 let chipRadius
@@ -10,8 +10,8 @@ let cnv
 let restartButton
 // let windowScale
 function preload() {
-  gridImg = loadImage("./resources/testGrid.png")
-  chipImg = loadImage("./resources/testChip.png")
+  gridImg = loadImage("./resources/spiralGrid.png")
+  chipImg = loadImage("./resources/chip.png")
   bopSound = loadSound("./resources/bop.mp3")
 }
 function windowResized() {
@@ -66,10 +66,8 @@ function keyPressed(e) {
   }
 }
 function draw() {
-
   if (frameCount === 1) windowResized()
   background(100);
   Engine.update(engine)
   game.show()
-  // console.log(mouseX)
 }
