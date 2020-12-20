@@ -5,15 +5,35 @@ class Game {
         this.walls = this.makeGrid()
         this.colors = [color(220, 0, 0), color(220, 220, 0)]
         this.chips = []
+        this.chipsCount = 0
         this.playerA = new Player(this.colors[0], "red")
         this.playerB = new Player(this.colors[1], "yellow")
         this.turn = random() < 0.5 ? this.playerA : this.playerB
+        this.isOver = false
+        this.winLines = []
+        this.grid = {}
+        Events.on(engine, 'collisionStart', this.collision);
+    }
+    collision(event) {
+        var pairs = event.pairs;
+        for (var i = 0; i < pairs.length; i++) {
+            var bodyA = pairs[i].bodyA;
+            var bodyB = pairs[i].bodyB;
+            if (Math.abs(bodyA.velocity.y) > 1 || Math.abs(bodyB.velocity.y) > 1) {
+                if (bodyA.label == 'Rectangle Body' || bodyB.label == 'Rectangle Body') return
+                if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
+                    bopSound.play()
+                    game.isOver = game.checkWin(game.turn)
+                    game.turn = game.turn === game.playerA ? game.playerB : game.playerA
+                }
+            }
+        }
     }
     makeGrid() {
         var walls = []
         var offset = 2.5
         for (var x = 0; x < 8; x++) {
-            walls.push(new Box(x + offset, height - chipRadius * 7, 5, chipRadius * 12))
+            walls.push(new Box(x + offset, height - chipRadius * 7, 5, chipRadius * 14.5))
             offset += chipRadius * 2 + 2.5
         }
         walls.push(new Box(width / 2, 0, width, 5))
@@ -22,27 +42,102 @@ class Game {
         return walls
     }
     playRound() {
-        var chip = new Chip(this.turn.color)
-        this.chips.push(chip)
-        this.turn.addChip(mouseX)
-        // this.chips.push(this.turn.addChip(x))
-        this.checkWin(this.turn)
-        this.turn = this.turn === this.playerA ? this.playerB : this.playerA
+        //Board is full
+        //Cant put another chip until the last chip has landed on the board
+        //(Preventing spam clicking)
+        if (this.chips.length > 0 && this.chips[this.chips.length - 1].body.velocity.y > 0.5) return
+        var column = Math.floor(mouseX / (chipRadius * 2.07))
+        //Preventing more than 6 chips in a column
+        if (this.grid[column] !== undefined && this.grid[column].length > 5) return
+        if (column > 6) column = 6
 
+        this.chips.push(new Chip(column, this.turn.color))
+        this.grid[column] ? this.grid[column].push(this.turn.name) : this.grid[column] = [this.turn.name]
     }
     checkWin(player) {
-        var chips = player.chips
-        for (var chip of chips) {
-            var x = chip.body.position.x
-            var y = chip.body.position.y
-            console.log(x, y)
+        // var wasWin = false
+        //Column check
+        for (let column in this.grid) {
+            //If column has less than 4 chips, there cant be win
+            if (this.grid[column].length > 3) {
+                var counter = 0
+                for (let row in this.grid[column]) {
+                    row = Number(row)
+                    var chipName = this.grid[column][row]
+                    chipName === player.name ? counter++ : counter = 0
+                    if (counter > 3) {
+                        // console.log(counter,"column win on column:", column, "indexes", row - 3, row)
+                        this.winLines.push([column, row - 3, column, row])
+                        return true
+                        // wasWin = true
+                    }
+                }
+            }
+        }
+
+        //Row check
+        for (var row = 0; row < 6; row++) {
+            var counter = 0
+            for (var column = 0; column < 7; column++) {
+                if (this.grid[column] === undefined || this.grid[column][row] === undefined) {
+                    counter = 0
+                    continue
+                }
+                this.grid[column][row] === player.name ? counter++ : counter = 0
+                if (counter > 3) {
+                    // console.log(counter,"row win on row:", row, "indexes", column - 3, column)
+                    this.winLines.push([column - 3, row, column, row])
+                    return true
+                    // wasWin = true
+                }
+            }
+        }
+        //Diagonal check
+        //             ne       sw
+        var diags = [[1, 1], [1, -1]]
+        for (var row = 0; row < 6; row++) {
+            for (let column in this.grid) {
+                var startX = Number(column)
+                var startY = row
+                if (this.grid[startX][startY] === undefined) continue
+                for (let diag of diags) {
+                    var counter = 1
+                    var x = startX
+                    var y = startY
+                    for (var i = 0; i < 3; i++) {
+                        x += diag[0]
+                        y += diag[1]
+                        if (this.grid[x] === undefined || this.grid[x][y] === undefined || this.grid[x][y] !== player.name) break
+                        counter++
+                        if (counter > 3) {
+                            // console.log("Diag win: from", startX, startY, "to", x, y)
+                            this.winLines.push([startX, startY, x, y])
+                            return true
+                            // wasWin = true
+                        }
+
+                    }
+                }
+            }
+        }
+        return false
+    }
+    drawWins() {
+        for (let l of this.winLines) {
+            var startX = l[0] * chipRadius * 2 + chipRadius + l[0] * 5 + 2.5
+            var startY = height - l[1] * chipRadius * 2 - chipRadius
+            var endX = l[2] * chipRadius * 2 + chipRadius + l[2] * 5 + 2.5
+            var endY = height - l[3] * chipRadius * 2 - chipRadius
+            push()
+            stroke(0,200,0)
+            strokeWeight(10)
+            line(startX, startY, endX, endY)
+            pop()
         }
     }
     show() {
-        // this.playerA.show()
-        // this.playerB.show()
-       
-        
+        // scale(windowScale)
+        //Draw chips
         for (var c = 0; c < this.chips.length; c++) {
             if (this.chips[c].isOffScreen()) {
                 World.remove(world, this.chips[c].body);
@@ -53,18 +148,28 @@ class Game {
             }
 
         }
+        //Draw backgorund
         tint(39, 39, 163)
-        image(gridImg,0,height-gridImg.height)
-        push();
-        ellipseMode(RADIUS);
-        rectMode(CENTER, CENTER)
-        // strokeWeight(chipRadius / 10)
-        // stroke(this.turn.color)
-        fill(this.turn.color)
-        var row = Math.floor(mouseX / (chipRadius * 2.05))
-        var x = row * chipRadius * 2 + chipRadius + row * 5 + 2.5
-        circle(x, chipRadius , chipRadius)
-        pop();
+        image(gridImg, 0, height - gridImg.height)
+
+        if (this.isOver) {
+            this.drawWins()
+        } else if (!(this.chips.length > 0 && this.chips[this.chips.length - 1].body.velocity.y > 0.5)) {
+            if(mouseY > height) return
+            //Drawing chip above the board if we can click (Previous chip has landed)
+            push();
+            // ellipseMode(RADIUS);
+            // rectMode(CENTER, CENTER)
+            // noStroke()
+            // fill(this.turn.color)
+            var row = Math.floor(mouseX / (chipRadius * 2.07))
+            var x = row * chipRadius * 2 + chipRadius + row * 5 + 2.5
+            tint(this.turn.color)
+            imageMode(CENTER);
+            image(chipImg, x, chipRadius, chipRadius*2,chipRadius*2);
+            // circle(x, chipRadius, chipRadius)
+            pop();
+        }
         // for (var wall of this.walls) {
         //     wall.show()
         // }
