@@ -185,6 +185,3 @@ function drawText(txt, x, y, size) {
   text(txt, x, y);
   noFill()
 }
-
-
-

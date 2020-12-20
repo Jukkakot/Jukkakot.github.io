@@ -1,7 +1,7 @@
 import React from "react"
 import mineImg from "./resources/img/minesweeper.png"
 import battleImg from "./resources/img/Battleship.png"
-import connectImg from "./resources/img/connect4.png"
+import connectImg from "./resources/img/newConnect4.png"
 import "./resources/css/app.css"
 function App() {
   return (
