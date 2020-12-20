@@ -185,7 +185,3 @@ function drawText(txt, x, y, size) {
   text(txt, x, y);
   noFill()
 }
-
-function touchMoved() {
-  return false;
-}
