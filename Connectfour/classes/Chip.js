@@ -38,4 +38,7 @@ class Chip {
         // text(Math.floor((pos.x / (chipRadius * 2))) + "," + Math.floor(7-(pos.y / (chipRadius * 2)) ), 0, 0)
         pop();
     }
+    isMoving() {
+        return this.body.velocity.y > 0.5
+    }
 }
