@@ -1,45 +1,58 @@
 const { Engine, World, Bodies, Body, Events, Vector } = Matter;
+const defaultCanvasSize = 800
 let engine
 let world
 let chipRadius
 let game
-let gridImg
+let gridImg,chipImg
 let bopSound
-
+let cnv
+let restartButton
+// let windowScale
 function preload() {
-  gridImg = loadImage("./resources/grid.png")
+  gridImg = loadImage("./resources/testGrid.png")
+  chipImg = loadImage("./resources/testChip.png")
   bopSound = loadSound("./resources/bop.mp3")
 }
+function windowResized() {
+  // Math.min(windowWidth, windowHeight) < defaultCanvasSize ?
+  //   chipRadius = Math.min(windowWidth, windowHeight) / 14.5 :
+  //   chipRadius = 55
+
+
+  // start()
+  // windowScale = min(map(windowWidth, 0, 800, 0, 1), 1)
+  // chipRadius = windowScale * 55
+  // cnv.resize(chipRadius * 14.5, chipRadius * 14.5)
+  restartButton.position(cnv.position().x, cnv.position().y + height)
+  // scale(windowScale)
+}
 function setup() {
-  createCanvas(800, 800);
+  chipRadius = 55
+  cnv = createCanvas(chipRadius * 14.5, chipRadius * 14.5);
+  // windowScale = min(map(windowWidth, 0, 800, 0, 1), 1)
+  // chipRadius = windowScale * 55
+ 
+  // cnv.resize(chipRadius * 14.5, chipRadius * 14.5)
+  // restartButton.position(cnv.position().x, cnv.position().y + height)
+  // scale(windowScale)
+  restartButton = createButton("Restart\n(r)")
+  restartButton.position(cnv.position().x, cnv.position().y + height)
+  restartButton.size(chipRadius * 3, chipRadius)
+  restartButton.style('font-size', chipRadius * 0.4 + "px")
+  restartButton.style('background-color', color(200,100))
+  restartButton.mousePressed(() => start())
   start()
-  
+
 }
 function start() {
   chipRadius = 55
   engine = Engine.create()
   world = engine.world
-  Events.on(engine, 'collisionStart', collision);
-  function collision(event) {
-    var pairs = event.pairs;
-    for (var i = 0; i < pairs.length; i++) {
-      var bodyA = pairs[i].bodyA;
-      var bodyB = pairs[i].bodyB;
-      if (Math.abs(bodyA.velocity.y) > 1 || Math.abs(bodyB.velocity.y) > 1) {
-        if (bodyA.label == 'Circle Body' && bodyB.label == 'Circle Body') {
-          bopSound.play()
-        } else if (bodyA.label == 'Circle Body' && bodyB.label == 'floor') {
-          bopSound.play()
-        } else if (bodyA.label == 'floor' && bodyB.label == 'Circle Body') {
-          bopSound.play()
-        }
-      }
-    }
-  }
   game = new Game()
 }
 function mousePressed() {
-  if (mouseX > 0 && mouseX < width) {
+  if (mouseX > 0 && mouseX < width && mouseY < height && !game.isOver) {
     game.playRound()
   }
 
@@ -53,7 +66,9 @@ function keyPressed(e) {
   }
 }
 function draw() {
-  background(80);
+
+  if (frameCount === 1) windowResized()
+  background(100);
   Engine.update(engine)
   game.show()
   // console.log(mouseX)

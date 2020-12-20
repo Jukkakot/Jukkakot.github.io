@@ -1,18 +1,15 @@
 class Chip {
-    constructor(col) {
-        var row = Math.floor(mouseX / (chipRadius * 2.05))
-        if (row > 6) row = 6
+    constructor(row, col) {
         var x = row * chipRadius * 2 + chipRadius + row * 5 + 2.5
-        var y = chipRadius*2
         const options = {
             friction: 0,
             restitution:0,
-            density:100
         }
         this.color = col
+        this.name = this.color.levels[1] === 220 ? "yellow" : "red"
         // this.color = color(255)
         this.r = chipRadius
-        this.body = Bodies.circle(x, y, this.r, options)
+        this.body = Bodies.circle(x, chipRadius, this.r, options)
         World.add(world, this.body)
     }
     isOffScreen() {
@@ -22,22 +19,23 @@ class Chip {
     }
     show() {
         const pos = this.body.position;
-        const angle = this.body.angle;
+        // const angle = this.body.angle;
         push();
-        ellipseMode(RADIUS);
+        // ellipseMode(RADIUS);
         translate(pos.x, pos.y);
-        rotate(angle);
-        rectMode(CENTER)
-        // strokeWeight(this.r/10)
-        // colorMode(HSB)
-        // stroke(color(0,0,255))
-        noStroke()
-        fill(this.color)
-        circle(0, 0, this.r)
-        textAlign(CENTER)
-        textSize(35)
-        fill(0)
-        // text(Math.floor((pos.x / (chipRadius * 2))) + "," + Math.floor((pos.y / (chipRadius * 2)) - 1), 0, 0)
+        // rotate(angle)
+        // rectMode(CENTER)
+        tint(this.color)
+        imageMode(CENTER);
+        image(chipImg, 0, 0, this.r*2,this.r*2);
+        // noStroke()
+        // fill(this.color)
+        // circle(0, 0, this.r)
+        //Drawing coordinates of the chip, good for debugging
+        // fill(0)
+        // textAlign(CENTER)
+        // textSize(35)
+        // text(Math.floor((pos.x / (chipRadius * 2))) + "," + Math.floor(7-(pos.y / (chipRadius * 2)) ), 0, 0)
         pop();
     }
 }
