@@ -20,7 +20,7 @@ class Game {
         for (var i = 0; i < pairs.length; i++) {
             var bodyA = pairs[i].bodyA;
             var bodyB = pairs[i].bodyB;
-            if (Math.abs(bodyA.velocity.y) > 1 || Math.abs(bodyB.velocity.y) > 1) {
+            if (Math.abs(bodyA.velocity.y) > 2 || Math.abs(bodyB.velocity.y) > 2) {
                 if (bodyA.label == 'Rectangle Body' || bodyB.label == 'Rectangle Body') return
                 if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
                     bopSound.play()
@@ -59,7 +59,10 @@ class Game {
         //Adding the chip to both arrays
         this.chips.push(new Chip(column, this.turn.color))
         this.grid[column] ? this.grid[column].push(this.turn.name) : this.grid[column] = [this.turn.name]
-
+        
+        // setTimeout(() => {
+        //     this.turn = this.turn === this.playerA ? this.playerB : this.playerA
+        // }, 50);
         //Chip collsion will cause win check and player turning
     }
     checkWin(player) {
