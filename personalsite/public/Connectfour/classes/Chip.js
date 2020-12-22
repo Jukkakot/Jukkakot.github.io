@@ -4,12 +4,14 @@ class Chip {
         const options = {
             friction: 0,
             restitution:0,
+            // density:0.00001
         }
         this.color = col
         this.name = this.color.levels[1] === 220 ? "yellow" : "red"
         // this.color = color(255)
         this.r = chipRadius
         this.body = Bodies.circle(x, chipRadius, this.r, options)
+        // this.body.setDensity(this.body, this.body.density*5)
         World.add(world, this.body)
     }
     isOffScreen() {
@@ -19,11 +21,11 @@ class Chip {
     }
     show() {
         const pos = this.body.position;
-        // const angle = this.body.angle;
+        const angle = this.body.angle;
         push();
         // ellipseMode(RADIUS);
         translate(pos.x, pos.y);
-        // rotate(angle)
+        rotate(angle)
         // rectMode(CENTER)
         tint(this.color)
         imageMode(CENTER);
@@ -31,7 +33,7 @@ class Chip {
         // noStroke()
         // fill(this.color)
         // circle(0, 0, this.r)
-        //Drawing coordinates of the chip, good for debugging
+        // // Drawing coordinates of the chip, good for debugging
         // fill(0)
         // textAlign(CENTER)
         // textSize(35)
