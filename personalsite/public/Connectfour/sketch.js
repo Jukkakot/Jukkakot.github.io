@@ -32,7 +32,7 @@ function setup() {
   cnv = createCanvas(chipRadius * 14.5, chipRadius * 14.5);
   // windowScale = min(map(windowWidth, 0, 800, 0, 1), 1)
   // chipRadius = windowScale * 55
-
+  
   // cnv.resize(chipRadius * 14.5, chipRadius * 14.5)
   // restartButton.position(cnv.position().x, cnv.position().y + height)
   // scale(windowScale)
@@ -68,7 +68,9 @@ function keyPressed(e) {
   }
 }
 function draw() {
-  if (frameCount === 1) windowResized()
+  if (frameCount === 10) {
+    windowResized()
+  }
   background(100);
   Engine.update(engine)
   game.show()

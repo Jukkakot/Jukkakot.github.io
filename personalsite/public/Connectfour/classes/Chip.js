@@ -41,6 +41,6 @@ class Chip {
         pop();
     }
     isMoving() {
-        return this.body.velocity.y > 0.5
+        return this.body.velocity.y > 1
     }
 }
