@@ -33,7 +33,7 @@ class Chip {
         // noStroke()
         // fill(this.color)
         // circle(0, 0, this.r)
-        //Drawing coordinates of the chip, good for debugging
+        // // Drawing coordinates of the chip, good for debugging
         // fill(0)
         // textAlign(CENTER)
         // textSize(35)
@@ -41,6 +41,6 @@ class Chip {
         pop();
     }
     isMoving() {
-        return this.body.velocity.y > 0.5
+        return this.body.velocity.y > 1
     }
 }

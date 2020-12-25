@@ -1,3 +1,4 @@
+
 class Game {
     constructor() {
         //making floor seperatly from other walls so can detech collisions with it
@@ -7,12 +8,14 @@ class Game {
         //Arr storing visible chips for drawing
         this.chips = []
         //Directory for game state (win/lose/draw)
-        this.grid = {}
+        this.grid = [...Array(7)].map(e => []);
         this.winLines = []
         this.isOver = false
-        this.playerA = new Player(color(220, 0, 0), "red")
-        this.playerB = new Player(color(220, 220, 0), "yellow")
-        this.turn = random() < 0.5 ? this.playerA : this.playerB
+        this.playerRed = new Player(color(220, 0, 0), "red")
+        this.playerYellow = new Player(color(220, 220, 0), "yellow")
+        // this.turn = random() < 0.5 ? this.playerRed : this.playerYellow
+        this.turn = this.playerRed
+        this.canClick = true
         Events.on(engine, 'collisionStart', this.collision);
     }
     collision(event) {
@@ -24,8 +27,16 @@ class Game {
                 if (bodyA.label == 'Rectangle Body' || bodyB.label == 'Rectangle Body') return
                 if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
                     bopSound.play()
-                    game.isOver = game.checkWin(game.turn)
-                    game.turn = game.turn === game.playerA ? game.playerB : game.playerA
+                    game.canClick = true
+                    game.isOver = game.checkWin(game.turn, game.grid, true) == null ? false : true
+                    if (!game.isOver) {
+                        game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
+                        if (game.turn === game.playerYellow) {
+                            game.findBestMove()
+                        }
+                        // game.findBestMove()
+                    }
+
                 }
             }
         }
@@ -42,98 +53,129 @@ class Game {
         walls.push(new Box(width - 2.5, height / 2, 5, height))
         return walls
     }
-    playRound() {
+    playRound(column) {
         //Cant put another chip until the last chip has landed on the board
         //(Preventing spam clicking)
-        if (this.chips.length > 0 && this.chips[this.chips.length - 1].isMoving())
-            return
-        var column = Math.floor(mouseX / (chipRadius * 2.07))
-
-        //Preventing from being able to drop a chip over the canvas
-        column = min(column, 6)
-
+        // if (this.chips.length > 0 && this.chips[this.chips.length - 1].isMoving()){
+        //     console.log("previous was moving")
+        //     return
+        // }
         //Preventing more than 6 chips in a column
-        if (this.grid[column] !== undefined && this.grid[column].length > 5)
-            return
-
-        //Adding the chip to both arrays
-        this.chips.push(new Chip(column, this.turn.color))
-        this.grid[column] ? this.grid[column].push(this.turn.name) : this.grid[column] = [this.turn.name]
-        
-        // setTimeout(() => {
-        //     this.turn = this.turn === this.playerA ? this.playerB : this.playerA
-        // }, 50);
-        //Chip collsion will cause win check and player turning
+        if (this.grid[column].length < 6 && this.canClick) {
+            //Adding the chip to both arrays
+            this.chips.push(new Chip(column, this.turn.color))
+            this.grid[column].push(this.turn.name)
+            this.canClick = false
+            //Chip collsion will cause win check and player turning
+            // return true
+        }
     }
-    checkWin(player) {
-        // var wasWin = false
-
-        //Columns check
-        for (let column in this.grid) {
-            //If column has less than 4 chips, there cant be win
-            if (this.grid[column].length > 3) {
-                var counter = 0
-                for (let row in this.grid[column]) {
-                    row = Number(row)
-                    var chipName = this.grid[column][row]
-                    chipName === player.name ? counter++ : counter = 0
-                    if (counter > 3) {
-                        // console.log(counter,"column win on column:", column, "indexes", row - 3, row)
-                        this.winLines.push([column, row - 3, column, row])
-                        return true
-                        // wasWin = true
+    checkWin(player, board, pushLines) {
+        //Vertical
+        for (var y = 0; y < 3; y++) {
+            for (var x = 0; x < 7; x++) {
+                var startY = y
+                var startX = x
+                let wasWin = true
+                for (var i = 0; i < 4; i++) {
+                    // console.log(y,x,i)
+                    if (board[x][y + i] !== player.name) {
+                        wasWin = false
+                        break
                     }
                 }
-            }
-        }
-
-        //Rows check
-        for (var row = 0; row < 6; row++) {
-            var counter = 0
-            for (var column = 0; column < 7; column++) {
-                if (this.grid[column] === undefined || this.grid[column][row] === undefined) {
-                    counter = 0
-                    continue
-                }
-                this.grid[column][row] === player.name ? counter++ : counter = 0
-                if (counter > 3) {
-                    // console.log(counter,"row win on row:", row, "indexes", column - 3, column)
-                    this.winLines.push([column - 3, row, column, row])
-                    return true
-                    // wasWin = true
+                if (wasWin) {
+                    if (pushLines) {
+                        console.log("vertical win", startX, startY, startX, startY + 3)
+                        this.winLines.push([startX, startY, startX, startY + 3])
+                    }
+                    return player.name
                 }
             }
         }
-
-        //Diagonals check
-        //             ne       sw
-        var diags = [[1, 1], [1, -1]]
-        for (var row = 0; row < 6; row++) {
-            for (var column = 0; column < 7; column++) {
-                if (this.grid[column] === undefined || this.grid[column][row] === undefined) continue
-                var startX = Number(column)
-                var startY = row
-                if (this.grid[startX][startY] === undefined) continue
-                for (let diag of diags) {
-                    var counter = 1
-                    var x = startX
-                    var y = startY
-                    for (var i = 0; i < 3; i++) {
-                        x += diag[0]
-                        y += diag[1]
-                        if (this.grid[x] === undefined || this.grid[x][y] === undefined || this.grid[x][y] !== player.name) break
-                        counter++
-                        if (counter > 3) {
-                            // console.log("Diag win: from", startX, startY, "to", x, y)
-                            this.winLines.push([startX, startY, x, y])
-                            return true
-                            // wasWin = true
-                        }
+        //Horizontal
+        for (var y = 0; y < 6; y++) {
+            for (var x = 0; x < 4; x++) {
+                var startY = y
+                var startX = x
+                let wasWin = true
+                for (var i = 0; i < 4; i++) {
+                    if (board[x + i][y] !== player.name) {
+                        wasWin = false
+                        break
                     }
                 }
+                if (wasWin) {
+                    if (pushLines) {
+                        console.log("Horizontal", startX, startY, startX + 3, startY)
+                        this.winLines.push([startX, startY, startX + 3, startY])
+                    }
+                    return player.name
+                }
             }
         }
-        return false
+
+        //Diagonal north east
+        for (var y = 0; y < 3; y++) {
+            for (var x = 0; x < 4; x++) {
+                var startY = y
+                var startX = x
+                let wasWin = true
+                for (var i = 0; i < 4; i++) {
+                    if (board[x + i][y + i] !== player.name) {
+                        wasWin = false
+                        break
+                    }
+                }
+                if (wasWin) {
+                    if (pushLines) {
+                        console.log("posi diag win", startX, startY, startX + 3, startY + 3)
+                        this.winLines.push([startX, startY, startX + 3, startY + 3])
+                    }
+                    return player.name
+                }
+            }
+
+        }
+
+        //Diagonal south east
+        for (var y = 3; y < 6; y++) {
+            for (var x = 0; x < 4; x++) {
+                var startY = y
+                var startX = x
+                let wasWin = true
+                for (var i = 0; i < 4; i++) {
+                    if (board[x + i][y - i] !== player.name) {
+                        wasWin = false
+                        break
+                    }
+                }
+                if (wasWin) {
+                    if (pushLines) {
+                        console.log("nega diag win", startX, startY, x + 3, y - 3)
+                        this.winLines.push([startX, startY, x + 3, y - 3])
+                    }
+                    return player.name
+                }
+            }
+
+        }
+        //Checking for tie in the end
+        if (this.chips.length >= 6 * 7) return "tie"
+        let isTie = true
+        // console.log("checking for tie")
+        for (let column in board) {
+            if (board[column].length < 6) {
+                isTie = false
+                break
+            }
+        }
+        if (isTie) {
+            return "tie"
+        } else {
+            return undefined
+        }
+
     }
     drawWins() {
         for (let l of this.winLines) {
@@ -190,5 +232,177 @@ class Game {
         //     rect(0, height - y * chipRadius * 2 - 5, width, 5)
         // }
 
+    }
+
+    findBestMove() {
+        var copyGrid = JSON.parse(JSON.stringify(this.grid));
+        let result = minimax(copyGrid, 6, -Infinity, Infinity, true)
+        let move = result[0]
+        let bestScore = result[1]
+        console.log("best score", bestScore, "move", move, this.grid)
+        this.playRound(move)
+    }
+
+}
+function evaluateWindow(window, player) {
+    if (window.length > 4) {
+        console.log("too long window", window)
+    }
+    while (window.length < 4) {
+        window.push("")
+    }
+
+    var value = 0
+    var oppPlayer = player === game.playerYellow ? game.playerRed : game.playerYellow
+
+    var pieceCount = window.filter(chip => chip === player.name).length
+    var emptyCount = window.filter(chip => chip === "").length
+    var oppCount = window.filter(chip => chip === oppPlayer.name).length
+
+    if (pieceCount === 4) value += 100
+    else if (pieceCount === 3 && emptyCount === 1) value += 5
+    else if (pieceCount === 2 && emptyCount === 2) value += 2
+    else if (oppCount === 3 && emptyCount === 1) value -= 4
+
+    return value
+}
+function scoreWindow(board, player) {
+    var value = 0
+    //Center pieces
+    var centerPieceCount = board[3].filter(chip => chip == player.name).length
+    // console.log(board,board[3])
+    value += centerPieceCount * 3
+
+    //Vertical
+    for (var y = 0; y < 3; y++) {
+        for (var x = 0; x < 7; x++) {
+            var window = []
+            for (var i = 0; i < 4; i++) {
+                // console.log(y,x,i)
+                if (board[x][y + i]) {
+                    window.push(board[x][y + i])
+                } else {
+                    break
+                }
+            }
+            if (window.length > 0) {
+                value += evaluateWindow(window, player)
+            }
+        }
+    }
+    //Horizontal
+    for (var y = 0; y < 6; y++) {
+        for (var x = 0; x < 4; x++) {
+            var window = []
+            for (var i = 0; i < 4; i++) {
+                if (board[x + i][y]) {
+                    window.push(board[x + i][y])
+                } else {
+                    break
+                }
+            }
+            if (window.length > 0) {
+                value += evaluateWindow(window, player)
+            }
+        }
+    }
+    //Diagonal north east
+    for (var y = 0; y < 3; y++) {
+
+        for (var x = 0; x < 4; x++) {
+            var window = []
+            for (var i = 0; i < 4; i++) {
+                if (board[x + i][y + i]) {
+                    // console.log("ne diag",window)
+                    window.push(board[x + i][y + i])
+                } else {
+                    break
+                }
+            }
+            if (window.length > 0) {
+                value += evaluateWindow(window, player)
+            }
+        }
+
+    }
+
+    //Diagonal south east
+    for (var y = 3; y < 6; y++) {
+
+        for (var x = 0; x < 4; x++) {
+            var window = []
+            for (var i = 0; i < 4; i++) {
+                if (board[x + i][y - i]) {
+                    // console.log("se diag",window)
+                    window.push(board[x + i][y - i])
+                } else {
+                    break
+                }
+            }
+            if (window.length > 0) {
+                value += evaluateWindow(window, player)
+            }
+        }
+
+    }
+    // console.log("total value",value)
+    return value
+}
+
+
+function minimax(board, depth, alpha, beta, isMaximizing) {
+    let scores = {
+        "yellow": 1000000000,
+        "red": -1000000000,
+        "tie": 0
+    };
+    let result = game.checkWin(game.playerRed, board, false)
+    if (result === undefined) {
+        result = game.checkWin(game.playerYellow, board, false)
+    } else {
+        return [undefined, scores[result]]
+    }
+    if (depth === 0) {
+        return [undefined, scoreWindow(board, game.playerYellow)]
+    }
+
+    if (isMaximizing) {
+        let bestScore = -Infinity
+        let bCol = floor(random(7))
+        for (var column = 0; column < 7; column++) {
+            if (board[column].length < 6) {
+                var cBoard = JSON.parse(JSON.stringify(board));
+                cBoard[column].push(game.playerYellow.name)
+                let score = minimax(cBoard, depth - 1, alpha, beta, false)[1]
+                // bestScore = max(score, bestScore)
+                if (score > bestScore) {
+                    bestScore = score
+                    bCol = column
+                }
+                alpha = max(bestScore, alpha)
+                if (alpha >= beta)
+                    break
+            }
+        }
+        return [bCol, bestScore]
+    } else {
+        let bestScore = Infinity;
+        let bCol = floor(random(7))
+        for (var column = 0; column < 7; column++) {
+            if (board[column].length < 6) {
+                var cBoard = JSON.parse(JSON.stringify(board));
+                cBoard[column].push(game.playerRed.name)
+                let score = minimax(cBoard, depth - 1, alpha, beta, true)[1]
+                // bestScore = min(score, bestScore);
+                if (score < bestScore) {
+                    bestScore = score
+                    bCol = column
+                }
+                beta = min(bestScore, beta)
+                if (alpha >= beta)
+                    break
+            }
+        }
+        return [bCol, bestScore]
     }
 }

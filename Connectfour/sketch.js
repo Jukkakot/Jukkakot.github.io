@@ -4,7 +4,7 @@ let engine
 let world
 let chipRadius
 let game
-let gridImg,chipImg
+let gridImg, chipImg
 let bopSound
 let cnv
 let restartButton
@@ -32,7 +32,7 @@ function setup() {
   cnv = createCanvas(chipRadius * 14.5, chipRadius * 14.5);
   // windowScale = min(map(windowWidth, 0, 800, 0, 1), 1)
   // chipRadius = windowScale * 55
- 
+  
   // cnv.resize(chipRadius * 14.5, chipRadius * 14.5)
   // restartButton.position(cnv.position().x, cnv.position().y + height)
   // scale(windowScale)
@@ -40,7 +40,7 @@ function setup() {
   restartButton.position(cnv.position().x, cnv.position().y + height)
   restartButton.size(chipRadius * 3, chipRadius)
   restartButton.style('font-size', chipRadius * 0.4 + "px")
-  restartButton.style('background-color', color(200,100))
+  restartButton.style('background-color', color(200, 100))
   restartButton.mousePressed(() => start())
   start()
 
@@ -53,7 +53,9 @@ function start() {
 }
 function mousePressed() {
   if (mouseX > 0 && mouseX < width && mouseY < height && !game.isOver) {
-    game.playRound()
+    var column = Math.floor(mouseX / (chipRadius * 2.07))
+    column = min(column, 6)
+    game.playRound(column)
   }
 
 }
@@ -66,7 +68,9 @@ function keyPressed(e) {
   }
 }
 function draw() {
-  if (frameCount === 1) windowResized()
+  if (frameCount === 10) {
+    windowResized()
+  }
   background(100);
   Engine.update(engine)
   game.show()
