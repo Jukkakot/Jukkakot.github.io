@@ -238,8 +238,8 @@ class Game {
     }
 
     findBestMove() {
-        var copyGrid = JSON.parse(JSON.stringify(this.grid));
-        let result = minimax(copyGrid, 6, -Infinity, Infinity, true)
+        // var copyGrid = JSON.parse(JSON.stringify(this.grid));
+        let result = minimax(this.grid, 6, -Infinity, Infinity, true)
         let move = result[0]
         let bestScore = result[1]
         console.log("best score", bestScore, "move", move, this.grid)
@@ -339,20 +339,32 @@ function scoreWindow(board, player) {
 
 
 function minimax(board, depth, alpha, beta, isMaximizing) {
-    let scores = {
-        "yellow": 10000000000,
-        "red": -10000000000,
-        "tie": 0
-    };
-    let result = game.checkWin(game.playerRed, board, false)
-    if (result === undefined) {
-        result = game.checkWin(game.playerYellow, board, false)
-    } else {
-        return [undefined, scores[result]]
+    // let scores = {
+    //     "yellow": 10000000000,
+    //     "red": -10000000000,
+    //     "tie": 0
+    // };
+    let yellowCheck = game.checkWin(game.playerYellow, board, false)
+    let redCheck = game.checkWin(game.playerRed, board, false)
+    if (yellowCheck === "yellow") {
+        return [undefined, 10000000000]
+    } else if (redCheck === "red") {
+        return [undefined, -10000000000]
+    } else if (yellowCheck === "tie" || redCheck === "tie") {
+        return [undefined, 0]
     }
     if (depth === 0) {
+        // var player = isMaximizing ? game.playerYellow : game.playerRed
+        // return [undefined, scoreWindow(board, player)]
         return [undefined, scoreWindow(board, game.playerYellow)]
     }
+    // let result = game.checkWin(game.playerRed, board, false)
+    // if (result === undefined) {
+    //     result = game.checkWin(game.playerYellow, board, false)
+    // } else {
+    //     return [undefined, scores[result]]
+    // }
+    
 
     if (isMaximizing) {
         let bestScore = -Infinity
