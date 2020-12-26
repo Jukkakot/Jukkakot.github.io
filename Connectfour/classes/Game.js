@@ -339,11 +339,11 @@ function scoreWindow(board, player) {
 
 
 function minimax(board, depth, alpha, beta, isMaximizing) {
-    let scores = {
-        "yellow": 10000000000,
-        "red": -10000000000,
-        "tie": 0
-    };
+    // let scores = {
+    //     "yellow": 10000000000,
+    //     "red": -10000000000,
+    //     "tie": 0
+    // };
     let yellowCheck = game.checkWin(game.playerYellow, board, false)
     let redCheck = game.checkWin(game.playerRed, board, false)
     if (yellowCheck === "yellow") {
@@ -354,8 +354,9 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
         return [undefined, 0]
     }
     if (depth === 0) {
-        var player = isMaximizing ? game.playerYellow : game.playerRed
-        return [undefined, scoreWindow(board, player)]
+        // var player = isMaximizing ? game.playerYellow : game.playerRed
+        // return [undefined, scoreWindow(board, player)]
+        return [undefined, scoreWindow(board, game.playerYellow)]
     }
     // let result = game.checkWin(game.playerRed, board, false)
     // if (result === undefined) {

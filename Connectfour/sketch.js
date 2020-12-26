@@ -25,7 +25,7 @@ function windowResized() {
   // windowScale = min(map(windowWidth, 0, 800, 0, 1), 1)
   // chipRadius = windowScale * 55
   // cnv.resize(chipRadius * 14.5, chipRadius * 14.5)
-  restartButton.position(cnv.position().x, cnv.position().y + height)
+  restartButton.position(cnv.position().x - restartButton.width, cnv.position().y + height - gridImg.height)
   // scale(windowScale)
 }
 function setup() {
@@ -33,12 +33,12 @@ function setup() {
   cnv = createCanvas(chipRadius * 14.5, chipRadius * 14.5);
   // windowScale = min(map(windowWidth, 0, 800, 0, 1), 1)
   // chipRadius = windowScale * 55
-  
+
   // cnv.resize(chipRadius * 14.5, chipRadius * 14.5)
   // restartButton.position(cnv.position().x, cnv.position().y + height)
   // scale(windowScale)
   restartButton = createButton("Restart\n(r)")
-  restartButton.position(cnv.position().x, cnv.position().y + height)
+  restartButton.position(cnv.position().x - restartButton.width, cnv.position().y + height - gridImg.height)
   restartButton.size(chipRadius * 3, chipRadius)
   restartButton.style('font-size', chipRadius * 0.4 + "px")
   restartButton.style('background-color', color(200, 100))
@@ -58,7 +58,7 @@ function mousePressed() {
     var column = Math.floor(mouseX / (chipRadius * 2.07))
     column = min(column, 6)
     game.playRound(column)
-    
+
   }
 
 }
@@ -73,6 +73,6 @@ function keyPressed(e) {
 function draw() {
   if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine,32)
+  Engine.update(engine, 32)
   game.show()
 }
