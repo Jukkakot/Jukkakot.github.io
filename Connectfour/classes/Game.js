@@ -166,19 +166,18 @@ class Game {
         }
         //Checking for tie in the end
         if (this.chips.length >= 6 * 7) return "tie"
-        let isTie = true
+
         // console.log("checking for tie")
-        for (let column in board) {
-            if (board[column].length < 6) {
-                isTie = false
-                break
+        for (let column of board) {
+            if (column.length < 6) {
+                //Not win or tie -> return undefined
+                return undefined
             }
         }
-        if (isTie) {
-            return "tie"
-        } else {
-            return undefined
-        }
+
+        console.log("was tie", board)
+        return "tie"
+
 
     }
     drawWins() {
@@ -334,7 +333,7 @@ function scoreWindow(board, player) {
         }
 
     }
-    
+
     return value
 }
 
@@ -345,9 +344,9 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
         "red": -10000000000,
         "tie": 0
     };
-    let result = game.checkWin(game.playerYellow, board, false)
+    let result = game.checkWin(game.playerRed, board, false)
     if (result === undefined) {
-        result = game.checkWin(game.playerRed, board, false)
+        result = game.checkWin(game.playerYellow, board, false)
     } else {
         return [undefined, scores[result]]
     }
