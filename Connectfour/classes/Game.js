@@ -28,6 +28,10 @@ class Game {
                 if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
                     bopSound.play()
                     game.canClick = true
+                    setTimeout(() => {
+                        bodyA.isStatic = true
+                        bodyB.isStatic = true
+                    }, 200);
                     game.isOver = game.checkWin(game.turn, game.grid, true) == null ? false : true
                     if (!game.isOver) {
                         game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
@@ -207,7 +211,7 @@ class Game {
 
         if (this.isOver) {
             this.drawWins()
-        } else if (this.chips.length === 0 || this.chips.length > 0 && !this.chips[this.chips.length - 1].isMoving()) {
+        } else if (this.canClick && this.turn === this.playerRed) {
             if (mouseY > height) return
             //Drawing chip above the board if we can click (Previous chip has landed)
             push();
@@ -266,7 +270,6 @@ function scoreWindow(board, player) {
     var value = 0
     //Center pieces
     var centerPieceCount = board[3].filter(chip => chip == player.name).length
-    // console.log(board,board[3])
     value += centerPieceCount * 3
 
     //Vertical
@@ -274,16 +277,13 @@ function scoreWindow(board, player) {
         for (var x = 0; x < 7; x++) {
             var window = []
             for (var i = 0; i < 4; i++) {
-                // console.log(y,x,i)
                 if (board[x][y + i]) {
                     window.push(board[x][y + i])
                 } else {
                     window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
     }
     //Horizontal
@@ -297,9 +297,7 @@ function scoreWindow(board, player) {
                     window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
     }
     //Diagonal north east
@@ -315,16 +313,13 @@ function scoreWindow(board, player) {
                     window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
 
     }
 
     //Diagonal south east
     for (var y = 3; y < 6; y++) {
-
         for (var x = 0; x < 4; x++) {
             var window = []
             for (var i = 0; i < 4; i++) {
@@ -335,26 +330,24 @@ function scoreWindow(board, player) {
                     window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
 
     }
-    // console.log("total value",value)
+    
     return value
 }
 
 
 function minimax(board, depth, alpha, beta, isMaximizing) {
     let scores = {
-        "yellow": 1000000000,
-        "red": -1000000000,
+        "yellow": 10000000000,
+        "red": -10000000000,
         "tie": 0
     };
-    let result = game.checkWin(game.playerRed, board, false)
+    let result = game.checkWin(game.playerYellow, board, false)
     if (result === undefined) {
-        result = game.checkWin(game.playerYellow, board, false)
+        result = game.checkWin(game.playerRed, board, false)
     } else {
         return [undefined, scores[result]]
     }

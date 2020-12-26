@@ -8,6 +8,7 @@ let gridImg, chipImg
 let bopSound
 let cnv
 let restartButton
+
 // let windowScale
 function preload() {
   gridImg = loadImage("./resources/spiralGrid.png")
@@ -42,6 +43,7 @@ function setup() {
   restartButton.style('font-size', chipRadius * 0.4 + "px")
   restartButton.style('background-color', color(200, 100))
   restartButton.mousePressed(() => start())
+  frameRate(30)
   start()
 
 }
@@ -56,6 +58,7 @@ function mousePressed() {
     var column = Math.floor(mouseX / (chipRadius * 2.07))
     column = min(column, 6)
     game.playRound(column)
+    
   }
 
 }
@@ -68,10 +71,8 @@ function keyPressed(e) {
   }
 }
 function draw() {
-  if (frameCount === 10) {
-    windowResized()
-  }
+  if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine)
+  Engine.update(engine,32)
   game.show()
 }
