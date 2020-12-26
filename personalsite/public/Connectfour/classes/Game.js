@@ -28,6 +28,10 @@ class Game {
                 if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
                     bopSound.play()
                     game.canClick = true
+                    setTimeout(() => {
+                        bodyA.isStatic = true
+                        bodyB.isStatic = true
+                    }, 200);
                     game.isOver = game.checkWin(game.turn, game.grid, true) == null ? false : true
                     if (!game.isOver) {
                         game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
@@ -162,19 +166,18 @@ class Game {
         }
         //Checking for tie in the end
         if (this.chips.length >= 6 * 7) return "tie"
-        let isTie = true
+
         // console.log("checking for tie")
-        for (let column in board) {
-            if (board[column].length < 6) {
-                isTie = false
-                break
+        for (let column of board) {
+            if (column.length < 6) {
+                //Not win or tie -> return undefined
+                return undefined
             }
         }
-        if (isTie) {
-            return "tie"
-        } else {
-            return undefined
-        }
+
+        console.log("was tie", board)
+        return "tie"
+
 
     }
     drawWins() {
@@ -207,7 +210,7 @@ class Game {
 
         if (this.isOver) {
             this.drawWins()
-        } else if (this.chips.length === 0 || this.chips.length > 0 && !this.chips[this.chips.length - 1].isMoving()) {
+        } else if (this.canClick && this.turn === this.playerRed) {
             if (mouseY > height) return
             //Drawing chip above the board if we can click (Previous chip has landed)
             push();
@@ -245,13 +248,9 @@ class Game {
 
 }
 function evaluateWindow(window, player) {
-    if (window.length > 4) {
-        console.log("too long window", window)
+    if (window.length !== 4) {
+        console.log("not 4 length window", window)
     }
-    while (window.length < 4) {
-        window.push("")
-    }
-
     var value = 0
     var oppPlayer = player === game.playerYellow ? game.playerRed : game.playerYellow
 
@@ -270,7 +269,6 @@ function scoreWindow(board, player) {
     var value = 0
     //Center pieces
     var centerPieceCount = board[3].filter(chip => chip == player.name).length
-    // console.log(board,board[3])
     value += centerPieceCount * 3
 
     //Vertical
@@ -278,16 +276,13 @@ function scoreWindow(board, player) {
         for (var x = 0; x < 7; x++) {
             var window = []
             for (var i = 0; i < 4; i++) {
-                // console.log(y,x,i)
                 if (board[x][y + i]) {
                     window.push(board[x][y + i])
                 } else {
-                    break
+                    window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
     }
     //Horizontal
@@ -298,12 +293,10 @@ function scoreWindow(board, player) {
                 if (board[x + i][y]) {
                     window.push(board[x + i][y])
                 } else {
-                    break
+                    window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
     }
     //Diagonal north east
@@ -316,19 +309,16 @@ function scoreWindow(board, player) {
                     // console.log("ne diag",window)
                     window.push(board[x + i][y + i])
                 } else {
-                    break
+                    window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
 
     }
 
     //Diagonal south east
     for (var y = 3; y < 6; y++) {
-
         for (var x = 0; x < 4; x++) {
             var window = []
             for (var i = 0; i < 4; i++) {
@@ -336,24 +326,22 @@ function scoreWindow(board, player) {
                     // console.log("se diag",window)
                     window.push(board[x + i][y - i])
                 } else {
-                    break
+                    window.push("")
                 }
             }
-            if (window.length > 0) {
-                value += evaluateWindow(window, player)
-            }
+            value += evaluateWindow(window, player)
         }
 
     }
-    // console.log("total value",value)
+
     return value
 }
 
 
 function minimax(board, depth, alpha, beta, isMaximizing) {
     let scores = {
-        "yellow": 1000000000,
-        "red": -1000000000,
+        "yellow": 10000000000,
+        "red": -10000000000,
         "tie": 0
     };
     let result = game.checkWin(game.playerRed, board, false)
