@@ -245,13 +245,9 @@ class Game {
 
 }
 function evaluateWindow(window, player) {
-    if (window.length > 4) {
-        console.log("too long window", window)
+    if (window.length !== 4) {
+        console.log("not 4 length window", window)
     }
-    while (window.length < 4) {
-        window.push("")
-    }
-
     var value = 0
     var oppPlayer = player === game.playerYellow ? game.playerRed : game.playerYellow
 
@@ -282,7 +278,7 @@ function scoreWindow(board, player) {
                 if (board[x][y + i]) {
                     window.push(board[x][y + i])
                 } else {
-                    break
+                    window.push("")
                 }
             }
             if (window.length > 0) {
@@ -298,7 +294,7 @@ function scoreWindow(board, player) {
                 if (board[x + i][y]) {
                     window.push(board[x + i][y])
                 } else {
-                    break
+                    window.push("")
                 }
             }
             if (window.length > 0) {
@@ -316,7 +312,7 @@ function scoreWindow(board, player) {
                     // console.log("ne diag",window)
                     window.push(board[x + i][y + i])
                 } else {
-                    break
+                    window.push("")
                 }
             }
             if (window.length > 0) {
@@ -336,7 +332,7 @@ function scoreWindow(board, player) {
                     // console.log("se diag",window)
                     window.push(board[x + i][y - i])
                 } else {
-                    break
+                    window.push("")
                 }
             }
             if (window.length > 0) {
