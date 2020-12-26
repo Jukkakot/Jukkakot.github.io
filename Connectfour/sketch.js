@@ -39,8 +39,8 @@ function setup() {
   // scale(windowScale)
   restartButton = createButton("Restart\n(r)")
   restartButton.position(cnv.position().x - restartButton.width, cnv.position().y + height - gridImg.height)
-  restartButton.size(chipRadius * 3, chipRadius)
-  restartButton.style('font-size', chipRadius * 0.4 + "px")
+  restartButton.size(chipRadius * 3, chipRadius*2)
+  restartButton.style('font-size', chipRadius * 0.5 + "px")
   restartButton.style('background-color', color(200, 100))
   restartButton.mousePressed(() => start())
   frameRate(30)
@@ -58,7 +58,6 @@ function mousePressed() {
     var column = Math.floor(mouseX / (chipRadius * 2.07))
     column = min(column, 6)
     game.playRound(column)
-
   }
 
 }
