@@ -32,7 +32,7 @@ class Game {
                         bodyA.isStatic = true
                         bodyB.isStatic = true
                     }, 200);
-                    game.isOver = game.checkWin(game.turn, game.grid, true) == null ? false : true
+                    game.isOver = game.checkWin(game.turn, game.grid, true) == undefined ? false : true
                     if (!game.isOver) {
                         game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
                         if (game.turn === game.playerYellow) {
