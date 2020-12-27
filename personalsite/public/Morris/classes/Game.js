@@ -40,16 +40,53 @@ class Game {
         var dots = []
         for (var layers = 0; layers < 3; layers++) {
             var rect = []
-            for (var i = -1; i < 2; i++) {
-                for (var j = -1; j < 2; j++) {
-                    if (i === 0 && j === 0) continue
-                    var player = random(1) < 0.3 ? new Player(color(floor(random(2)) * 255)) : undefined
-                    rect.push(new Dot(j, i, player))
-                }
-            }
+
+
+            //Top
+            rect.push(new Dot(-1, -1))
+            rect.push(new Dot(0, -1))
+            rect.push(new Dot(1, -1))
+            //Right
+            rect.push(new Dot(1, 0))
+            //Bottom
+            rect.push(new Dot(1, 1))
+            rect.push(new Dot(0, 1))
+            rect.push(new Dot(-1, 1))
+            //Left
+            rect.push(new Dot(-1, 0))
+
+
             dots.push(rect)
         }
+
         return dots
     }
-
+    click() {
+        for (var l = 2; l >= 0; l--) {
+            for (var dot of this.dots[l]) {
+                var size = (outBoxSize - distance * l) / 2
+                if (pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r)) {
+                    dot.click()
+                } else {
+                    dot.highlight = false
+                }
+            }
+        }
+    }
+    hover() {
+        for (var l = 2; l >= 0; l--) {
+            for (var dot of this.dots[l]) {
+                var size = (outBoxSize - distance * l) / 2
+                if (pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r)) {
+                    dot.hover = true
+                } else {
+                    dot.hover = false
+                }
+            }
+        }
+    }
+}
+function pointInCircle(x, y, cx, cy, radius) {
+    var distancesquared = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+    return distancesquared <= radius * radius;
 }
