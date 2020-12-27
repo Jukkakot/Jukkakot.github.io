@@ -32,7 +32,7 @@ class Game {
                         bodyA.isStatic = true
                         bodyB.isStatic = true
                     }, 200);
-                    game.isOver = game.checkWin(game.turn, game.grid, true) == null ? false : true
+                    game.isOver = game.checkWin(game.turn, game.grid, true) == undefined ? false : true
                     if (!game.isOver) {
                         game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
                         if (game.turn === game.playerYellow) {
@@ -347,9 +347,9 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
     let yellowCheck = game.checkWin(game.playerYellow, board, false)
     let redCheck = game.checkWin(game.playerRed, board, false)
     if (yellowCheck === "yellow") {
-        return [undefined, 10000000000]
+        return [undefined, 10000000000-depth]
     } else if (redCheck === "red") {
-        return [undefined, -10000000000]
+        return [undefined, -10000000000+depth]
     } else if (yellowCheck === "tie" || redCheck === "tie") {
         return [undefined, 0]
     }
