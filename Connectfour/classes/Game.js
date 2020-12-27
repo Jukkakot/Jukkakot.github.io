@@ -239,8 +239,9 @@ class Game {
 
     findBestMove() {
         // var copyGrid = JSON.parse(JSON.stringify(this.grid));
-        let move, bestScore
-        for (var depth = 1; depth < 7; depth++) {
+        let move = floor(random(7))
+        let bestScore =-Infinity
+        for (var depth = 1; depth < 6; depth++) {
             let result = minimax(this.grid, depth, -Infinity, Infinity, true)
             move = result[0]
             bestScore = result[1]
