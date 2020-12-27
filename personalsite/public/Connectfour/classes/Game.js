@@ -93,7 +93,7 @@ class Game {
                         console.log("vertical win", startX, startY, startX, startY + 3)
                         this.winLines.push([startX, startY, startX, startY + 3])
                     }
-                    return player.name
+                    return true
                 }
             }
         }
@@ -114,7 +114,7 @@ class Game {
                         console.log("Horizontal", startX, startY, startX + 3, startY)
                         this.winLines.push([startX, startY, startX + 3, startY])
                     }
-                    return player.name
+                    return true
                 }
             }
         }
@@ -136,7 +136,7 @@ class Game {
                         console.log("posi diag win", startX, startY, startX + 3, startY + 3)
                         this.winLines.push([startX, startY, startX + 3, startY + 3])
                     }
-                    return player.name
+                    return true
                 }
             }
 
@@ -159,7 +159,7 @@ class Game {
                         console.log("nega diag win", startX, startY, x + 3, y - 3)
                         this.winLines.push([startX, startY, x + 3, y - 3])
                     }
-                    return player.name
+                    return true
                 }
             }
 
@@ -239,10 +239,16 @@ class Game {
 
     findBestMove() {
         // var copyGrid = JSON.parse(JSON.stringify(this.grid));
-        let result = minimax(this.grid, 6, -Infinity, Infinity, true)
-        let move = result[0]
-        let bestScore = result[1]
-        console.log("best score", bestScore, "move", move, this.grid)
+        let move = floor(random(7))
+        let bestScore =-Infinity
+        for (var depth = 1; depth < 6; depth++) {
+            let result = minimax(this.grid, depth, -Infinity, Infinity, true)
+            move = result[0]
+            bestScore = result[1]
+            if (bestScore >= 100000000) break
+        }
+
+        console.log("depth",depth,"best score", bestScore, "move", move, this.grid)
         this.playRound(move)
     }
 
@@ -346,14 +352,15 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
     // };
     let yellowCheck = game.checkWin(game.playerYellow, board, false)
     let redCheck = game.checkWin(game.playerRed, board, false)
-    if (yellowCheck === "yellow") {
-        return [undefined, 10000000000]
-    } else if (redCheck === "red") {
-        return [undefined, -10000000000]
-    } else if (yellowCheck === "tie" || redCheck === "tie") {
-        return [undefined, 0]
-    }
-    if (depth === 0) {
+    if (yellowCheck !== undefined || redCheck !== undefined) {
+        if (yellowCheck) {
+            return [undefined, 100000000]
+        } else if (redCheck) {
+            return [undefined, -100000000]
+        } else if (yellowCheck === "tie" || redCheck === "tie") {
+            return [undefined, 0]
+        }
+    } else if (depth === 0) {
         // var player = isMaximizing ? game.playerYellow : game.playerRed
         // return [undefined, scoreWindow(board, player)]
         return [undefined, scoreWindow(board, game.playerYellow)]
@@ -364,7 +371,7 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
     // } else {
     //     return [undefined, scores[result]]
     // }
-    
+
 
     if (isMaximizing) {
         let bestScore = -Infinity
