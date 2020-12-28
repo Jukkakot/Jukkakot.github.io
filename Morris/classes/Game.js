@@ -21,7 +21,7 @@ class Game {
         for (var layers = 0; layers < 3; layers++) {
             this.drawRect(outBoxSize - distance * layers)
         }
-        textSize(30)
+        textSize(circleSize)
         fill(0)
         textAlign(CENTER)
         if (this.gameStarted) {
