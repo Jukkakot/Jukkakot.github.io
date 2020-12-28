@@ -105,7 +105,7 @@ class Game {
             for (var l in this.dots) {
                 for (var dot of this.dots[l]) {
                     var size = (outBoxSize - distance * l) / 2
-                    if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r / 2)) {
+                    if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r)) {
                         this.turn.chipCount++
                         dot.player = this.turn
                         dot.r = circleSize * 2
@@ -121,7 +121,7 @@ class Game {
         for (var l in this.dots) {
             for (var dot of this.dots[l]) {
                 var size = (outBoxSize - distance * l) / 2
-                dot.hover = pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r / 2)
+                dot.hover = pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r )
             }
         }
     }
