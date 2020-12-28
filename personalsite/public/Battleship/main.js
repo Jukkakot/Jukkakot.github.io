@@ -144,7 +144,9 @@ function autoGame() {
   }
 
 }
-
+function touchStarted() {
+  mouseClicked()
+}
 function mouseClicked(e) {
   if (autoplay || grid1.hasWon() || grid2.hasWon()) return
   if (wasInGrid2() && !grid2.hasWon()) {

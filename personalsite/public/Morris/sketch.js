@@ -21,6 +21,9 @@ function windowResized() {
 	circleSize = width / 35
 	distance = width / 4
 }
+function touchStarted() {
+	mousePressed()
+}
 function mousePressed() {
 	game.click()
 }

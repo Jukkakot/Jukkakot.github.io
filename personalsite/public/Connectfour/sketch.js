@@ -53,6 +53,9 @@ function start() {
   world = engine.world
   game = new Game()
 }
+function touchStarted() {
+  mousePressed()
+}
 function mousePressed() {
   if (mouseX > 0 && mouseX < width && mouseY < height && !game.isOver) {
     var column = Math.floor(mouseX / (chipRadius * 2.07))
