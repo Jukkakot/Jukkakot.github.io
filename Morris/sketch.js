@@ -36,11 +36,18 @@ function draw() {
 	translate(width / 2, height / 2)
 	game.drawBoard()
 	game.hover()
+	// if(frameCount % 100 == 0) console.log(frameRate())
 	// textSize(30)
 	// fill(0)
 	// textAlign(CENTER)
 	mX = mouseX - width / 2
 	mY = mouseY - height / 2
 	// text(mX + "," + mY, -100, height / 2 - 10)
+	// push()
+	// textSize(30)
+	// fill(0)
+	// textAlign(CENTER)
+	// text(floor(frameRate()), -100, height / 2 - 10)
+	// pop()
 }
 
