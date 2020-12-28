@@ -25,13 +25,13 @@ class Game {
         fill(0)
         textAlign(CENTER)
         if (this.gameStarted) {
-            text("Turn:",-circleSize*3,+circleSize/5)
+            text("Turn:", -circleSize * 3, +circleSize / 5)
         } else {
-            text("Place your chips", 0, +circleSize*3)
+            text("Place your chips", 0, +circleSize * 3)
         }
         fill(this.turn.color)
         noStroke()
-        circle(0,0,circleSize*3)
+        circle(0, 0, circleSize * 3)
         pop()
     }
     drawRect(w) {
@@ -94,7 +94,9 @@ class Game {
             for (var l in this.dots) {
                 for (var dot of this.dots[l]) {
                     var size = (outBoxSize - distance * l) / 2
-                    if ((dot.player === this.turn || this.prevDot && this.prevDot.player === this.turn && !dot.player) && pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r / 2)) {
+                    var r = dot.player ? dot.r * 0.6 : dot.r * 2
+                    if ((dot.player === this.turn || this.prevDot && this.prevDot.player === this.turn && !dot.player) &&
+                        pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
                         this.prevDot = dot.click(this.prevDot) ? undefined : dot
                         return
                     }
@@ -105,7 +107,8 @@ class Game {
             for (var l in this.dots) {
                 for (var dot of this.dots[l]) {
                     var size = (outBoxSize - distance * l) / 2
-                    if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r)) {
+                    var r = dot.player ? dot.r * 0.6 : dot.r * 2
+                    if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
                         this.turn.chipCount++
                         dot.player = this.turn
                         dot.r = circleSize * 2
@@ -115,13 +118,14 @@ class Game {
                 }
             }
         }
-        
+
     }
     hover() {
         for (var l in this.dots) {
             for (var dot of this.dots[l]) {
+                var r = dot.player ? dot.r * 0.6 : dot.r * 2
                 var size = (outBoxSize - distance * l) / 2
-                dot.hover = pointInCircle(mX, mY, dot.x * size, dot.y * size, dot.r )
+                dot.hover = pointInCircle(mX, mY, dot.x * size, dot.y * size, r)
             }
         }
     }
