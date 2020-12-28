@@ -116,7 +116,9 @@ function start() {
 function windowResized() {
   scaling()
 }
-
+function touchStarted() {
+  mousePressed()
+}
 function mousePressed() {
   if (grid.gameWon()) return
   if (mouseButton === RIGHT && !grid.gameOver) {
