@@ -5,7 +5,11 @@ var cnv
 var scaledWidth
 var game
 var mX, mY
+var dotImg
 const defaultWidth = 800
+function preload() {
+	dotImg = loadImage("./resources/img/dotimg.png")
+}
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
 	start()
