@@ -19,12 +19,13 @@ class Dot {
             stroke(this.hlColor)
             if (this.hover) this.r *= 1.3
             this.highlight ? strokeWeight(this.r / 10) : noStroke()
-            noFill()
+            // noFill()
+            fill(this.player.color)
             circle(this.x * size, this.y * size, this.r * 1.1)
             // noStroke()
-            tint(this.player.color)
-            imageMode(CENTER);
-            image(dotImg, this.x * size, this.y * size, this.r, this.r);
+            // tint(this.player.color)
+            // imageMode(CENTER);
+            // image(dotImg, this.x * size, this.y * size, this.r, this.r);
             noStroke()
 
             fill(0, 50, 255)
@@ -45,7 +46,7 @@ class Dot {
             textAlign(CENTER)
             textSize(circleSize)
             text(l + "," + d, this.x * size, this.y * size - circleSize * 0.7)
-            // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
+            text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
         }
 
         pop()

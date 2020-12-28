@@ -2,6 +2,7 @@ class Game {
     constructor() {
         this.dots = this.initDots()
         this.prevDot
+        this.prevHover
         this.playerRed = new Player(color(255, 0, 0))
         this.playerBlue = new Player(color(0, 170, 255))
         this.turn = random(1) < 0.5 ? this.playerRed : this.playerBlue
@@ -33,12 +34,12 @@ class Game {
         } else {
             text("Place your chips", 0, +circleSize * 3)
         }
-        // fill(this.turn.color)
-        // noStroke()
-        // circle(0, 0, circleSize * 3)
-        tint(this.turn.color)
-        imageMode(CENTER);
-        image(dotImg, 0, 0, circleSize * 3, circleSize * 3);
+        fill(this.turn.color)
+        noStroke()
+        circle(0, 0, circleSize * 3)
+        // tint(this.turn.color)
+        // imageMode(CENTER);
+        // image(dotImg, 0, 0, circleSize * 3, circleSize * 3);
 
         pop()
     }
@@ -132,14 +133,32 @@ class Game {
 
     }
     hover() {
+        if(this.prevHover){
+            var r = this.prevHover.player ? this.prevHover.r * 0.6 : this.prevHover.r * 2
+        if(pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, r)) return
+        }
         for (var l in this.dots) {
+            var size = (outBoxSize - distance * l) / 2
             for (var dot of this.dots[l]) {
                 var r = dot.player ? dot.r * 0.6 : dot.r * 2
-                var size = (outBoxSize - distance * l) / 2
-                dot.hover = pointInCircle(mX, mY, dot.x * size, dot.y * size, r)
+                if (pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
+                    if(this.prevHover && this.prevHover !== dot ){
+                        this.prevHover.hover = false
+                        this.prevHover = undefined
+                    }
+                    dot.hover = true
+                    this.prevHover = dot
+                    return
+                } 
             }
+
+        }
+        if(this.prevHover && this.prevHover !== dot ){
+            this.prevHover.hover = false
+            this.prevHover = undefined
         }
     }
+
     checkForMill(board, player, drawMills) {
         for (var l in board) {
             var size = (outBoxSize - distance * l) / 2
@@ -154,7 +173,7 @@ class Game {
                     }
                 }
                 if (isMill && drawMills) {
-                    var line = [player.color,layer[i].x*size, layer[i].y*size, layer[(i + 2) % 8].x * size,layer[(i + 2) % 8].y * size ]
+                    var line = [player.color, layer[i].x * size, layer[i].y * size, layer[(i + 2) % 8].x * size, layer[(i + 2) % 8].y * size]
                     this.mills.push(line)
                 }
 
@@ -166,7 +185,7 @@ class Game {
                     var size1 = (outBoxSize - distance * 0) / 2
                     var size2 = (outBoxSize - distance * 2) / 2
                     if (drawMills) {
-                        var line = [player.color,this.dots[0][i].x*size1, this.dots[0][i].y*size1,this.dots[2][i].x*size2,this.dots[2][i].y*size2]
+                        var line = [player.color, this.dots[0][i].x * size1, this.dots[0][i].y * size1, this.dots[2][i].x * size2, this.dots[2][i].y * size2]
                         this.mills.push(line)
                     }
                 }
@@ -178,7 +197,6 @@ class Game {
         for (var l of this.mills) {
             stroke(l[0])
             strokeWeight(circleSize / 5)
-            var size = l[0]
             line(l[1], l[2], l[3], l[4])
         }
         pop()
