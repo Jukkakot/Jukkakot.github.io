@@ -22,11 +22,11 @@ class Chip {
     }
     show() {
         const pos = this.body.position;
-        const angle = this.body.angle;
+        // const angle = this.body.angle;
         push();
         // ellipseMode(RADIUS);
         translate(pos.x, pos.y);
-        rotate(angle)
+        // rotate(angle)
         // rectMode(CENTER)
         // tint(this.color)
         imageMode(CENTER);

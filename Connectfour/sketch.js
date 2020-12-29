@@ -55,7 +55,8 @@ function start() {
   engine = Engine.create()
   world = engine.world
   game = new Game()
-  fps = 60
+  fps = 0
+
 }
 function touchStarted() {
   mousePressed()
@@ -79,7 +80,7 @@ function keyPressed(e) {
 function draw() {
   if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine,floor(1000/fps))
+  Engine.update(engine,20)
   game.show()
   //Displaying fps
   if (frameCount % 60 == 0) fps = frameRate()
