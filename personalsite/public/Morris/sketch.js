@@ -1,3 +1,4 @@
+const MAXCHIPCOUNT = 18
 var outBoxSize
 var circleSize
 var distance
@@ -36,10 +37,16 @@ function mousePressed() {
 	movableDot = game.click()
 	
 }
+function touchMoved() {
+	mouseDragged()
+}
 function mouseDragged() {
 	if (movableDot && movableDot.player && movableDot.player === game.turn) {
 		locked = true
 	}
+}
+function touchEnded() {
+	mouseReleased()
 }
 function mouseReleased() {
 	locked = false

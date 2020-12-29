@@ -125,7 +125,7 @@ class Game {
                         this.checkForMill(this.dots, this.turn, true)
                         this.turn = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
                         this.checkForMill(this.dots, this.turn, true)
-                        this.gameStarted = this.playerRed.chipCount + this.playerBlue.chipCount >= 8
+                        this.gameStarted = this.playerRed.chipCount + this.playerBlue.chipCount >= MAXCHIPCOUNT
                     }
                 }
             }
