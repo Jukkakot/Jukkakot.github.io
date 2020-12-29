@@ -46,7 +46,7 @@ function setup() {
   restartButton.style('font-size', chipRadius * 0.5 + "px")
   restartButton.style('background-color', color(200, 100))
   restartButton.mousePressed(() => start())
-  // frameRate(30)
+  frameRate(30)
   start()
 
 }
@@ -80,7 +80,7 @@ function keyPressed(e) {
 function draw() {
   if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine,20)
+  Engine.update(engine,40)
   game.show()
   //Displaying fps
   if (frameCount % 60 == 0) fps = frameRate()
