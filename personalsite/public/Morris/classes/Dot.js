@@ -23,10 +23,11 @@ class Dot {
             // noFill()
             // fill(this.player.color)
             circle(this.x * size, this.y * size, this.r * 1.1)
-            noStroke()
-            tint(this.player.color)
+            
+            // tint(this.player.color)
             imageMode(CENTER);
-            image(dotImg, this.x * size, this.y * size, this.r, this.r);
+            image(this.player.img, this.x * size, this.y * size, this.r, this.r);
+            // noTint()
             noStroke()
 
             fill(0, 50, 255)
@@ -47,7 +48,7 @@ class Dot {
             textAlign(CENTER)
             textSize(circleSize)
             text(l + "," + d, this.x * size, this.y * size - circleSize * 0.7)
-            text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
+            // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
         }
 
         pop()
@@ -55,16 +56,16 @@ class Dot {
     move(x,y) {
         push()
         this.r = circleSize * 2
-        stroke(this.hlColor)
-        if (this.hover) this.r *= 1.3
-        this.highlight ? strokeWeight(this.r / 10) : noStroke()
+        // stroke(this.hlColor)
+        // if (this.hover) this.r *= 1.3
+        // this.highlight ? strokeWeight(this.r / 10) : noStroke()
         // noFill()
         // fill(this.player.color)
-        // circle(x, y, this.r * 1.1)
+        circle(x, y, this.r * 1.1)
         // noStroke()
-        tint(this.player.color)
+        // tint(this.player.color)
         imageMode(CENTER);
-        image(dotImg, x, y, this.r, this.r);
+        image(this.player.img, x, y, this.r, this.r);
         noStroke()
         pop()
     }

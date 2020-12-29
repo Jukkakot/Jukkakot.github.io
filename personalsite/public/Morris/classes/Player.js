@@ -1,6 +1,7 @@
 class Player {
-    constructor(color) {
+    constructor(color,img) {
         this.color = color
         this.chipCount = 0
+        this.img = img
     }
 }

@@ -6,13 +6,14 @@ var cnv
 var scaledWidth
 var game
 var mX, mY
-var dotImg
 var fps
 var locked
 var movableDot
+var redDot, blueDot
 const defaultWidth = 800
 function preload() {
-	dotImg = loadImage("./resources/img/dotSquareInvert.png")
+	redDot = loadImage("./resources/img/redDot.png")
+	blueDot = loadImage("./resources/img/blueDot.png")
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
@@ -31,29 +32,29 @@ function windowResized() {
 	distance = width / 4
 }
 function touchStarted() {
-	mousePressed() 
+	mousePressed()
 }
 function mousePressed() {
 	movableDot = game.click()
-	
+
 }
 function touchMoved() {
 	mouseDragged()
 }
 function mouseDragged() {
-	if(!movableDot && game.gameStarted) {
+	if (!movableDot && game.gameStarted) {
 		movableDot = game.click()
 	}
-	
+
 	if (movableDot && movableDot.player && movableDot.player === game.turn) {
 		locked = true
-	} 
+	}
 }
 function touchEnded() {
 	mouseReleased()
 }
 function mouseReleased() {
-	
+
 	if (movableDot && locked) {
 		movableDot.moving = false
 		game.prevDot = movableDot
@@ -78,10 +79,10 @@ function draw() {
 	mY = mouseY - height / 2
 	// text(mX + "," + mY, -100, height / 2 - 10)
 	push()
-	textSize(30)
+	textSize(circleSize)
 	fill(0)
 	textAlign(CENTER)
-	text(floor(fps), -100, -height / 2 + 40)
+	text(floor(fps), width / 2 - circleSize, -height / 2 + circleSize)
 	// text(mX + "," + mY, -200,-height/2+40 )
 	pop()
 }

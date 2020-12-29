@@ -3,8 +3,8 @@ class Game {
         this.dots = this.initDots()
         this.prevDot
         this.prevHover
-        this.playerRed = new Player(color(255, 0, 0))
-        this.playerBlue = new Player(color(0, 170, 255))
+        this.playerRed = new Player(color(255, 0, 0), redDot)
+        this.playerBlue = new Player(color(0, 170, 255), blueDot)
         this.turn = random(1) < 0.5 ? this.playerRed : this.playerBlue
         // this.turn = this.playerBlue
         this.gameStarted = false
@@ -35,11 +35,11 @@ class Game {
             text("Place your chips", 0, +circleSize * 3)
         }
         // fill(this.turn.color)
-        // noStroke()
+        noStroke()
         // circle(0, 0, circleSize * 3)
-        tint(this.turn.color)
+        // tint(this.turn.color)
         imageMode(CENTER);
-        image(dotImg, 0, 0, circleSize * 3, circleSize * 3);
+        image(this.turn.img, 0, 0, circleSize * 3, circleSize * 3);
 
         pop()
     }
