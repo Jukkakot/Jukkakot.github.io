@@ -27,9 +27,14 @@ class Chip {
         translate(pos.x, pos.y);
         rotate(angle)
         // rectMode(CENTER)
-        tint(this.color)
+        // tint(this.color)
         imageMode(CENTER);
-        image(chipImg, 0, 0, this.r*2,this.r*2);
+        if(this.name ==="yellow"){
+            image(yellowChip, 0, 0, this.r*2,this.r*2);
+        } else {
+            image(redChip, 0, 0, this.r*2,this.r*2);
+        }
+        
         // noStroke()
         // fill(this.color)
         // circle(0, 0, this.r)

@@ -5,6 +5,7 @@ let world
 let chipRadius
 let game
 let gridImg, chipImg
+let redChip,yellowChip
 let bopSound
 let cnv
 let restartButton
@@ -12,7 +13,9 @@ let restartButton
 // let windowScale
 function preload() {
   gridImg = loadImage("./resources/spiralGrid.png")
-  chipImg = loadImage("./resources/smallChip.png")
+  // chipImg = loadImage("./resources/smallChip.png")
+  redChip = loadImage("./resources/redChip.png")
+  yellowChip = loadImage("./resources/yellowChip.png")
   bopSound = loadSound("./resources/bop.mp3")
 }
 function windowResized() {

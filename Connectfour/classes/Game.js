@@ -11,8 +11,8 @@ class Game {
         this.grid = [...Array(7)].map(e => []);
         this.winLines = []
         this.isOver = false
-        this.playerRed = new Player(color(220, 0, 0), "red")
-        this.playerYellow = new Player(color(220, 220, 0), "yellow")
+        this.playerRed = new Player(color(220, 0, 0), "red",redChip)
+        this.playerYellow = new Player(color(220, 220, 0), "yellow",yellowChip)
         // this.turn = random() < 0.5 ? this.playerRed : this.playerYellow
         this.turn = this.playerRed
         this.canClick = true
@@ -207,7 +207,7 @@ class Game {
         //Draw game board
         tint(39, 39, 163)
         image(gridImg, 0, height - gridImg.height)
-
+        noTint()
         if (this.isOver) {
             this.drawWins()
         } else if (this.canClick && this.turn === this.playerRed) {
@@ -220,9 +220,9 @@ class Game {
             // fill(this.turn.color)
             var row = Math.floor(mouseX / (chipRadius * 2.07))
             var x = row * chipRadius * 2 + chipRadius + row * 5 + 2.5
-            tint(this.turn.color)
+            // tint(this.turn.color)
             imageMode(CENTER);
-            image(chipImg, x, chipRadius, chipRadius * 2, chipRadius * 2);
+            image(this.turn.img, x, chipRadius, chipRadius * 2, chipRadius * 2);
             // circle(x, chipRadius, chipRadius)
             pop();
         }
