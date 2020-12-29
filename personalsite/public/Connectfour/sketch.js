@@ -5,14 +5,17 @@ let world
 let chipRadius
 let game
 let gridImg, chipImg
+let redChip,yellowChip
 let bopSound
 let cnv
 let restartButton
-
+let fps
 // let windowScale
 function preload() {
   gridImg = loadImage("./resources/spiralGrid.png")
-  chipImg = loadImage("./resources/smallChip.png")
+  // chipImg = loadImage("./resources/smallChip.png")
+  redChip = loadImage("./resources/redChip.png")
+  yellowChip = loadImage("./resources/yellowChip.png")
   bopSound = loadSound("./resources/bop.mp3")
 }
 function windowResized() {
@@ -43,7 +46,7 @@ function setup() {
   restartButton.style('font-size', chipRadius * 0.5 + "px")
   restartButton.style('background-color', color(200, 100))
   restartButton.mousePressed(() => start())
-  frameRate(30)
+  // frameRate(30)
   start()
 
 }
@@ -75,13 +78,14 @@ function keyPressed(e) {
 function draw() {
   if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine, 40)
+  Engine.update(engine,20)
   game.show()
   //Displaying fps
-  // push()
-	// textSize(30)
-	// fill(0)
-	// textAlign(CENTER)
-	// text(floor(frameRate()), 100, 100)
-	// pop()
+  if (frameCount % 10 == 0) fps = frameRate()
+  push()
+	textSize(chipRadius/2)
+	fill(0)
+	textAlign(CENTER)
+	text(floor(fps), width-chipRadius/2, chipRadius/2)
+	pop()
 }
