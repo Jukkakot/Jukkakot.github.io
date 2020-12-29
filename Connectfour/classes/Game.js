@@ -28,10 +28,10 @@ class Game {
                 if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
                     bopSound.play()
                     game.canClick = true
-                    // setTimeout(() => {
-                    //     bodyA.isStatic = true
-                    //     bodyB.isStatic = true
-                    // }, 200);
+                    setTimeout(() => {
+                        bodyA.isStatic = true
+                        bodyB.isStatic = true
+                    }, 200);
                     game.isOver = game.checkWin(game.turn, game.grid, true) == undefined ? false : true
                     if (!game.isOver) {
                         game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
