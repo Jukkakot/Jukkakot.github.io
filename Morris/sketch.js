@@ -31,7 +31,7 @@ function windowResized() {
 	distance = width / 4
 }
 function touchStarted() {
-	mousePressed()
+	mousePressed() 
 }
 function mousePressed() {
 	movableDot = game.click()
@@ -41,20 +41,25 @@ function touchMoved() {
 	mouseDragged()
 }
 function mouseDragged() {
+	if(!movableDot && game.gameStarted) {
+		movableDot = game.click()
+	}
+	
 	if (movableDot && movableDot.player && movableDot.player === game.turn) {
 		locked = true
-	}
+	} 
 }
 function touchEnded() {
 	mouseReleased()
 }
 function mouseReleased() {
-	locked = false
-	if (movableDot) {
+	
+	if (movableDot && locked) {
 		movableDot.moving = false
 		game.prevDot = movableDot
 		game.click()
 	}
+	locked = false
 }
 function draw() {
 	background(150)
@@ -72,12 +77,12 @@ function draw() {
 	mX = mouseX - width / 2
 	mY = mouseY - height / 2
 	// text(mX + "," + mY, -100, height / 2 - 10)
-	// push()
-	// textSize(30)
-	// fill(0)
-	// textAlign(CENTER)
-	// text(floor(fps), -100, -height / 2 + 40)
-	// // text(mX + "," + mY, -200,-height/2+40 )
-	// pop()
+	push()
+	textSize(30)
+	fill(0)
+	textAlign(CENTER)
+	text(floor(fps), -100, -height / 2 + 40)
+	// text(mX + "," + mY, -200,-height/2+40 )
+	pop()
 }
 
