@@ -5,27 +5,28 @@ class Dot {
         this.player
         this.r = this.player ? circleSize * 2 : circleSize
         this.highlight = false
-        this.hlColor = color(0, 0, 255)
+        this.hlColor = color(0, 255, 0)
         this.hover = false
         this.neighbours = []
+        this.moving = false
     }
 
     draw(l, d) {
         // this.player = game.playerBlue
         var size = (outBoxSize - distance * l) / 2
         push()
-        if (this.player) {
+        if (this.player && !this.moving) {
             this.r = circleSize * 2
             stroke(this.hlColor)
             if (this.hover) this.r *= 1.3
             this.highlight ? strokeWeight(this.r / 10) : noStroke()
             // noFill()
-            fill(this.player.color)
+            // fill(this.player.color)
             circle(this.x * size, this.y * size, this.r * 1.1)
-            // noStroke()
-            // tint(this.player.color)
-            // imageMode(CENTER);
-            // image(dotImg, this.x * size, this.y * size, this.r, this.r);
+            noStroke()
+            tint(this.player.color)
+            imageMode(CENTER);
+            image(dotImg, this.x * size, this.y * size, this.r, this.r);
             noStroke()
 
             fill(0, 50, 255)
@@ -49,6 +50,22 @@ class Dot {
             text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
         }
 
+        pop()
+    }
+    move(x,y) {
+        push()
+        this.r = circleSize * 2
+        stroke(this.hlColor)
+        if (this.hover) this.r *= 1.3
+        this.highlight ? strokeWeight(this.r / 10) : noStroke()
+        // noFill()
+        // fill(this.player.color)
+        // circle(x, y, this.r * 1.1)
+        // noStroke()
+        tint(this.player.color)
+        imageMode(CENTER);
+        image(dotImg, x, y, this.r, this.r);
+        noStroke()
         pop()
     }
     click(prevDot) {

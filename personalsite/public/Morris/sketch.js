@@ -6,9 +6,12 @@ var scaledWidth
 var game
 var mX, mY
 var dotImg
+var fps
+var locked
+var movableDot
 const defaultWidth = 800
 function preload() {
-	dotImg = loadImage("./resources/img/dotimg.png")
+	dotImg = loadImage("./resources/img/dotSquareInvert.png")
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
@@ -17,6 +20,7 @@ function setup() {
 }
 function start() {
 	game = new Game()
+	locked = false
 }
 function windowResized() {
 	scaledWidth = min(windowHeight, windowWidth, 800)
@@ -29,14 +33,32 @@ function touchStarted() {
 	mousePressed()
 }
 function mousePressed() {
-	game.click()
+	movableDot = game.click()
+	
+}
+function mouseDragged() {
+	if (movableDot && movableDot.player && movableDot.player === game.turn) {
+		locked = true
+	}
+}
+function mouseReleased() {
+	locked = false
+	if (movableDot) {
+		movableDot.moving = false
+		game.prevDot = movableDot
+		game.click()
+	}
 }
 function draw() {
 	background(150)
 	translate(width / 2, height / 2)
 	game.drawBoard()
 	game.hover()
-	// if(frameCount % 100 == 0) console.log(frameRate())
+	if (frameCount % 10 == 0) fps = frameRate()
+	if (locked && movableDot) {
+		movableDot.moving = true
+		movableDot.move(mX, mY)
+	}
 	// textSize(30)
 	// fill(0)
 	// textAlign(CENTER)
@@ -47,7 +69,8 @@ function draw() {
 	// textSize(30)
 	// fill(0)
 	// textAlign(CENTER)
-	// text(floor(frameRate()), -100, height / 2 - 10)
+	// text(floor(fps), -100, -height / 2 + 40)
+	// // text(mX + "," + mY, -200,-height/2+40 )
 	// pop()
 }
 

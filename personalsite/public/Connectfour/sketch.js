@@ -12,7 +12,7 @@ let restartButton
 // let windowScale
 function preload() {
   gridImg = loadImage("./resources/spiralGrid.png")
-  chipImg = loadImage("./resources/chip.png")
+  chipImg = loadImage("./resources/smallChip.png")
   bopSound = loadSound("./resources/bop.mp3")
 }
 function windowResized() {
@@ -75,6 +75,13 @@ function keyPressed(e) {
 function draw() {
   if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine, 32)
+  Engine.update(engine, 40)
   game.show()
+  //Displaying fps
+  // push()
+	// textSize(30)
+	// fill(0)
+	// textAlign(CENTER)
+	// text(floor(frameRate()), 100, 100)
+	// pop()
 }

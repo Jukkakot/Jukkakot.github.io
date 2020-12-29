@@ -34,12 +34,12 @@ class Game {
         } else {
             text("Place your chips", 0, +circleSize * 3)
         }
-        fill(this.turn.color)
-        noStroke()
-        circle(0, 0, circleSize * 3)
-        // tint(this.turn.color)
-        // imageMode(CENTER);
-        // image(dotImg, 0, 0, circleSize * 3, circleSize * 3);
+        // fill(this.turn.color)
+        // noStroke()
+        // circle(0, 0, circleSize * 3)
+        tint(this.turn.color)
+        imageMode(CENTER);
+        image(dotImg, 0, 0, circleSize * 3, circleSize * 3);
 
         pop()
     }
@@ -101,21 +101,21 @@ class Game {
                 }
             }
             for (var l in this.dots) {
+                var size = (outBoxSize - distance * l) / 2
                 for (var dot of this.dots[l]) {
-                    var size = (outBoxSize - distance * l) / 2
                     var r = dot.player ? dot.r * 0.6 : dot.r * 2
                     if ((dot.player === this.turn || this.prevDot && this.prevDot.player === this.turn && !dot.player) &&
                         pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
                         this.prevDot = dot.click(this.prevDot) ? undefined : dot
-                        return
+                        return dot
                     }
                 }
             }
             this.prevDot = undefined
         } else {
             for (var l in this.dots) {
+                var size = (outBoxSize - distance * l) / 2
                 for (var dot of this.dots[l]) {
-                    var size = (outBoxSize - distance * l) / 2
                     var r = dot.player ? dot.r * 0.6 : dot.r * 2
                     if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
                         this.turn.chipCount++
@@ -125,7 +125,7 @@ class Game {
                         this.checkForMill(this.dots, this.turn, true)
                         this.turn = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
                         this.checkForMill(this.dots, this.turn, true)
-                        this.gameStarted = this.playerRed.chipCount + this.playerBlue.chipCount >= 18
+                        this.gameStarted = this.playerRed.chipCount + this.playerBlue.chipCount >= 8
                     }
                 }
             }
@@ -133,27 +133,27 @@ class Game {
 
     }
     hover() {
-        if(this.prevHover){
+        if (this.prevHover) {
             var r = this.prevHover.player ? this.prevHover.r * 0.6 : this.prevHover.r * 2
-        if(pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, r)) return
+            if (pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, r)) return
         }
         for (var l in this.dots) {
             var size = (outBoxSize - distance * l) / 2
             for (var dot of this.dots[l]) {
                 var r = dot.player ? dot.r * 0.6 : dot.r * 2
                 if (pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
-                    if(this.prevHover && this.prevHover !== dot ){
+                    if (this.prevHover && this.prevHover !== dot) {
                         this.prevHover.hover = false
                         this.prevHover = undefined
                     }
                     dot.hover = true
                     this.prevHover = dot
                     return
-                } 
+                }
             }
 
         }
-        if(this.prevHover && this.prevHover !== dot ){
+        if (this.prevHover && this.prevHover !== dot) {
             this.prevHover.hover = false
             this.prevHover = undefined
         }
@@ -200,6 +200,18 @@ class Game {
             line(l[1], l[2], l[3], l[4])
         }
         pop()
+    }
+    getDot(x, y) {
+        for (var l in this.dots) {
+            var size = (outBoxSize - distance * l) / 2
+            for (var dot of this.dots[l]) {
+                var r = dot.player ? dot.r * 0.6 : dot.r * 2
+                if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
+                    this.prevDot = dot.click(this.prevDot) ? undefined : dot
+                    return dot
+                }
+            }
+        }
     }
 }
 function pointInCircle(x, y, cx, cy, radius) {
