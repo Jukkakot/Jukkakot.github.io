@@ -9,6 +9,7 @@ class Game {
         // this.turn = this.playerBlue
         this.gameStarted = false
         this.mills = []
+        this.millDots = []
     }
     drawBoard() {
         push()
@@ -122,6 +123,7 @@ class Game {
                         dot.player = this.turn
                         dot.r = circleSize * 2
                         this.mills = []
+                        this.millDots = []
                         this.checkForMill(this.dots, this.turn, true)
                         this.turn = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
                         this.checkForMill(this.dots, this.turn, true)
@@ -167,29 +169,58 @@ class Game {
                 var isMill = true
                 for (var j = 0; j < 3; j++) {
                     var index = (i + j) % 8
-                    if (!layer[index].player || layer[index].player !== player) {
+                    if (!layer[index].player || layer[index].player !== player || this.millDots.includes(layer[index])) {
                         isMill = false
                         break
                     }
                 }
-                if (isMill && drawMills) {
-                    var line = [player.color, layer[i].x * size, layer[i].y * size, layer[(i + 2) % 8].x * size, layer[(i + 2) % 8].y * size]
-                    this.mills.push(line)
-                }
-
-            }
-            for (var i = 1; i < 8; i += 2) {
-                if (this.dots[0][i].player === player &&
-                    this.dots[1][i].player === player &&
-                    this.dots[2][i].player === player) {
-                    var size1 = (outBoxSize - distance * 0) / 2
-                    var size2 = (outBoxSize - distance * 2) / 2
-                    if (drawMills) {
-                        var line = [player.color, this.dots[0][i].x * size1, this.dots[0][i].y * size1, this.dots[2][i].x * size2, this.dots[2][i].y * size2]
+                
+                if (isMill) {
+                    this.millDots.push(layer[i], layer[(i + 1) % 8], layer[(i + 2) % 8])
+                    if(drawMills){
+                        var line = [player.color, layer[i].x * size, layer[i].y * size, layer[(i + 2) % 8].x * size, layer[(i + 2) % 8].y * size]
                         this.mills.push(line)
                     }
                 }
+                //Checking mills between layers (4 of them) so odd indexes
+                if (i % 2 === 1) {
+                    isMill = true
+                    for (var j = 0; j < 3; j++) {
+                        if (!this.dots[j][i].player || this.dots[j][i].player !== player || this.millDots.includes(this.dots[j][i])) {
+                            isMill = false
+                            break
+                        }
+                    }
+                   
+                    if (isMill) {
+                        this.millDots.push(this.dots[0][i], this.dots[1][i], this.dots[2][i])
+                        if (drawMills) {
+                            var size1 = (outBoxSize - distance * 0) / 2
+                            var size2 = (outBoxSize - distance * 2) / 2
+                            var line = [player.color, this.dots[0][i].x * size1, this.dots[0][i].y * size1, this.dots[2][i].x * size2, this.dots[2][i].y * size2]
+                            this.mills.push(line)
+                        }
+                    }
+                }
             }
+            // for (var i = 1; i < 8; i += 2) {
+            //     var isMill = true
+            //     for (var j = 0; j < 3; j++) {
+            //         if (!this.dots[j][i].player || this.dots[j][i].player !== player || this.millDots.includes(this.dots[j][i])) {
+            //             isMill = false
+            //             break
+            //         }
+            //     }
+            //     this.millDots.push(this.dots[0][i], this.dots[1][i], this.dots[2][i])
+            //     if (isMill && drawMills) {
+            //         if (drawMills) {
+            //             var size1 = (outBoxSize - distance * 0) / 2
+            //             var size2 = (outBoxSize - distance * 2) / 2
+            //             var line = [player.color, this.dots[0][i].x * size1, this.dots[0][i].y * size1, this.dots[2][i].x * size2, this.dots[2][i].y * size2]
+            //             this.mills.push(line)
+            //         }
+            //     }
+            // }
         }
     }
     drawMills() {

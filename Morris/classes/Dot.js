@@ -75,6 +75,7 @@ class Dot {
             prevDot.player = undefined
             this.r = this.player ? circleSize * 2 : circleSize
             game.mills = []
+            game.millDots = []
             game.checkForMill(game.dots, game.turn, true)
             game.turn = game.turn === game.playerRed ? game.playerBlue : game.playerRed
             game.checkForMill(game.dots, game.turn, true)
