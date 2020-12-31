@@ -11,8 +11,8 @@ class Game {
         this.grid = [...Array(7)].map(e => []);
         this.winLines = []
         this.isOver = false
-        this.playerRed = new Player(color(220, 0, 0), "red",redChip)
-        this.playerYellow = new Player(color(220, 220, 0), "yellow",yellowChip)
+        this.playerRed = new Player(color(220, 0, 0), "red", redChip)
+        this.playerYellow = new Player(color(220, 220, 0), "yellow", yellowChip)
         // this.turn = random() < 0.5 ? this.playerRed : this.playerYellow
         this.turn = this.playerRed
         this.canClick = true
@@ -28,10 +28,10 @@ class Game {
                 if (bodyA.label == 'Circle Body' || bodyB.label == 'Circle Body') {
                     bopSound.play()
                     game.canClick = true
-                    // setTimeout(() => {
-                    //     bodyA.isStatic = true
-                    //     bodyB.isStatic = true
-                    // }, 200);
+                    setTimeout(() => {
+                        bodyA.isStatic = true
+                        bodyB.isStatic = true
+                    }, 200);
                     game.isOver = game.checkWin(game.turn, game.grid, true) == undefined ? false : true
                     if (!game.isOver) {
                         game.turn = game.turn === game.playerRed ? game.playerYellow : game.playerRed
@@ -71,7 +71,9 @@ class Game {
             this.grid[column].push(this.turn.name)
             this.canClick = false
             //Chip collsion will cause win check and player turning
-            // return true
+            return true
+        } else {
+            return false
         }
     }
     checkWin(player, board, pushLines) {
@@ -240,18 +242,26 @@ class Game {
     findBestMove() {
         // var copyGrid = JSON.parse(JSON.stringify(this.grid));
         let move = floor(random(7))
-        let bestScore =-Infinity
+        let bestScore = -Infinity
         for (var depth = 1; depth < 6; depth++) {
             let result = minimax(this.grid, depth, -Infinity, Infinity, true)
             move = result[0]
             bestScore = result[1]
             if (bestScore >= 100000000) break
         }
-
-        console.log("depth",depth,"best score", bestScore, "move", move, this.grid)
-        this.playRound(move)
+        console.log("depth", depth, "best score", bestScore, "move", move, this.grid)
+        if (bestScore <= -100000000) {
+            //Finding random column to play if ai knows its going to lose
+            //otherwise it kind of gives up and just plays the first non full column (Which is boring)
+            while(true) {
+                if(this.playRound(floor(random(this.grid.length)))) {
+                    break
+                }
+            }
+        } else {
+            this.playRound(move)
+        }
     }
-
 }
 function evaluateWindow(window, player) {
     if (window.length !== 4) {
@@ -275,7 +285,7 @@ function scoreWindow(board, player) {
     var value = 0
     //Center pieces
     var centerPieceCount = board[3].filter(chip => chip == player.name).length
-    value += centerPieceCount * 3
+    value += centerPieceCount * 7
 
     //Vertical
     for (var y = 0; y < 3; y++) {
