@@ -63,19 +63,45 @@ class Dot {
         pop()
     }
     click(prevDot) {
-        if (prevDot && prevDot !== this && this.neighbours.includes(prevDot) && !this.player) {
-            this.player = prevDot.player
-            prevDot.player = undefined
-            return true
+        if (prevDot && prevDot !== this && !this.player) {
+
+            if (this.neighbours.includes(prevDot)) {
+                //Succesful move to neighbour dot
+                this.player = prevDot.player
+                prevDot.player = undefined
+                return true
+            } else if (prevDot.player.chipCount === 3) {
+                //Succesful move to any empty dot (Flying)
+                this.player = prevDot.player
+                prevDot.player = undefined
+                return true
+            }
+
+
         } else if (this.player) {
             this.highlight = !this.highlight
             this.hlColor = color(0, 0, 255)
-            for (var n of this.neighbours) {
-                if (!n.player) {
-                    n.highlight = !n.highlight
-                    n.hlColor = color(0, 255, 0)
+
+            if (this.player.chipCount > 3) {
+                //Highlighting neighbours
+                for (var n of this.neighbours) {
+                    if (!n.player) {
+                        n.highlight = !n.highlight
+                        n.hlColor = color(0, 255, 0)
+                    }
+                }
+            } else {
+                //Highlighting all empty dots
+                for (var layer of game.dots) {
+                    for (var dot of layer) {
+                        if (!dot.player) {
+                            dot.highlight = true
+                            dot.hlColor = color(0, 255, 0)
+                        }
+                    }
                 }
             }
+
         }
         return false
 

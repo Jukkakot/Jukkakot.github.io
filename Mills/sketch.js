@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 18
+const MAXCHIPCOUNT = 8
 var outBoxSize
 var circleSize
 var distance
@@ -53,9 +53,13 @@ function mouseDragged() {
 	if (!movableDot && game.gameStarted) {
 		movableDot = game.click()
 	}
-
-	if (movableDot && movableDot.player && movableDot.player === game.turn) {
-		locked = true
+	
+	if (movableDot && movableDot.player && movableDot.player === game.turn ) {
+		var r = movableDot.player ? movableDot.r * 0.6 : movableDot.r * 2
+		var size = movableDot.size()
+		if(pointInCircle(mX, mY, movableDot.x * size, movableDot.y * size, r)) {
+			locked = true
+		}
 	}
 }
 function touchEnded() {

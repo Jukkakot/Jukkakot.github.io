@@ -101,21 +101,25 @@ class Game {
                 for (var dot of this.dots[l]) {
                     var r = dot.player ? dot.r * 0.6 : dot.r * 2
                     //Checking that dot has player and its opponents chip
-                    // var oppPlayer = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
                     if(pointInCircle(mX, mY, dot.x * size, dot.y * size, r) && this.turn.canEat(dot)){
+                        //Succesful eating of a chip
                         dot.player.chipCount--
                         dot.player = undefined
                         this.eatMode = false
+
                         this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
+
+                        //Checking the mills again incase had to eat from a mill
+                        this.checkForMill(this.dots, this.turn)
                     }
 
                 }
             }
         } else if (this.gameStarted) {
-            if (this.prevDot) {
-                this.prevDot.highlight = false
-                for (var n of this.prevDot.neighbours) {
-                    n.highlight = false
+            //un highlighting everything at the start
+            for(var layer of game.dots) {
+                for(var dot of layer) {
+                    dot.highlight = false
                 }
             }
             for (var l in this.dots) {
@@ -129,7 +133,6 @@ class Game {
                         if (dot.click(this.prevDot)) {
                             //Moving was succesful
                             this.prevDot = undefined
-
                             //Checking if new mill was found
                             if(this.checkForMill(this.dots, this.turn)){
                                 this.eatMode = true
@@ -137,6 +140,7 @@ class Game {
                                 this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
                             }
                         } else {
+                            //This dot and its neighbours was highlighted in dots.click() method
                             this.prevDot = dot
                         }
                         return dot
@@ -153,6 +157,7 @@ class Game {
                     if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
 
                         dot.player = this.turn
+                        this.turn.chipCount++
                         this.turn.chipsToAdd--
                         this.gameStarted = this.playerRed.chipsToAdd + this.playerBlue.chipsToAdd === 0
 
@@ -227,18 +232,18 @@ class Game {
         this.playerBlue.drawMills()
         this.playerRed.drawMills()
     }
-    getDot(x, y) {
-        for (var l in this.dots) {
-            var size = (outBoxSize - distance * l) / 2
-            for (var dot of this.dots[l]) {
-                var r = dot.player ? dot.r * 0.6 : dot.r * 2
-                if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
-                    this.prevDot = dot.click(this.prevDot) ? undefined : dot
-                    return dot
-                }
-            }
-        }
-    }
+    // getDot(x, y) {
+    //     for (var l in this.dots) {
+    //         var size = (outBoxSize - distance * l) / 2
+    //         for (var dot of this.dots[l]) {
+    //             var r = dot.player ? dot.r * 0.6 : dot.r * 2
+    //             if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
+    //                 this.prevDot = dot.click(this.prevDot) ? undefined : dot
+    //                 return dot
+    //             }
+    //         }
+    //     }
+    // }
     getLayer(dot) {
         for (var l in game.dots) {
             if (game.dots[l].includes(dot)) {
