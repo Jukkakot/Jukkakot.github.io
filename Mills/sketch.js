@@ -32,11 +32,10 @@ function windowResized() {
 	distance = width / 4
 }
 function touchStarted() {
-	mousePressed()
+	mouseClicked()
 }
-function mousePressed() {
+function mouseClicked() {
 	movableDot = game.click()
-
 }
 function touchMoved() {
 	mouseDragged()
