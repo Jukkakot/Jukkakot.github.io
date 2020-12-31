@@ -28,7 +28,7 @@ function windowResized() {
 	scaledWidth = min(windowHeight, windowWidth, 800)
 	cnv.resize(scaledWidth, scaledWidth)
 	outBoxSize = width - 100
-	circleSize = width / 35
+	circleSize = floor(width / 35)
 	distance = width / 4
 }
 function touchStarted() {

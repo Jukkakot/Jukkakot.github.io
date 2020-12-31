@@ -1,6 +1,6 @@
 class Dot {
     constructor(x, y) {
-        this.x = x
+        this.x = x 
         this.y = y
         this.player
         this.r = this.player ? circleSize * 2 : circleSize
@@ -10,7 +10,9 @@ class Dot {
         this.neighbours = []
         this.moving = false
     }
-
+    size() {
+        return (outBoxSize - distance * game.getLayer(this)) / 2
+    }
     draw(l, d) {
         // this.player = game.playerBlue
         var size = (outBoxSize - distance * l) / 2
@@ -61,24 +63,18 @@ class Dot {
         // this.highlight ? strokeWeight(this.r / 10) : noStroke()
         // noFill()
         // fill(this.player.color)
-        circle(x, y, this.r * 1.1)
+        // circle(x, y, this.r * 1.1)
         // noStroke()
         // tint(this.player.color)
         imageMode(CENTER);
         image(this.player.img, x, y, this.r, this.r);
-        noStroke()
+        // noStroke()
         pop()
     }
     click(prevDot) {
         if (prevDot && prevDot !== this && this.neighbours.includes(prevDot) && !this.player) {
             this.player = prevDot.player
             prevDot.player = undefined
-            this.r = this.player ? circleSize * 2 : circleSize
-            game.mills = []
-            game.millDots = []
-            game.checkForMill(game.dots, game.turn, true)
-            game.turn = game.turn === game.playerRed ? game.playerBlue : game.playerRed
-            game.checkForMill(game.dots, game.turn, true)
             return true
         } else if (this.player) {
             this.highlight = !this.highlight
