@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/static/css/main.509b7750.chunk.css",
-    "main.js": "/static/js/main.611ee19b.chunk.js",
-    "main.js.map": "/static/js/main.611ee19b.chunk.js.map",
+    "main.js": "/static/js/main.cad04ee9.chunk.js",
+    "main.js.map": "/static/js/main.cad04ee9.chunk.js.map",
     "runtime-main.js": "/static/js/runtime-main.8c44269c.js",
     "runtime-main.js.map": "/static/js/runtime-main.8c44269c.js.map",
     "static/js/2.26c8d0cd.chunk.js": "/static/js/2.26c8d0cd.chunk.js",
@@ -11,14 +11,14 @@
     "static/css/main.509b7750.chunk.css.map": "/static/css/main.509b7750.chunk.css.map",
     "static/js/2.26c8d0cd.chunk.js.LICENSE.txt": "/static/js/2.26c8d0cd.chunk.js.LICENSE.txt",
     "static/media/Battleship.221c6bb8.png": "/static/media/Battleship.221c6bb8.png",
+    "static/media/mills.e0b77e97.png": "/static/media/mills.e0b77e97.png",
     "static/media/minesweeper.4499b47d.png": "/static/media/minesweeper.4499b47d.png",
-    "static/media/morris.3ea16c76.png": "/static/media/morris.3ea16c76.png",
     "static/media/newConnect4.35945983.png": "/static/media/newConnect4.35945983.png"
   },
   "entrypoints": [
     "static/js/runtime-main.8c44269c.js",
     "static/js/2.26c8d0cd.chunk.js",
     "static/css/main.509b7750.chunk.css",
-    "static/js/main.611ee19b.chunk.js"
+    "static/js/main.cad04ee9.chunk.js"
   ]
 }

@@ -1,6 +1,6 @@
 class Dot {
     constructor(x, y) {
-        this.x = x 
+        this.x = x
         this.y = y
         this.player
         this.r = this.player ? circleSize * 2 : circleSize
@@ -13,62 +13,53 @@ class Dot {
     size() {
         return (outBoxSize - distance * game.getLayer(this)) / 2
     }
-    draw(l, d) {
+    draw(eatMode) {
         // this.player = game.playerBlue
-        var size = (outBoxSize - distance * l) / 2
+        var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()
         if (this.player && !this.moving) {
             this.r = circleSize * 2
-            stroke(this.hlColor)
+            strokeWeight(this.r / 10)
             if (this.hover) this.r *= 1.3
-            this.highlight ? strokeWeight(this.r / 10) : noStroke()
-            // noFill()
-            // fill(this.player.color)
+            this.highlight ? stroke(this.hlColor) : noStroke()
+
+            if (eatMode && this.player.canEat(this)) {
+                stroke(color(0, 255, 0))
+            }
+            noFill()
             circle(this.x * size, this.y * size, this.r * 1.1)
-            
-            // tint(this.player.color)
+
             imageMode(CENTER);
             image(this.player.img, this.x * size, this.y * size, this.r, this.r);
-            // noTint()
-            noStroke()
 
-            fill(0, 50, 255)
-            textAlign(CENTER)
-            textSize(circleSize)
-            text(l + "," + d, this.x * size, this.y * size - circleSize * 1.2)
+            //Text labels to help debugging
+            // fill(0, 50, 255)
+            // textAlign(CENTER)
+            // textSize(circleSize)
+            // text(l + "," + d, this.x * size, this.y * size - circleSize * 1.2)
             // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.5)
         } else {
             this.r = circleSize
-            // stroke(this.hlColor)
             noStroke()
             if (this.hover) this.r *= 1.3
             this.highlight ? fill(this.hlColor) : fill(0)
-
             circle(this.x * size, this.y * size, this.r)
-            noStroke()
-            fill(0, 50, 255)
-            textAlign(CENTER)
-            textSize(circleSize)
-            text(l + "," + d, this.x * size, this.y * size - circleSize * 0.7)
-            // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
         }
-
+        //Text labels to help debugging
+        // var l = game.getLayer(this)
+        // var d = game.dots[l].indexOf(this)
+        // fill(0, 50, 255)
+        // textAlign(CENTER)
+        // textSize(circleSize)
+        // text(l + "," + d, this.x * size, this.y * size - circleSize * 0.7)
+        // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
         pop()
     }
-    move(x,y) {
+    move(x, y) {
         push()
         this.r = circleSize * 2
-        // stroke(this.hlColor)
-        // if (this.hover) this.r *= 1.3
-        // this.highlight ? strokeWeight(this.r / 10) : noStroke()
-        // noFill()
-        // fill(this.player.color)
-        // circle(x, y, this.r * 1.1)
-        // noStroke()
-        // tint(this.player.color)
         imageMode(CENTER);
         image(this.player.img, x, y, this.r, this.r);
-        // noStroke()
         pop()
     }
     click(prevDot) {
