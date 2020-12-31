@@ -8,7 +8,6 @@ class Game {
         this.turn = random(1) < 0.5 ? this.playerRed : this.playerBlue
         // this.turn = this.playerBlue
         this.gameStarted = false
-        this.mills = []
     }
     drawBoard() {
         push()
@@ -104,9 +103,21 @@ class Game {
                 var size = (outBoxSize - distance * l) / 2
                 for (var dot of this.dots[l]) {
                     var r = dot.player ? dot.r * 0.6 : dot.r * 2
-                    if ((dot.player === this.turn || this.prevDot && this.prevDot.player === this.turn && !dot.player) &&
+                    if ((dot.player === this.turn ||
+                        this.prevDot &&
+                        this.prevDot.player === this.turn &&
+                        !dot.player) &&
                         pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
-                        this.prevDot = dot.click(this.prevDot) ? undefined : dot
+
+                        if(dot.click(this.prevDot)){
+                            this.prevDot = undefined
+                            this.checkForMill(this.dots, this.turn)
+                            this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
+                        } else {
+                            this.prevDot = dot
+                        }
+                       
+                       
                         return dot
                     }
                 }
@@ -120,11 +131,13 @@ class Game {
                     if (!dot.player && pointInCircle(mX, mY, dot.x * size, dot.y * size, r)) {
                         this.turn.chipCount++
                         dot.player = this.turn
-                        dot.r = circleSize * 2
-                        this.mills = []
-                        this.checkForMill(this.dots, this.turn, true)
+                        // dot.r = circleSize * 2
+                        // this.turn.mills = []
+                        // this.turn.millDots = []
+                        this.checkForMill(this.dots, this.turn)
                         this.turn = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
-                        this.checkForMill(this.dots, this.turn, true)
+
+                        // this.checkForMill(this.dots, this.turn, true)
                         this.gameStarted = this.playerRed.chipCount + this.playerBlue.chipCount >= MAXCHIPCOUNT
                     }
                 }
@@ -159,47 +172,45 @@ class Game {
         }
     }
 
-    checkForMill(board, player, drawMills) {
-        for (var l in board) {
-            var size = (outBoxSize - distance * l) / 2
-            for (var i = 0; i < 7; i += 2) {
-                var layer = board[l]
-                var isMill = true
-                for (var j = 0; j < 3; j++) {
-                    var index = (i + j) % 8
-                    if (!layer[index].player || layer[index].player !== player) {
-                        isMill = false
-                        break
+    checkForMill(board, player) {
+        var tempMills = []
+        player.mills = []
+        for (var layer of board) {
+            for (var i = 0; i < 8; i++) {
+
+                if (i % 2 === 0) {
+                    //i = 0,2,4,6
+                    //Checking mills on layers
+                    var mill = isMill(player, layer[i], layer[(i + 1) % 8], layer[(i + 2) % 8])
+                    if (mill && player.isValidMill(mill)) {
+                        //&& player.isValidMill(mill)
+                        player.mills.push(mill)
                     }
-                }
-                if (isMill && drawMills) {
-                    var line = [player.color, layer[i].x * size, layer[i].y * size, layer[(i + 2) % 8].x * size, layer[(i + 2) % 8].y * size]
-                    this.mills.push(line)
+                } else {
+                    //i = 1,3,5,7
+                    //Checking mills between layers (4 of them) so odd indexes
+                    var mill = isMill(player, board[0][i], board[1][i], board[2][i])
+                    if (mill && player.isValidMill(mill)) {
+                        //&& player.isValidMill(mill)
+                        player.mills.push(mill)
+                    }
                 }
 
             }
-            for (var i = 1; i < 8; i += 2) {
-                if (this.dots[0][i].player === player &&
-                    this.dots[1][i].player === player &&
-                    this.dots[2][i].player === player) {
-                    var size1 = (outBoxSize - distance * 0) / 2
-                    var size2 = (outBoxSize - distance * 2) / 2
-                    if (drawMills) {
-                        var line = [player.color, this.dots[0][i].x * size1, this.dots[0][i].y * size1, this.dots[2][i].x * size2, this.dots[2][i].y * size2]
-                        this.mills.push(line)
-                    }
-                }
-            }
         }
+        // player.mills = tempMills
+        //Replacing mills for player only if they are different
+        // for(var tMill of tempMills) {
+        //     if(!player.isDupeMill(tMill)){
+        //         player.mills = tempMills
+        //         break
+        //     }
+        // }
+        
     }
     drawMills() {
-        push()
-        for (var l of this.mills) {
-            stroke(l[0])
-            strokeWeight(circleSize / 5)
-            line(l[1], l[2], l[3], l[4])
-        }
-        pop()
+        this.playerBlue.drawMills()
+        this.playerRed.drawMills()
     }
     getDot(x, y) {
         for (var l in this.dots) {
@@ -213,11 +224,24 @@ class Game {
             }
         }
     }
+    getLayer(dot) {
+        for (var l in game.dots) {
+            if (game.dots[l].includes(dot)) {
+                return Number(l)
+            }
+        }
+        console.log("Error?")
+        return -1
+    }
 }
 function pointInCircle(x, y, cx, cy, radius) {
     var distancesquared = (x - cx) * (x - cx) + (y - cy) * (y - cy);
     return distancesquared <= radius * radius;
 }
 function isMill(player, d1, d2, d3) {
-    return d1.player === d2.player === d3.player === player
+    if (d1.player === player && d2.player === player && d3.player === player) {
+        return new Mill(d1, d2, d3)
+    } else {
+        return undefined
+    }
 }
