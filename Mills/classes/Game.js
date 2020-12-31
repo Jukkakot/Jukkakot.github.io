@@ -101,7 +101,7 @@ class Game {
                 for (var dot of this.dots[l]) {
                     var r = dot.player ? dot.r * 0.6 : dot.r * 2
                     //Checking that dot has player and its opponents chip
-                    var oppPlayer = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
+                    // var oppPlayer = this.turn === this.playerBlue ? this.playerRed : this.playerBlue
                     if(pointInCircle(mX, mY, dot.x * size, dot.y * size, r) && this.turn.canEat(dot)){
                         dot.player.chipCount--
                         dot.player = undefined

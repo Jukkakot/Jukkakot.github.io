@@ -40,6 +40,9 @@ function windowResized() {
 function touchStarted() {
 	mouseClicked()
 }
+function mousePressed() {
+	return false
+}
 function mouseClicked() {
 	movableDot = game.click()
 }
