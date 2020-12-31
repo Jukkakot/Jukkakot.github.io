@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 18
+const MAXCHIPCOUNT = 8
 var outBoxSize
 var circleSize
 var distance
@@ -17,6 +17,12 @@ function preload() {
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
+	function noScroll() {
+		window.scrollTo(0, 0);
+	  }
+	  
+	  // add listener to disable scroll
+	  window.addEventListener('scroll', noScroll);
 	start()
 	windowResized()
 }
@@ -32,11 +38,13 @@ function windowResized() {
 	distance = width / 4
 }
 function touchStarted() {
-	mousePressed()
+	mouseClicked()
 }
 function mousePressed() {
+	return false
+}
+function mouseClicked() {
 	movableDot = game.click()
-
 }
 function touchMoved() {
 	mouseDragged()
@@ -45,9 +53,13 @@ function mouseDragged() {
 	if (!movableDot && game.gameStarted) {
 		movableDot = game.click()
 	}
-
-	if (movableDot && movableDot.player && movableDot.player === game.turn) {
-		locked = true
+	
+	if (movableDot && movableDot.player && movableDot.player === game.turn ) {
+		var r = movableDot.player ? movableDot.r * 0.6 : movableDot.r * 2
+		var size = movableDot.size()
+		if(pointInCircle(mX, mY, movableDot.x * size, movableDot.y * size, r)) {
+			locked = true
+		}
 	}
 }
 function touchEnded() {

@@ -2,7 +2,7 @@ import React from "react"
 import mineImg from "./resources/img/minesweeper.png"
 import battleImg from "./resources/img/Battleship.png"
 import connectImg from "./resources/img/newConnect4.png"
-import morrisImg from "./resources/img/morris.png"
+import millsImg from "./resources/img/mills.png"
 import "./resources/css/app.css"
 function App() {
   return (
@@ -25,8 +25,8 @@ function App() {
       </button>   
       <button 
         className="imgButton" 
-        onClick={()=>window.location="/Morris"}>
-        <img src={morrisImg}  alt="Morris" title="Morris"/>
+        onClick={()=>window.location="/Mills"}>
+        <img src={millsImg}  alt="Mills" title="Mills"/>
       </button>    
     </div>
   )
