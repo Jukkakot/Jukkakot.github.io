@@ -6,7 +6,6 @@ html, body {
     align-items: center;
     justify-content: center;
     overscroll-behavior: contain;
-    
   }
   canvas {
     display: block;

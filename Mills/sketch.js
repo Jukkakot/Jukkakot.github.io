@@ -17,12 +17,16 @@ function preload() {
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
-	function noScroll() {
-		return false
-	  }
-	  
-	  // add listener to disable scroll
-	  window.addEventListener('scroll', noScroll);
+	// function preventDefault(e){
+	// 	e.preventDefault();
+	// }
+	
+	
+	// document.body.addEventListener('touchmove', preventDefault, { passive: false });
+	
+	// function enableScroll(){
+	// 	document.body.removeEventListener('touchmove', preventDefault);
+	// }
 	start()
 	windowResized()
 }
@@ -46,7 +50,8 @@ function mousePressed() {
 function mouseClicked() {
 	movableDot = game.click()
 }
-function touchMoved() {
+function touchMoved(e) {
+	e.preventDefault();
 	mouseDragged()
 }
 function mouseDragged() {
