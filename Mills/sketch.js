@@ -18,7 +18,7 @@ function preload() {
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
 	function noScroll() {
-		window.scrollTo(0, 0);
+		return false
 	  }
 	  
 	  // add listener to disable scroll
