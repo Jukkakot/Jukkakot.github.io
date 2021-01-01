@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 8
+const MAXCHIPCOUNT = 18
 var outBoxSize
 var circleSize
 var distance
@@ -17,12 +17,6 @@ function preload() {
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
-	function noScroll() {
-		window.scrollTo(0, 0);
-	  }
-	  
-	  // add listener to disable scroll
-	  window.addEventListener('scroll', noScroll);
 	start()
 	windowResized()
 }
@@ -46,7 +40,9 @@ function mousePressed() {
 function mouseClicked() {
 	movableDot = game.click()
 }
-function touchMoved() {
+function touchMoved(e) {
+	//Disable scrolling and making chip moving difficult
+	e.preventDefault();
 	mouseDragged()
 }
 function mouseDragged() {
