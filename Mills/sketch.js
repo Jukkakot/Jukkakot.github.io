@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 8
+const MAXCHIPCOUNT = 18
 var outBoxSize
 var circleSize
 var distance

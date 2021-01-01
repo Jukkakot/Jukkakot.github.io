@@ -70,7 +70,7 @@ class Dot {
                 this.player = prevDot.player
                 prevDot.player = undefined
                 return true
-            } else if (prevDot.player.chipCount === 3) {
+            } else if (prevDot.player.chipCount <= 3) {
                 //Succesful move to any empty dot (Flying)
                 this.player = prevDot.player
                 prevDot.player = undefined
