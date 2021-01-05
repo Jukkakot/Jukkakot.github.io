@@ -104,6 +104,10 @@ class Game {
                     if(pointInCircle(mX, mY, dot.x * size, dot.y * size, r) && this.turn.canEat(dot)){
                         //Succesful eating of a chip
                         dot.player.chipCount--
+                        if(dot.player.chipCount < 3 && this.gameStarted) {
+                            var winColor = dot.player === this.playerRed ? "blue" : "red"
+                            console.log(winColor,"won!")
+                        }
                         dot.player = undefined
                         this.eatMode = false
 
