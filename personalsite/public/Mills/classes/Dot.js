@@ -13,6 +13,7 @@ class Dot {
     size() {
         return (outBoxSize - distance * game.getLayer(this)) / 2
     }
+
     draw(eatMode) {
         // this.player = game.playerBlue
         var size = (outBoxSize - distance * game.getLayer(this)) / 2
@@ -65,18 +66,12 @@ class Dot {
     click(prevDot) {
         if (prevDot && prevDot !== this && !this.player) {
 
-            if (this.neighbours.includes(prevDot)) {
+            if (this.neighbours.includes(prevDot) || prevDot.player.chipCount <= 3) {
                 //Succesful move to neighbour dot
                 this.player = prevDot.player
                 prevDot.player = undefined
                 return true
-            } else if (prevDot.player.chipCount <= 3) {
-                //Succesful move to any empty dot (Flying)
-                this.player = prevDot.player
-                prevDot.player = undefined
-                return true
             }
-
 
         } else if (this.player) {
             this.highlight = !this.highlight
@@ -104,6 +99,5 @@ class Dot {
 
         }
         return false
-
     }
 }

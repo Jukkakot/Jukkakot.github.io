@@ -5,11 +5,12 @@ var distance
 var cnv
 var scaledWidth
 var game
-var mX, mY, tX, tY
+var mX, mY
 var fps
 var locked
 var movableDot
 var redDot, blueDot
+var restartButton
 const defaultWidth = 800
 function preload() {
 	redDot = loadImage("./resources/img/redDot.png")
@@ -17,22 +18,45 @@ function preload() {
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultWidth);
+	restartButton = createButton("Restart\n(r)")
+	restartButton.id("restartButton")
+	restartButton.mousePressed(() => start())
 	start()
 	windowResized()
+}
+function keyPressed(e) {
+	if (e.key === "r") {
+	  start()
+	}
 }
 function start() {
 	game = new Game()
 	locked = false
+
+	restartButton.position(cnv.position().x, cnv.position().y + height )
+	restartButton.size(circleSize * 5, circleSize*2)
+	restartButton.style('font-size', circleSize*0.7  + "px")
+	restartButton.style('background-color', color(200,200))
 }
 function windowResized() {
 	scaledWidth = min(windowHeight, windowWidth, 800)
 	cnv.resize(scaledWidth, scaledWidth)
-	outBoxSize = width - 100
-	circleSize = floor(width / 35)
-	distance = width / 4
+	circleSize = floor(width / 30)
+	outBoxSize = width - circleSize *2
+	distance = width*0.28
+
+	restartButton.position(cnv.position().x, cnv.position().y + height )
+	restartButton.size(circleSize * 5, circleSize*2)
+	restartButton.style('font-size', circleSize*0.7  + "px")
+	restartButton.style('background-color', color(200,200))
+	
+	
 }
-function touchStarted() {
-	// console.log(touches[0].x,touches[0].y)
+function touchStarted(e) {
+	if(e.target.id !== "restartButton") {
+		//Disables double clicking issues when placing chips
+		e.preventDefault()
+	}
 	mouseClicked()
 }
 function mousePressed() {
@@ -51,7 +75,7 @@ function touchMoved(e) {
 	mouseDragged()
 }
 function mouseDragged() {
-	if (!game.gameStarted) return
+	if (!game.gameStarted) return 
 	if (!movableDot) {
 		movableDot = game.click()
 	}
@@ -71,7 +95,6 @@ function touchEnded() {
 }
 function mouseReleased() {
 	if (!game.gameStarted) return
-
 	if (movableDot && locked) {
 		movableDot.moving = false
 		game.prevDot = movableDot
@@ -81,6 +104,7 @@ function mouseReleased() {
 	locked = false
 }
 function draw() {
+	if (frameCount === 1) windowResized()
 	background(150)
 	translate(width / 2, height / 2)
 	mX = mouseX - width / 2
@@ -91,7 +115,7 @@ function draw() {
 	}
 
 	game.hover()
-	game.drawBoard()
+	game.draw()
 
 	if (frameCount % 10 == 0) fps = frameRate()
 	if (locked && movableDot) {
@@ -104,18 +128,15 @@ function draw() {
 
 	// text(mX + "," + mY, -100, height / 2 - 10)
 	push()
-
-
 	textSize(circleSize)
 	fill(0)
 	textAlign(CENTER)
-	text(floor(fps), width / 2 - circleSize, -height / 2 + circleSize)
+	text(floor(fps), width / 2 - circleSize*3, -height / 2 + circleSize*0.9)
 	// text(mX + "," + mY, -200,-height/2+40 )
 	//Show mouse / touch location no screen
-	stroke(255,0,255)
-	strokeWeight(circleSize)
-	point(mX,mY)
-
+	// stroke(255,0,255)
+	// strokeWeight(circleSize)
+	// point(mX,mY)
 	pop()
 }
 

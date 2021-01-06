@@ -10,6 +10,7 @@ let bopSound
 let cnv
 let restartButton
 let fps
+const isMobileDevice = /Mobi/i.test(window.navigator.userAgent)
 // let windowScale
 function preload() {
   gridImg = loadImage("./resources/spiralGrid.png")
@@ -47,11 +48,13 @@ function setup() {
   restartButton.style('background-color', color(200, 100))
   restartButton.mousePressed(() => start())
   
+  if(isMobileDevice) {
+    frameRate(30)
+  }
   start()
 
 }
 function start() {
-  frameRate(30)
   chipRadius = 55
   engine = Engine.create()
   world = engine.world
@@ -81,7 +84,12 @@ function keyPressed(e) {
 function draw() {
   if (frameCount === 1) windowResized()
   background(100);
-  Engine.update(engine,50)
+  if(isMobileDevice) {
+    Engine.update(engine,50)
+  } else {
+    Engine.update(engine,25)
+  }
+  
   game.show()
   //Displaying fps
   if (frameCount % 60 == 0) fps = frameRate()

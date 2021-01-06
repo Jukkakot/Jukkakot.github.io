@@ -1,11 +1,13 @@
 class Player {
-    constructor(color, img) {
+    constructor(color, img, name) {
+        this.name = name
         this.color = color
         this.chipCount = 0
         this.chipsToAdd = MAXCHIPCOUNT / 2
         this.img = img
         this.mills = []
         this.millDots = []
+        this.movableDots = []
     }
     drawMills() {
         this.mills.forEach(mill => mill.draw())
@@ -20,40 +22,40 @@ class Player {
     }
     canEat(dot) {
         var oppPlayer = game.turn === game.playerRed ? game.playerBlue : game.playerRed
-        if (dot.player && dot.player === oppPlayer) {
-            //Dot was opponent players 
-            if (oppPlayer.allDotsInMill()) {
-                //All opponents dots are in mill -> can eat any 
-                return true
-            } else if (oppPlayer.dotIsInMill(dot)) {
-                //Can't eat from opponents mills since already checked 
-                //that there are available dots
-                return false
-            } else {
-                return true
-            }
-        } else {
-            //Dot was not opponents dot
-            return false
-        }
+        //Dot has to be opponent player AND
+        //Either all dots in are mill or this dot is not in a mill
+        return (dot.player && dot.player === oppPlayer && (dot.player.allDotsInMill() || !dot.player.dotIsInMill(dot)))
+
     }
-        allDotsInMill() {
-            var uniqueDots = []
-            for (var mill of this.mills) {
-                for (var dot of mill.dots) {
-                    if (!uniqueDots.includes(dot)) {
-                        uniqueDots.push(dot)
-                    }
+    allDotsInMill() {
+        var uniqueDots = []
+        for (var mill of this.mills) {
+            for (var dot of mill.dots) {
+                if (!uniqueDots.includes(dot)) {
+                    uniqueDots.push(dot)
                 }
             }
-            return uniqueDots.length === this.chipCount
         }
-        dotIsInMill(dot) {
-            for (var mill of this.mills) {
-                if (mill.contain(dot)) {
-                    return true
+        return uniqueDots.length === this.chipCount
+    }
+    dotIsInMill(dot) {
+        for (var mill of this.mills) {
+            if (mill.contain(dot)) {
+                return true
+            }
+        }
+        return false
+    }
+    checkMovableDots(board) {
+        var movableDots = []
+        for (var layer of board) {
+            for (var dot of layer) {
+                //Check if player has 3 chips left or dots neighbours has empty dot
+                if(dot.player && dot.player === this && ( this.chipCount  === 3 || dot.neighbours.some(nDot => !nDot.player))) {
+                    movableDots.push(dot)
                 }
             }
-            return false
         }
+        return movableDots
     }
+}
