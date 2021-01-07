@@ -76,19 +76,25 @@ function setup() {
     showMines = !showMines
   })
   easyB.mousePressed(() => {
-    if (difficulty === 0) return
-    difficulty = 0
-    start()
+    if (difficulty !== 0) {
+      difficulty = 0
+      start()
+    }
+
   })
   mediumB.mousePressed(() => {
-    if (difficulty === 1) return
-    difficulty = 1
-    start()
+    if (difficulty !== 1) {
+      difficulty = 1
+      start()
+    }
+
   })
   hardB.mousePressed(() => {
-    if (difficulty === 2) return
-    difficulty = 2
-    start()
+    if (difficulty !== 2) {
+      difficulty = 2
+      start()
+    }
+
   })
   hintB.mousePressed(() => {
     if (!grid.gameOver && !grid.gameWon()) {
@@ -139,23 +145,23 @@ function keyPressed(e) {
     start()
   } else if (e.key === "m") {
     showMines = !showMines
-  }  else if (e.key === "h") {
-      grid.getHint(true)
-  } else if (e.key === "1" ) {
-    if (difficulty !== 1){
+  } else if (e.key === "h") {
+    grid.getHint(true)
+  } else if (e.key === "1") {
+    if (difficulty !== 0) {
       difficulty = 0
       start()
-    } 
-  } else if (e.key === "2" ) {
-    if (difficulty !== 1){
+    }
+  } else if (e.key === "2") {
+    if (difficulty !== 1) {
       difficulty = 1
       start()
-    } 
-  } else if (e.key === "3" ) {
-    if (difficulty !== 2){
+    }
+  } else if (e.key === "3") {
+    if (difficulty !== 2) {
       difficulty = 2
       start()
-    } 
+    }
   }
 }
 function draw() {
