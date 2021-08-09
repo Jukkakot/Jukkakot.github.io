@@ -19,20 +19,25 @@ class Dot {
         var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()
         if (this.player && !this.moving) {
+
             this.r = circleSize * 2
             strokeWeight(this.r / 10)
-            if (this.hover) this.r *= 1.3
-            this.highlight ? stroke(this.hlColor) : noStroke()
 
-            if (eatMode && this.player.canEat(this)) {
-                stroke(color(0, 255, 0))
-            }
-            noFill()
-            circle(this.x * size, this.y * size, this.r * 1.1)
+            if (this.hover)  this.r *= 1.3
+
+            this.highlight ? stroke(this.hlColor) : noStroke()
 
             imageMode(CENTER);
             image(this.player.img, this.x * size, this.y * size, this.r, this.r);
 
+            if (eatMode && this.player.canEat(this)) {
+                this.drawEatable()
+            } else if (this.canMove()) {
+                strokeWeight(this.r / 30)
+                stroke(color(0, 255, 160))
+            }
+            noFill()
+            circle(this.x * size, this.y * size, this.r * 1.1)
             //Text labels to help debugging
             // fill(0, 50, 255)
             // textAlign(CENTER)
@@ -40,11 +45,18 @@ class Dot {
             // text(l + "," + d, this.x * size, this.y * size - circleSize * 1.2)
             // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.5)
         } else {
-            this.r = circleSize
-            noStroke()
-            if (this.hover) this.r *= 1.3
-            this.highlight ? fill(this.hlColor) : fill(0)
-            circle(this.x * size, this.y * size, this.r)
+            if(!game.gameStarted && this.hover) {
+                this.r = circleSize * 2.6
+                imageMode(CENTER);
+                image(game.turn.img, this.x * size, this.y * size, this.r, this.r); 
+            } else {
+                this.r = circleSize
+                noStroke()
+                if (this.hover) this.r *= 1.3
+                this.highlight ? fill(this.hlColor) : fill(0)
+                circle(this.x * size, this.y * size, this.r)
+            }
+            
         }
         //Text labels to help debugging
         // var l = game.getLayer(this)
@@ -99,5 +111,27 @@ class Dot {
 
         }
         return false
+    }
+    canMove() {
+        //Checking for empty dot in neighbour dots
+        for (var dot of this.neighbours) {
+            if (!dot.player) return true
+        }
+        return false
+    }
+    drawEatable() {
+        var size = (outBoxSize - distance * game.getLayer(this)) / 2
+        push()
+        var pg = createGraphics(this.player.img.width, this.player.img.height);
+        imageMode(CENTER);
+        pg.strokeWeight(this.r / 20)
+        pg.stroke(color(255, 0, 0))
+        pg.line(0, 0, pg.width, pg.height)
+        pg.line(0, pg.height, pg.width, 0)
+        image(this.player.img, this.x * size, this.y * size, this.r, this.r);
+        image(pg, this.x * size, this.y * size, this.r, this.r)
+        pop()
+
+
     }
 }

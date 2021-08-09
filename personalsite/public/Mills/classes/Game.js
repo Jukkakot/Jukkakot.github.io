@@ -61,7 +61,7 @@ class Game {
             if (this.gameStarted) {
                 text("Turn:", -circleSize * 3, +circleSize / 5)
             } else if (this.eatMode) {
-                text("Eat a chip", 0, +circleSize * 3)
+                text("Mills!", 0, +circleSize * 3)
             } else {
                 text("Place a chip", 0, +circleSize * 3)
             }
