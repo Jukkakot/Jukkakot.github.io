@@ -122,7 +122,16 @@ class Game {
     click() {
         if (this.winner) return
         var dot = this.getDot(mX, mY)
-        if (!dot) return
+        if (!dot) {
+            //unhighlight everything
+            for (var layer of game.dots) {
+                for (var d of layer) {
+                    d.highlight = false
+                }
+            }
+            this.prevDot = undefined
+            return
+        } 
 
         if (this.eatMode) {
             if (this.turn.canEat(dot)) {
@@ -154,8 +163,9 @@ class Game {
                     d.highlight = false
                 }
             }
+            //Check if dot is previously clicked dot
             //Check if dot is player or previous dot clicked is player (For moving purposes)
-            if (dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
+            if (dot && dot !== this.prevDot && dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
                 //Check if moving was succesful
                 if (dot.click(this.prevDot)) {
                     this.prevDot = undefined
