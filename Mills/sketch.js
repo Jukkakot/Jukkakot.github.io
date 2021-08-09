@@ -1,4 +1,6 @@
 const MAXCHIPCOUNT = 18
+const EASING = 0.1
+const SPEED = 1
 var outBoxSize
 var circleSize
 var distance
@@ -67,6 +69,7 @@ function mouseClicked() {
 		mX = touches[0].x - width / 2
 		mY = touches[0].y - height / 2
 	}
+	// console.log("Mouse",mX,mY)
 	game.click()
 }
 function touchMoved(e) {
@@ -113,9 +116,11 @@ function draw() {
 		mX = touches[0].x - width / 2
 		mY = touches[0].y - height / 2
 	}
-
-	game.hover()
 	game.draw()
+	game.hover()
+	game.updateAnimations()
+	// delayTime(0.4)
+	
 
 	if (frameCount % 10 == 0) fps = frameRate()
 	if (locked && movableDot) {

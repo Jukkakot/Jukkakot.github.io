@@ -10,6 +10,7 @@ class Game {
         this.gameStarted = false
         this.eatMode = false
         this.winner
+        this.animations = []
     }
     draw() {
 
@@ -61,7 +62,7 @@ class Game {
             if (this.gameStarted) {
                 text("Turn:", -circleSize * 3, +circleSize / 5)
             } else if (this.eatMode) {
-                text("Eat a chip", 0, +circleSize * 3)
+                text("Mill!", 0, +circleSize * 3)
             } else {
                 text("Place a chip", 0, +circleSize * 3)
             }
@@ -122,14 +123,23 @@ class Game {
     click() {
         if (this.winner) return
         var dot = this.getDot(mX, mY)
-        if (!dot) return
+        if (!dot) {
+            //unhighlight everything
+            for (var layer of game.dots) {
+                for (var d of layer) {
+                    d.highlight = false
+                }
+            }
+            this.prevDot = undefined
+            return
+        }
 
         if (this.eatMode) {
             if (this.turn.canEat(dot)) {
                 //EATING CHIPS
 
                 dot.player.chipCount--
-                
+
                 if (dot.player.chipCount < 3 && this.gameStarted) {
                     // console.log(thus.turn.name, "won!")
                     this.setWinner(this.turn)
@@ -154,8 +164,9 @@ class Game {
                     d.highlight = false
                 }
             }
+            //Check if dot is previously clicked dot
             //Check if dot is player or previous dot clicked is player (For moving purposes)
-            if (dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
+            if (dot && dot !== this.prevDot && dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
                 //Check if moving was succesful
                 if (dot.click(this.prevDot)) {
                     this.prevDot = undefined
@@ -175,7 +186,7 @@ class Game {
             this.prevDot = undefined
         } else if (!dot.player) {
             //PLACING CHIPS (Stage 1)
-            
+
             dot.player = this.turn
             this.turn.chipCount++
             this.turn.chipsToAdd--
@@ -196,11 +207,11 @@ class Game {
         //(Just for performance improvement)
         if (this.prevHover) {
             var size = this.prevHover.size()
-            var r = this.prevHover.player ? this.prevHover.r * 0.6 : this.prevHover.r * 2
-            if (pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, r)) {
+            if (pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, this.prevHover.r )) {
                 return
             }
         }
+
         var dot = this.getDot(mX, mY)
         if (dot) {
             if (this.prevHover && this.prevHover !== dot) {
@@ -277,8 +288,7 @@ class Game {
         for (var layer of this.dots) {
             for (var dot of layer) {
                 var size = dot.size()
-                var r = dot.player ? dot.r * 0.6 : dot.r * 2
-                if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
+                if (pointInCircle(x, y, dot.x * size, dot.y * size, dot.r)) {
                     return dot
                 }
             }
@@ -292,6 +302,11 @@ class Game {
         }
         console.log("Error?")
         return -1
+    }
+    updateAnimations() {
+        for(var dot of this.animations) {
+            dot.updateAnimation()
+        }
     }
 }
 function pointInCircle(x, y, cx, cy, radius) {
