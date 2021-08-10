@@ -139,17 +139,13 @@ class Dot {
         game.eatableAnimations.push(this)
     }
     updateEatableAnimation() {
-        push()
         var value = map(sin(ANGLE), -1, 1, 0.6, 1.4)
         this.r = this.r * value
-
-        // strokeWeight(this.r / 5)
-        // stroke(color(255, 255, 255))
-        // circle(this.x * this.size(), this.y * this.size(), this.r)
-
-        imageMode(CENTER);
-        image(this.player.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
-        pop()
+        if (this.canMove()) {
+            this.drawMoveable()
+        } else {
+            this.drawDefault()
+        }
     }
     drawMoveable() {
         var index = game.movingAnimations.indexOf(this)
@@ -242,8 +238,4 @@ class Dot {
 
         }
     }
-    // updateAnimation() {
-    //     this.updateMovingAnimation()
-    //     this.updateEatableAnimation()
-    // }
 }
