@@ -1,11 +1,12 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.1
-const SPEED = 1
+var ANGLE = 0.0
+const SPEED = 0.1
 var outBoxSize
 var circleSize
 var distance
 var cnv
-var scaledWidth
+var scaledWidth,scaledHeight
 var game
 var mX, mY
 var fps
@@ -14,12 +15,13 @@ var movableDot
 var redDot, blueDot
 var restartButton
 const defaultWidth = 800
+const defaultHeight = 1100
 function preload() {
 	redDot = loadImage("./resources/img/redDot.png")
 	blueDot = loadImage("./resources/img/blueDot.png")
 }
 function setup() {
-	cnv = createCanvas(defaultWidth, defaultWidth);
+	cnv = createCanvas(defaultWidth, defaultHeight);
 	restartButton = createButton("Restart\n(r)")
 	restartButton.id("restartButton")
 	restartButton.mousePressed(() => start())
@@ -41,11 +43,13 @@ function start() {
 	restartButton.style('background-color', color(200,200))
 }
 function windowResized() {
-	scaledWidth = min(windowHeight, windowWidth, 800)
-	cnv.resize(scaledWidth, scaledWidth)
-	circleSize = floor(width / 30)
-	outBoxSize = width - circleSize *2
-	distance = width*0.28
+	scaledWidth = min(windowWidth, defaultWidth)
+	scaledHeight = min(windowHeight, defaultHeight)
+	cnv.resize(scaledWidth, scaledHeight)
+
+	circleSize = floor(min(width,height) / 30)
+	outBoxSize = min(width,height) - circleSize *2
+	distance = min(width,height)*0.28
 
 	restartButton.position(cnv.position().x, cnv.position().y + height )
 	restartButton.size(circleSize * 5, circleSize*2)
@@ -69,7 +73,6 @@ function mouseClicked() {
 		mX = touches[0].x - width / 2
 		mY = touches[0].y - height / 2
 	}
-	// console.log("Mouse",mX,mY)
 	game.click()
 }
 function touchMoved(e) {
@@ -119,10 +122,9 @@ function draw() {
 	game.draw()
 	game.hover()
 	game.updateAnimations()
-	// delayTime(0.4)
 	
-
 	if (frameCount % 10 == 0) fps = frameRate()
+
 	if (locked && movableDot) {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
@@ -132,13 +134,14 @@ function draw() {
 	// textAlign(CENTER)
 
 	// text(mX + "," + mY, -100, height / 2 - 10)
+	//Displaying fps
 	push()
 	textSize(circleSize)
 	fill(0)
 	textAlign(CENTER)
-	text(floor(fps), width / 2 - circleSize*3, -height / 2 + circleSize*0.9)
+	text(floor(fps)+" fps", width / 2 - circleSize*3, -height / 2 + circleSize*0.9)
 	// text(mX + "," + mY, -200,-height/2+40 )
-	//Show mouse / touch location no screen
+	// // Show mouse / touch location no screen
 	// stroke(255,0,255)
 	// strokeWeight(circleSize)
 	// point(mX,mY)

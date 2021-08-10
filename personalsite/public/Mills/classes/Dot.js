@@ -33,7 +33,10 @@ class Dot {
 
             this.highlight ? stroke(this.hlColor) : noStroke()
             if (eatMode && this.player.canEat(this)) {
-                this.drawEatable()
+                if (game.eatableAnimations.indexOf(this) === -1) {
+                    this.setEatableDot()
+                }
+
             } else if (this.canMove()) {
                 this.drawMoveable()
             } else {
@@ -45,8 +48,8 @@ class Dot {
             // fill(0, 50, 255)
             // textAlign(CENTER)
             // textSize(circleSize)
-            // text(l + "," + d, this.x * size, this.y * size - circleSize * 1.2)
-            // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.5)
+            // text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 1.2)
+            // text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.5)
         } else {
             //Drawing empty dot
             if (!game.gameStarted && this.hover && !eatMode) {
@@ -54,7 +57,7 @@ class Dot {
                 this.r = circleSize * 2.6
                 push()
                 imageMode(CENTER);
-                tint(230)
+                tint(100)
                 image(game.turn.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
 
                 pop()
@@ -69,8 +72,8 @@ class Dot {
         // fill(0, 50, 255)
         // textAlign(CENTER)
         // textSize(circleSize)
-        // text(l + "," + d, this.x * size, this.y * size - circleSize * 0.7)
-        // text(this.x + "," + this.y, this.x * size, this.y * size + circleSize * 1.2)
+        // text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
+        // text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
         pop()
     }
     //Method to use when moving chip by dragging mouse
@@ -127,20 +130,24 @@ class Dot {
         }
         return false
     }
-    drawEatable() {
+    setEatableDot() {
+        game.eatableAnimations.push(this)
+    }
+    updateEatableAnimation() {
         push()
-        var pg = createGraphics(this.player.img.width, this.player.img.height);
+        var value = map(sin(ANGLE), -1, 1, 0.6, 1.4)
+        this.r = this.r * value
+       
+        // strokeWeight(this.r / 5)
+        // stroke(color(255, 255, 255))
+        // circle(this.x * this.size(), this.y * this.size(), this.r)
+
         imageMode(CENTER);
-        pg.strokeWeight(this.r / 20)
-        pg.stroke(color(255, 0, 0))
-        pg.line(0, 0, pg.width, pg.height)
-        pg.line(0, pg.height, pg.width, 0)
         image(this.player.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
-        image(pg, this.x * this.size(), this.y * this.size(), this.r, this.r)
         pop()
     }
     drawMoveable() {
-        var index = game.animations.indexOf(this)
+        var index = game.movingAnimations.indexOf(this)
         if (index >= 0) {
             this.drawEmpty()
             return
@@ -154,7 +161,7 @@ class Dot {
         pop()
     }
     drawDefault() {
-        var index = game.animations.indexOf(this)
+        var index = game.movingAnimations.indexOf(this)
         if (index >= 0) {
             this.drawEmpty()
             return
@@ -191,10 +198,9 @@ class Dot {
         this.animTargetY = this.y * this.size()
         // console.log("From", this.animLocX, this.animLocY, "To", this.animTargetX, this.animTargetY)
         prevDot.player = undefined
-        game.animations.push(this)
+        game.movingAnimations.push(this)
     }
-    updateAnimation() {
-        // console.log(this.animTargetX !== this.animLocX && this.animTargetY !== this.animLocY)
+    updateMovingAnimation() {
         if (this.animTargetX !== this.animLocX || this.animTargetY !== this.animLocY) {
 
             let dx = this.animTargetX - this.animLocX;
@@ -222,13 +228,17 @@ class Dot {
 
                 this.animPlayer = undefined
 
-                var index = game.animations.indexOf(this)
+                var index = game.movingAnimations.indexOf(this)
 
-                game.animations.splice(index, 1)
+                game.movingAnimations.splice(index, 1)
             } else {
                 this.drawAnimation()
             }
 
         }
     }
+    // updateAnimation() {
+    //     this.updateMovingAnimation()
+    //     this.updateEatableAnimation()
+    // }
 }
