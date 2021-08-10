@@ -16,6 +16,20 @@ class Dot {
         this.moving = false
         this.startChip = startChip
     }
+    getLayer() {
+        return game.getLayer(this)
+    }
+    getDotIndex() {
+        return game.dots[this.getLayer()].indexOf(this)
+    }
+    //Returns dots where this dot can move to
+    getNeighbours() {
+        if (this.player.chipCount > 3) {
+            return this.neighbours
+        } else {
+            return game.getEmptyDots()
+        }
+    }
     size() {
         if (this.startChip) return (outBoxSize - distance) / 2
         return (outBoxSize - distance * game.getLayer(this)) / 2
@@ -33,7 +47,13 @@ class Dot {
 
             if (this.hover) this.r *= 1.3
 
-            this.highlight ? stroke(this.hlColor) : noStroke()
+            //Highlighting circle around the chip
+            if (this.highlight) {
+                stroke(this.hlColor)
+                noFill()
+                circle(this.x * this.size(), this.y * this.size(), this.r * 1.1)
+            }
+
             if (eatMode && this.player.canEat(this)) {
                 if (game.eatableAnimations.indexOf(this) === -1) {
                     this.setEatableDot()
@@ -43,7 +63,6 @@ class Dot {
             } else {
                 this.drawDefault()
             }
-            // noFill()
 
             //Text labels to help debugging
             // fill(0, 50, 255)
@@ -74,7 +93,7 @@ class Dot {
         //     fill(0, 50, 255)
         //     textAlign(CENTER)
         //     textSize(circleSize)
-        //     // text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
+        //     text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
         //     text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
         // }
 
@@ -113,14 +132,12 @@ class Dot {
                 }
             } else {
                 //Highlighting all empty dots
-                for (var layer of game.dots) {
-                    for (var dot of layer) {
-                        if (!dot.player) {
-                            dot.highlight = true
-                            dot.hlColor = color(0, 255, 0)
-                        }
-                    }
-                }
+                var emptyDots = game.getEmptyDots()
+                emptyDots.forEach(dot => {
+                    dot.highlight = true
+                    dot.hlColor = color(0, 255, 0)
+                })
+
             }
 
         }
@@ -139,7 +156,7 @@ class Dot {
         game.eatableAnimations.push(this)
     }
     updateEatableAnimation() {
-        var value = map(sin(ANGLE), -1, 1, 0.6, 1.4)
+        var value = map(sin(ANGLE), -1, 1, 0.8, 1.4)
         this.r = this.r * value
         if (this.canMove()) {
             this.drawMoveable()

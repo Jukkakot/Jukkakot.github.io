@@ -1,7 +1,7 @@
-const MAXCHIPCOUNT = 18
+const MAXCHIPCOUNT = 8
 const EASING = 0.1
 var ANGLE = 0.0
-const SPEED = 0.05
+var SPEED =0.07
 var outBoxSize
 var circleSize
 var distance
@@ -15,7 +15,8 @@ var movableDot
 var redDot, blueDot
 var restartButton
 const defaultWidth = 800
-const defaultHeight = 950
+const defaultHeight = 1000
+var CircularJSON = window.CircularJSON
 function preload() {
 	redDot = loadImage("./resources/img/redDot.png")
 	blueDot = loadImage("./resources/img/blueDot.png")
