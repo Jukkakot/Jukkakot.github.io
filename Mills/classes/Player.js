@@ -8,6 +8,7 @@ class Player {
         this.mills = []
         this.millDots = []
         this.movableDots = []
+        this.startChips = []
     }
     drawMills() {
         this.mills.forEach(mill => mill.draw())
@@ -51,7 +52,7 @@ class Player {
         for (var layer of board) {
             for (var dot of layer) {
                 //Check if player has 3 chips left or dots neighbours has empty dot
-                if(dot.player && dot.player === this && ( this.chipCount  === 3 || dot.neighbours.some(nDot => !nDot.player))) {
+                if (dot.player && dot.player === this && (this.chipCount === 3 || dot.neighbours.some(nDot => !nDot.player))) {
                     movableDots.push(dot)
                 }
             }

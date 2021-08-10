@@ -1,12 +1,12 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.1
 var ANGLE = 0.0
-const SPEED = 0.1
+const SPEED = 0.05
 var outBoxSize
 var circleSize
 var distance
 var cnv
-var scaledWidth,scaledHeight
+var scaledWidth, scaledHeight
 var game
 var mX, mY
 var fps
@@ -15,7 +15,7 @@ var movableDot
 var redDot, blueDot
 var restartButton
 const defaultWidth = 800
-const defaultHeight = 1100
+const defaultHeight = 950
 function preload() {
 	redDot = loadImage("./resources/img/redDot.png")
 	blueDot = loadImage("./resources/img/blueDot.png")
@@ -30,36 +30,36 @@ function setup() {
 }
 function keyPressed(e) {
 	if (e.key === "r") {
-	  start()
+		start()
 	}
 }
 function start() {
 	game = new Game()
 	locked = false
 
-	restartButton.position(cnv.position().x, cnv.position().y + height )
-	restartButton.size(circleSize * 5, circleSize*2)
-	restartButton.style('font-size', circleSize*0.7  + "px")
-	restartButton.style('background-color', color(200,200))
+	restartButton.position(cnv.position().x, cnv.position().y + height)
+	restartButton.size(circleSize * 5, circleSize * 2)
+	restartButton.style('font-size', circleSize * 0.7 + "px")
+	restartButton.style('background-color', color(200, 200))
 }
 function windowResized() {
 	scaledWidth = min(windowWidth, defaultWidth)
 	scaledHeight = min(windowHeight, defaultHeight)
 	cnv.resize(scaledWidth, scaledHeight)
 
-	circleSize = floor(min(width,height) / 30)
-	outBoxSize = min(width,height) - circleSize *2
-	distance = min(width,height)*0.28
+	circleSize = floor(min(width, height) / 30)
+	outBoxSize = min(width, height) - circleSize * 2
+	distance = min(width, height) * 0.28
 
-	restartButton.position(cnv.position().x, cnv.position().y + height )
-	restartButton.size(circleSize * 5, circleSize*2)
-	restartButton.style('font-size', circleSize*0.7  + "px")
-	restartButton.style('background-color', color(200,200))
-	
-	
+	restartButton.position(cnv.position().x, cnv.position().y + height)
+	restartButton.size(circleSize * 5, circleSize * 2)
+	restartButton.style('font-size', circleSize * 0.7 + "px")
+	restartButton.style('background-color', color(200, 200))
+
+
 }
 function touchStarted(e) {
-	if(e.target.id !== "restartButton") {
+	if (e.target.id !== "restartButton") {
 		//Disables double clicking issues when placing chips
 		e.preventDefault()
 	}
@@ -81,7 +81,7 @@ function touchMoved(e) {
 	mouseDragged()
 }
 function mouseDragged() {
-	if (!game.gameStarted) return 
+	if (!game.gameStarted) return
 	if (!movableDot) {
 		movableDot = game.click()
 	}
@@ -122,7 +122,7 @@ function draw() {
 	game.draw()
 	game.hover()
 	game.updateAnimations()
-	
+
 	if (frameCount % 10 == 0) fps = frameRate()
 
 	if (locked && movableDot) {
@@ -139,7 +139,7 @@ function draw() {
 	textSize(circleSize)
 	fill(0)
 	textAlign(CENTER)
-	text(floor(fps)+" fps", width / 2 - circleSize*3, -height / 2 + circleSize*0.9)
+	text(floor(fps) + " fps", 0, -height * 0.45)
 	// text(mX + "," + mY, -200,-height/2+40 )
 	// // Show mouse / touch location no screen
 	// stroke(255,0,255)
