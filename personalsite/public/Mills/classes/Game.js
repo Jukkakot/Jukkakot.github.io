@@ -12,9 +12,9 @@ class Game {
         this.winner
         this.movingAnimations = []
         this.eatableAnimations = []
+        this.initStartChips()
     }
     draw() {
-
         push()
         strokeWeight(circleSize / 5)
 
@@ -28,7 +28,7 @@ class Game {
         for (var layers = 0; layers < 3; layers++) {
             this.drawRect(outBoxSize - distance * layers)
         }
-
+        this.drawStartChips()
         // if (this.gameStarted) {
         //      Highlighting players movable dots (Used for debugging)
         //     this.turn.movableDots.forEach(dot => {
@@ -121,8 +121,20 @@ class Game {
         }
         return dots
     }
-    initChips () {
+    initStartChips() {
+        for (var i = 0; i < MAXCHIPCOUNT / 2; i++) {
+            var dot = new Dot(-1.4 + i / 10, -1.7, true)
+            dot.player = this.playerBlue
+            this.playerBlue.startChips.push(dot)
 
+            var dot = new Dot(1.4 - i / 10, -1.7, true)
+            dot.player = this.playerRed
+            this.playerRed.startChips.push(dot)
+        }
+    }
+    drawStartChips() {
+        this.playerBlue.startChips.forEach(chip => chip.draw())
+        this.playerRed.startChips.forEach(chip => chip.draw())
     }
     click() {
         if (this.winner) return
@@ -194,6 +206,10 @@ class Game {
             dot.player = this.turn
             this.turn.chipCount++
             this.turn.chipsToAdd--
+
+            var prevDot = this.turn.startChips.pop()
+            dot.setTargetDot(prevDot)
+
             this.gameStarted = this.playerRed.chipsToAdd + this.playerBlue.chipsToAdd === 0
 
             //Checking if new mill was found
@@ -211,7 +227,7 @@ class Game {
         //(Just for performance improvement)
         if (this.prevHover) {
             var size = this.prevHover.size()
-            if (pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, this.prevHover.r )) {
+            if (pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, this.prevHover.r)) {
                 return
             }
         }
@@ -308,10 +324,10 @@ class Game {
         return -1
     }
     updateAnimations() {
-        for(var dot of this.movingAnimations) {
+        for (var dot of this.movingAnimations) {
             dot.updateMovingAnimation()
         }
-        for(var dot of this.eatableAnimations) {
+        for (var dot of this.eatableAnimations) {
             dot.updateEatableAnimation()
         }
         ANGLE += SPEED

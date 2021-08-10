@@ -1,5 +1,5 @@
 class Dot {
-    constructor(x, y) {
+    constructor(x, y, startChip) {
         this.x = x
         this.y = y
         this.animLocX
@@ -14,8 +14,10 @@ class Dot {
         this.hover = false
         this.neighbours = []
         this.moving = false
+        this.startChip = startChip
     }
     size() {
+        if (this.startChip) return (outBoxSize - distance) / 2
         return (outBoxSize - distance * game.getLayer(this)) / 2
     }
 
@@ -36,7 +38,6 @@ class Dot {
                 if (game.eatableAnimations.indexOf(this) === -1) {
                     this.setEatableDot()
                 }
-
             } else if (this.canMove()) {
                 this.drawMoveable()
             } else {
@@ -67,13 +68,16 @@ class Dot {
 
         }
         //Text labels to help debugging
-        // var l = game.getLayer(this)
-        // var d = game.dots[l].indexOf(this)
-        // fill(0, 50, 255)
-        // textAlign(CENTER)
-        // textSize(circleSize)
-        // text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
-        // text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
+        // if(!this.startChip) {
+        //     var l = game.getLayer(this)
+        //     var d = game.dots[l].indexOf(this)
+        //     fill(0, 50, 255)
+        //     textAlign(CENTER)
+        //     textSize(circleSize)
+        //     // text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
+        //     text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
+        // }
+
         pop()
     }
     //Method to use when moving chip by dragging mouse
@@ -123,6 +127,7 @@ class Dot {
         return false
     }
     canMove() {
+        if (this.startChip) return false
         if (this.player && this.player.chipCount <= 3) return true
         //Checking for empty dot in neighbour dots
         for (var dot of this.neighbours) {
@@ -137,7 +142,7 @@ class Dot {
         push()
         var value = map(sin(ANGLE), -1, 1, 0.6, 1.4)
         this.r = this.r * value
-       
+
         // strokeWeight(this.r / 5)
         // stroke(color(255, 255, 255))
         // circle(this.x * this.size(), this.y * this.size(), this.r)
@@ -204,14 +209,14 @@ class Dot {
         if (this.animTargetX !== this.animLocX || this.animTargetY !== this.animLocY) {
 
             let dx = this.animTargetX - this.animLocX;
-            if (abs(dx) < 5) {
+            if (abs(dx) < 10) {
                 this.animLocX = this.animTargetX
             } else {
                 this.animLocX += dx * EASING;
             }
 
             let dy = this.animTargetY - this.animLocY;
-            if (abs(dy) < 5) {
+            if (abs(dy) < 10) {
                 this.animLocY = this.animTargetY
             } else {
                 this.animLocY += dy * EASING;
