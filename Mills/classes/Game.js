@@ -212,6 +212,7 @@ class Game {
             }
             this.prevDot = undefined
         } else if (!dot.player) {
+            //Placing chips (Stage 1)
             this.placeAChip(dot)
         }
     }
@@ -341,7 +342,9 @@ class Game {
         for (var layer of this.dots) {
             for (var dot of layer) {
                 var size = dot.size()
-                if (pointInCircle(x, y, dot.x * size, dot.y * size, dot.r)) {
+                var r = dot.r
+                if(!dot.player) r *= 1.3
+                if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
                     return dot
                 }
             }
