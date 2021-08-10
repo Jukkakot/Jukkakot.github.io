@@ -10,7 +10,8 @@ class Game {
         this.gameStarted = false
         this.eatMode = false
         this.winner
-        this.animations = []
+        this.movingAnimations = []
+        this.eatableAnimations = []
     }
     draw() {
 
@@ -120,6 +121,9 @@ class Game {
         }
         return dots
     }
+    initChips () {
+
+    }
     click() {
         if (this.winner) return
         var dot = this.getDot(mX, mY)
@@ -147,7 +151,7 @@ class Game {
 
                 dot.player = undefined
                 this.eatMode = false
-
+                this.eatableAnimations = []
                 // this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
                 this.switchTurn()
 
@@ -304,9 +308,14 @@ class Game {
         return -1
     }
     updateAnimations() {
-        for(var dot of this.animations) {
-            dot.updateAnimation()
+        for(var dot of this.movingAnimations) {
+            dot.updateMovingAnimation()
         }
+        for(var dot of this.eatableAnimations) {
+            dot.updateEatableAnimation()
+        }
+        ANGLE += SPEED
+        ANGLE = ANGLE % PI
     }
 }
 function pointInCircle(x, y, cx, cy, radius) {
