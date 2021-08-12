@@ -1,12 +1,14 @@
 class Dot {
-    constructor(x, y, startChip) {
+    constructor(x, y, l, d, startChip) {
         this.x = x
         this.y = y
+        this.l = l
+        this.d = d
+        this.suggested = false
         this.animLocX
         this.animLocY
         this.animTargetX
         this.animTargetY
-        this.animPlayer
         this.player
         this.r = this.player ? circleSize * 2 : circleSize
         this.highlight = false
@@ -16,30 +18,23 @@ class Dot {
         this.moving = false
         this.startChip = startChip
     }
-    getLayer() {
-        return game.getLayer(this)
-    }
-    getDotIndex() {
-        return game.dots[this.getLayer()].indexOf(this)
-    }
     //Returns dots where this dot can move to
     getNeighbours() {
         if (this.player.chipCount > 3) {
             return this.neighbours
         } else {
-            return game.getEmptyDots()
+            return game.getEmptyDots(game.dots)
         }
     }
     size() {
         if (this.startChip) return (outBoxSize - distance) / 2
-        return (outBoxSize - distance * game.getLayer(this)) / 2
+        return (outBoxSize - distance * this.l) / 2
     }
 
     draw(eatMode) {
         // this.player = game.playerBlue
         // var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()
-
         if (this.player && !this.moving) {
             //Drawing player chip
             this.r = circleSize * 2
@@ -63,13 +58,6 @@ class Dot {
             } else {
                 this.drawDefault()
             }
-
-            //Text labels to help debugging
-            // fill(0, 50, 255)
-            // textAlign(CENTER)
-            // textSize(circleSize)
-            // text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 1.2)
-            // text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.5)
         } else {
             //Drawing empty dot
             if (!game.gameStarted && this.hover && !eatMode) {
@@ -86,16 +74,19 @@ class Dot {
             }
 
         }
+        if (this.suggested) {
+            this.drawSuggested()
+        }
         //Text labels to help debugging
-        // if(!this.startChip) {
-        //     var l = game.getLayer(this)
-        //     var d = game.dots[l].indexOf(this)
-        //     fill(0, 50, 255)
-        //     textAlign(CENTER)
-        //     textSize(circleSize)
-        //     text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
-        //     text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
-        // }
+        if (!this.startChip && DEBUG) {
+            var l = this.l
+            var d = this.d
+            fill(255, 255, 0)
+            textAlign(CENTER)
+            textSize(circleSize * 0.7)
+            text("L" + l + "," + "D" + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
+            text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
+        }
 
         pop()
     }
@@ -106,6 +97,10 @@ class Dot {
         imageMode(CENTER);
         image(this.player.img, x, y, this.r, this.r);
         pop()
+    }
+    moveTo(dot) {
+        dot.player = this.player
+        this.player = undefined
     }
     click(prevDot) {
         if (prevDot && prevDot !== this && !this.player) {
@@ -132,7 +127,7 @@ class Dot {
                 }
             } else {
                 //Highlighting all empty dots
-                var emptyDots = game.getEmptyDots()
+                var emptyDots = game.getEmptyDots(game.dots)
                 emptyDots.forEach(dot => {
                     dot.highlight = true
                     dot.hlColor = color(0, 255, 0)
@@ -163,6 +158,15 @@ class Dot {
         } else {
             this.drawDefault()
         }
+    }
+    drawSuggested() {
+        push()
+        if (!this.player) this.r = circleSize * 2
+        // this.r = circleSize * 2.5
+        strokeWeight(this.r / 10)
+        stroke(game.turn.color)
+        circle(this.x * this.size(), this.y * this.size(), this.r * 1.5)
+        pop()
     }
     drawMoveable() {
         var index = game.movingAnimations.indexOf(this)
@@ -201,13 +205,11 @@ class Dot {
     drawAnimation() {
         push()
         imageMode(CENTER);
-        image(this.animPlayer.img, this.animLocX, this.animLocY, this.r * 2, this.r * 2);
+        image(this.player.img, this.animLocX, this.animLocY, this.r * 2, this.r * 2);
         pop()
     }
     setTargetDot(prevDot) {
         this.player = prevDot.player
-        // this.player = undefined
-        this.animPlayer = prevDot.player
 
         this.animLocX = prevDot.x * prevDot.size();
         this.animLocY = prevDot.y * prevDot.size();
@@ -236,15 +238,12 @@ class Dot {
             }
 
             if (this.animTargetX === this.animLocX && this.animLocY === this.animTargetY) {
-                this.player = this.animPlayer
 
                 this.animLocX = undefined
                 this.animLocY = undefined
 
                 this.animTargetX = undefined
                 this.animTargetY = undefined
-
-                this.animPlayer = undefined
 
                 var index = game.movingAnimations.indexOf(this)
 

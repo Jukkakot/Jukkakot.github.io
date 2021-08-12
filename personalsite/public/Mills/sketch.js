@@ -1,7 +1,7 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.1
 var ANGLE = 0.0
-var SPEED =0.07
+var SPEED = 0.07
 var outBoxSize
 var circleSize
 var distance
@@ -15,8 +15,9 @@ var movableDot
 var redDot, blueDot
 var restartButton
 const defaultWidth = 800
-const defaultHeight = 1000
-var CircularJSON = window.CircularJSON
+const defaultHeight = defaultWidth * 1.25
+var DEBUG = false
+var AUTOPLAY = false
 function preload() {
 	redDot = loadImage("./resources/img/redDot.png")
 	blueDot = loadImage("./resources/img/blueDot.png")
@@ -25,13 +26,43 @@ function setup() {
 	cnv = createCanvas(defaultWidth, defaultHeight);
 	restartButton = createButton("Restart\n(r)")
 	restartButton.id("restartButton")
-	restartButton.mousePressed(() => start())
+	restartButton.mousePressed(() => restartPress())
+
+	// restartButton = createButton("Suggestion\n(r)")
+	// restartButton.id("suggestionButton")
+	// restartButton.mousePressed(() => start())
+
+	// restartButton = createButton("BotPlay\n(r)")
+	// restartButton.id("restartButton")
+	// restartButton.mousePressed(() => start())
 	start()
 	windowResized()
 }
 function keyPressed(e) {
 	if (e.key === "r") {
-		start()
+		restartPress()
+	} else if (e.key === "b") {
+		if (game.eatMode) return
+		game.playRound(game.findBestMove())
+
+	} else if (e.key === "s") {
+		if (game.eatMode) return
+		game.setSuggestion(game.findBestMove())
+	} else if (e.key === "d") {
+		DEBUG = !DEBUG
+	} else if (e.key === "a") {
+		AUTOPLAY = !AUTOPLAY
+		if (game.turn === game.playerBlue) {
+			if (game.eatMode) return
+			game.playRound(game.findBestMove())
+		}
+	}
+}
+function restartPress() {
+	start()
+	if (AUTOPLAY && game.turn === game.playerBlue) {
+		if (game.eatMode) return
+		game.playRound(game.findBestMove())
 	}
 }
 function start() {
@@ -130,22 +161,31 @@ function draw() {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
 	}
-	// textSize(30)
-	// fill(0)
-	// textAlign(CENTER)
 
-	// text(mX + "," + mY, -100, height / 2 - 10)
-	//Displaying fps
+
 	push()
+	textAlign(CENTER)
+	if (AUTOPLAY) {
+		fill(0)
+		textSize(circleSize * 1.5)
+		text("AUTOPLAY", 0, -height * 0.40)
+	}
+	//Displaying fps
 	textSize(circleSize)
 	fill(0)
-	textAlign(CENTER)
+
 	text(floor(fps) + " fps", 0, -height * 0.45)
-	// text(mX + "," + mY, -200,-height/2+40 )
-	// // Show mouse / touch location no screen
-	// stroke(255,0,255)
-	// strokeWeight(circleSize)
-	// point(mX,mY)
+
+	if (DEBUG) {
+		//Mouse coords
+		fill(0)
+		text(mX + "," + mY, 0, -height * 0.42)
+		// // Show mouse / touch location no screen
+		stroke(255, 0, 255)
+		strokeWeight(circleSize)
+		point(mX, mY)
+	}
+
 	pop()
 }
 
