@@ -25,7 +25,7 @@ class Player {
         var oppPlayer = game.turn === game.playerRed ? game.playerBlue : game.playerRed
         //Dot has to be opponent player AND
         //Either all dots in are mill or this dot is not in a mill
-        return (dot.player && dot.player === oppPlayer && (dot.player.allDotsInMill() || !dot.player.dotIsInMill(dot)))
+        return (dot.player && dot.player.name == oppPlayer.name && (dot.player.allDotsInMill() || !dot.player.dotIsInMill(dot)))
 
     }
     allDotsInMill() {

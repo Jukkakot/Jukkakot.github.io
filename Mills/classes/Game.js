@@ -13,18 +13,32 @@ class Game {
         this.movingAnimations = []
         this.eatableAnimations = []
         this.initStartChips()
+        this.suggestion
     }
-    getEmptyDots() {
+    getEmptyDots(board) {
         var dots = []
-        for (var layer of this.dots) {
+        for (var layer of board) {
             for (var dot of layer) {
-                if (dot.player === undefined) {
+                if (!dot.player) {
                     dots.push(dot)
                 }
             }
         }
         return dots
     }
+    // getEmptyDots() {
+    //     console.log("Hujahti tänne")
+    //     var dots = []
+    //     for (var layer of this.dots) {
+    //         for (var dot of layer) {
+    //             if (dot.player === undefined) {
+    //                 dots.push(dot)
+    //             }
+    //         }
+    //     }
+    //     return dots
+    // }
+
     draw() {
         push()
         strokeWeight(circleSize / 5)
@@ -40,14 +54,6 @@ class Game {
             this.drawRect(outBoxSize - distance * layers)
         }
         this.drawStartChips()
-        // if (this.gameStarted) {
-        //      Highlighting players movable dots (Used for debugging)
-        //     this.turn.movableDots.forEach(dot => {
-        //         dot.highlight = true
-        //         dot.hlColor = color(255, 0, 255)
-        //         dot.draw()
-        //     })
-        // }
         noStroke()
         // circle(0, 0, circleSize * 3)
         // tint(this.turn.color)
@@ -59,10 +65,6 @@ class Game {
             textSize(circleSize * 5)
             stroke(this.winner.color)
             text(this.winner.name + " won!", 0, 0)
-            // restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
-            // restartButton.size(circleSize * 15, circleSize * 3)
-            // restartButton.style('font-size', circleSize * 2 + "px")
-            // restartButton.style('background-color', color(0, 255, 0, 200))
             pop()
         } else {
 
@@ -98,28 +100,28 @@ class Game {
     }
     initDots() {
         var dots = []
-        for (var layers = 0; layers < 3; layers++) {
+        for (var l = 0; l < 3; l++) {
             var rect = []
             //Top
-            rect.push(new Dot(-1, -1))
-            rect.push(new Dot(0, -1))
-            rect.push(new Dot(1, -1))
+            rect.push(new Dot(-1, -1, l, 0))
+            rect.push(new Dot(0, -1, l, 1))
+            rect.push(new Dot(1, -1, l, 2))
             //Right
-            rect.push(new Dot(1, 0))
+            rect.push(new Dot(1, 0, l, 3))
             //Bottom
-            rect.push(new Dot(1, 1))
-            rect.push(new Dot(0, 1))
-            rect.push(new Dot(-1, 1))
+            rect.push(new Dot(1, 1, l, 4))
+            rect.push(new Dot(0, 1, l, 5))
+            rect.push(new Dot(-1, 1, l, 6))
             //Left
-            rect.push(new Dot(-1, 0))
+            rect.push(new Dot(-1, 0, l, 7))
             dots.push(rect)
         }
         //Adding neighbours to dots
         for (var l in dots) {
-            for (var d in dots[l]) {
-                d = Number(d)
-                var currD = dots[l][d]
-                var nextD = d < 7 ? dots[l][d + 1] : dots[l][0]
+            for (var dot in dots[l]) {
+                dot = Number(dot)
+                var currD = dots[l][dot]
+                var nextD = dot < 7 ? dots[l][dot + 1] : dots[l][0]
                 nextD.neighbours.push(currD)
                 currD.neighbours.push(nextD)
             }
@@ -134,11 +136,11 @@ class Game {
     }
     initStartChips() {
         for (var i = 0; i < MAXCHIPCOUNT / 2; i++) {
-            var dot = new Dot(-1.4 + i / 10, -1.7, true)
+            var dot = new Dot(-1.4 + i / 10, -1.7, -1, -1, true)
             dot.player = this.playerBlue
             this.playerBlue.startChips.push(dot)
 
-            var dot = new Dot(1.4 - i / 10, -1.7, true)
+            var dot = new Dot(1.4 - i / 10, -1.7, -1, -1, true)
             dot.player = this.playerRed
             this.playerRed.startChips.push(dot)
         }
@@ -175,7 +177,7 @@ class Game {
                 dot.player = undefined
                 this.eatMode = false
                 this.eatableAnimations = []
-                // this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
+
                 this.switchTurn()
 
                 //Checking the mills again incase had to eat from a mill
@@ -186,62 +188,74 @@ class Game {
             //MOVING CHIPS (Stage 2)
 
             //unhighlighting everything at the start
-            for (var layer of game.dots) {
+            for (var layer of this.dots) {
                 for (var d of layer) {
                     d.highlight = false
                 }
             }
-            //Check if dot is previously clicked dot
+
             //Check if dot is player or previous dot clicked is player (For moving purposes)
-            if (dot  && dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
+            if (dot && dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
                 //Check if moving was succesful
                 if (dot.click(this.prevDot)) {
                     this.prevDot = undefined
-
-                    //Checking if new mill was found
-                    if (this.checkNewMills(this.dots, this.turn)) {
-                        this.eatMode = true
-                    } else {
-                        this.switchTurn()
-                    }
+                    this.switchTurn()
                 } else {
                     //This dot and its neighbours was highlighted in dots.click() method
                     this.prevDot = dot
                 }
+                //using return value on mouse dragging
                 return dot
             }
             this.prevDot = undefined
         } else if (!dot.player) {
             //Placing chips (Stage 1)
-            this.placeAChip(dot)
+            this.playRound(dot)
         }
     }
-    placeAChip(cDot) {
-        //First need to find the actual dot from board (given dot is a copy from a copied board)
-        for (var dot of game.getEmptyDots()) {
-            
-            if (dot.getLayer() === cDot.getLayer() && dot.getDotIndex() === cDot.getDotIndex()) {
-                // console.log("onko true", dot === cDot)
-                dot.player = this.turn
-                this.turn.chipCount++
-                this.turn.chipsToAdd--
-
-                var prevDot = this.turn.startChips.pop()
-                dot.setTargetDot(prevDot)
-
-                this.gameStarted = this.playerRed.chipsToAdd + this.playerBlue.chipsToAdd === 0
-
-                //Checking if new mill was found
-                if (this.checkNewMills(this.dots, this.turn)) {
-                    this.eatMode = true
-                } else {
-                    this.switchTurn()
-                    // this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
-                }
-                return
-            }
+    clearSuggestion() {
+        if(!this.suggestion) return
+        for(var dot of this.suggestion) {
+            this.dots[dot.l][dot.d].suggested = false
         }
-        console.log("Ei pitäs mennä tänne")
+        this.suggestion = undefined
+    }
+    setSuggestion(move) {
+        this.clearSuggestion()
+        
+        if(this.gameStarted) {
+            this.suggestion = move
+            for(var dot of move) {
+                dot = this.dots[dot.l][dot.d]
+                dot.suggested = true
+            }
+        } else {
+            this.suggestion = [move]
+            dot = this.dots[move.l][move.d]
+            dot.suggested = true
+        }
+        
+
+        
+
+    }
+    placeChip(cDot) {
+        // this.clearSuggestedDot()
+
+        var dot = this.dots[cDot.l][cDot.d]
+
+        setPlayerTo(this.dots, this.turn, dot)
+        this.turn.chipCount++
+        this.turn.chipsToAdd--
+
+        var prevDot = this.turn.startChips.pop()
+        dot.setTargetDot(prevDot)
+
+        //Checking if all chips has been added
+        this.gameStarted = this.playerRed.chipsToAdd + this.playerBlue.chipsToAdd === 0
+
+        this.switchTurn()
+
     }
     hover() {
         //Returning if mouse is still on the prevHover dot place
@@ -268,27 +282,67 @@ class Game {
 
     }
     checkIfCanMove(player, board) {
-        var movableDots = player.checkMovableDots(board)
-        if (movableDots.length > 0) {
-            player.movableDots = movableDots
-            return true
-        } else {
-            return false
-        }
+        var movableDots = this.checkMoveableDots(board, player)
+        player.movableDots = movableDots
+        return movableDots.length > 0
+    }
+    checkMoveableDots(board, player) {
+        var movableDots = []
+        for (var layer of board) {
+            for (var dot of layer) {
 
+                //Check if player has 3 chips left or dots neighbours has empty dot
+                if (dot.player && dot.player.name == player.name && (player.chipCount === 3 || dot.neighbours.some(nDot => !nDot.player))) {
+                    movableDots.push(dot)
+                }
+            }
+        }
+        return movableDots
     }
     switchTurn() {
-        //Unhighlighting movable dots (Used for debugging)
-        // this.turn.movableDots.forEach(dot => {
-        //     dot.highlight = false
-        //     // dot.hlColor = color(255, 0, 255)
-        // })
+        this.clearSuggestion()
+
+        //Checking for new mills before switching turn
+        if (this.checkNewMills(this.dots, this.turn)) {
+            this.eatMode = true
+            return
+        }
+
         this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
         //Checking if opponent can move
         if (this.gameStarted && !this.checkIfCanMove(this.turn, this.dots)) {
             var oppPlayer = this.turn === this.playerRed ? this.playerBlue : this.playerRed
             this.setWinner(oppPlayer)
         }
+        if (AUTOPLAY && this.turn === this.playerBlue && !this.eatMode) {
+            this.playRound(this.findBestMove())
+        }
+    }
+    playRound(move) {
+        if (this.eatMode) {
+            //TODO
+            //this.eatChip(move)
+        } else if (!this.gameStarted && this.turn.chipsToAdd > 0) {
+            this.placeChip(move)
+        } else {
+            this.moveChip(move)
+        }
+        //unhighlighting everything at the end
+        for (var layer of this.dots) {
+            for (var d of layer) {
+                d.highlight = false
+            }
+        }
+    }
+    moveChip(move) {
+        var fromDot = move[0]
+        var toDot = move[1]
+        //Have to find the "same" dot from this.dots because given dots are cloned dots so they are not the same
+        fromDot = this.dots[fromDot.l][fromDot.d]
+        toDot = this.dots[toDot.l][toDot.d]
+
+        toDot.setTargetDot(fromDot)
+        this.switchTurn()
     }
     checkIfLost(board, player) {
         if (player.chipCount < 3 || !this.checkIfCanMove(player, board)) {
@@ -305,25 +359,31 @@ class Game {
         restartButton.style('background-color', color(0, 255, 0, 200))
     }
     checkNewMills(board, player) {
+        // console.log("checking for mill",player.name)
         var newMills = 0
         var mills = []
         for (var layer of board) {
-            for (var i = 0; i < 8; i++) {
+            for (var d = 0; d < 8; d++) {
+                // for (var d in layer) {
+                // d = Number(d)
                 var mill
-                if (i % 2 === 0) {
+                if (d % 2 === 0) {
                     //i = 0,2,4,6
                     //Checking mills on layers (even indexes)
-                    mill = isMill(player, layer[i], layer[(i + 1) % 8], layer[(i + 2) % 8])
+                    mill = isMill(player, layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8])
                 } else {
                     //i = 1,3,5,7
                     //Checking mills between layers (odd indexes)
-                    mill = isMill(player, board[0][i], board[1][i], board[2][i])
+                    mill = isMill(player, board[0][d], board[1][d], board[2][d])
                 }
                 if (mill) {
-                    if (player.isNewMill(mill)) {
+                    if (isNewMill(player, mill)) {
                         newMills++
                     }
-                    mills.push(mill)
+                    if (!mills.includes(mill)) {
+                        mills.push(mill)
+                    }
+
                 }
             }
         }
@@ -343,21 +403,12 @@ class Game {
             for (var dot of layer) {
                 var size = dot.size()
                 var r = dot.r
-                if(!dot.player) r *= 1.3
+                if (!dot.player) r *= 1.3
                 if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
                     return dot
                 }
             }
         }
-    }
-    getLayer(dot) {
-        for (var l in this.dots) {
-            if (this.dots[l].includes(dot)) {
-                return Number(l)
-            }
-        }
-        console.log("Error when getting layer")
-        return -1
     }
     updateAnimations() {
         for (var dot of this.movingAnimations) {
@@ -369,74 +420,162 @@ class Game {
         ANGLE += SPEED
         // ANGLE = ANGLE % PI
     }
+
     findBestMove() {
-        // var copyGrid = JSON.parse(JSON.stringify(this.grid));
-        // var cPlayerRed = CircularJSON.parse(CircularJSON.stringify(this.playerRed));
-        // var cPlayerBlue = CircularJSON.parse(CircularJSON.stringify(this.playerBlue));
-        // var cBoard = CircularJSON.parse(CircularJSON.stringify(this.dots));
-        console.log(this.playerRed)
-        var cPlayerRed = JSON.parse(JSON.stringify(this.playerRed));
-        console.log(cPlayerRed)
-        var cPlayerBlue = JSON.parse(JSON.stringify(this.playerBlue));
+        //Only allow this when on stage 1 and not on eating mode
+        if (this.eatMode) {
+            console.log("Bot can't eat yet")
+            return
+        }
+
+        var player = this.turn === this.playerRed ? deepClone(this.playerRed) : deepClone(this.playerBlue)
+        var oppPlayer = this.turn === this.playerRed ? deepClone(this.playerBlue) : deepClone(this.playerRed)
         var cBoard = deepClone(this.dots)
-        console.log(cBoard)
+
         let move
         let bestScore = -Infinity
-        var depth = 100
-        let result = minimax(cBoard, cPlayerRed, cPlayerBlue, depth, -Infinity, Infinity, true)
-        move = result[0]
-        bestScore = result[1]
-        // if (bestScore >= 100000000) break
-
-        // console.log("depth", depth, "best score", bestScore, "move", move, this.grid)
-
+        //this for loop is to prioritize earlier win or mill
+        for (var depth = 1; depth < 4; depth++) {
+            // var depth = 4
+            let result = minimax(cBoard, player, oppPlayer, depth, -Infinity, Infinity, true)
+            move = result[0]
+            bestScore = result[1]
+            if (bestScore >= 90) {
+                break
+            }
+        }
         //Play the best move
-        console.log("Suggesting", move, bestScore)
-        this.placeAChip(move)
+        if (move && move.length === 1) {
+            move = move[0]
+            console.log("Stage 1", "x", move.x, "y", move.y, "l", move.l, "score", bestScore)
+            return move
+        } else if (move && move.length === 2) {
+            var fromDot = move[0]
+            var toDot = move[1]
+            console.log("Stage 2", "from", [fromDot.l, fromDot.d], "to", [toDot.l, toDot.d], "score", bestScore)
+            return move
+        } else {
+            console.log("Couldn't find a move")
+        }
     }
 }
+function scoreWindow(window, player, oppPlayer) {
+    if (window.length !== 3) {
+        console.log("not 3 length window", window)
+    }
+    var value = 0
 
-function minimax(board, playerRed, playerBlue, depth, alpha, beta, isMaximizing) {
-    //Checking wins
-    // let blueCheck = game.checkNewMills(board, game.playerBlue)
-    // let redCheck = game.checkNewMills(board, game.playerRed)
-    // if (blueCheck !== undefined || redCheck !== undefined) {
-    //     if (yellowCheck) {
-    //         return [undefined, 100000000]
-    //     } else if (redCheck) {
-    //         return [undefined, -100000000]
-    //     } else if (yellowCheck === "tie" || redCheck === "tie") {
-    //         return [undefined, 0]
-    //     }
-    // } else if (depth === 0) {
-    //     return [undefined, scoreBoard(board, game.playerYellow)]
-    // }
-    if (depth === 0) {
-        return [undefined, scoreBoard(board, playerBlue, playerRed)]
+    var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
+    var emptyCount = window.filter(chip => !chip.player).length
+    var oppCount = window.filter(chip => chip.player && chip.player.name == oppPlayer.name).length
+    if (pieceCount + emptyCount + oppCount !== 3) {
+        console.log(pieceCount, emptyCount, oppCount, window)
+        console.log("Shouldn't happen?")
     }
 
+    //Mill
+    if (pieceCount === 3) value += 400
+    //OppMill
+    else if (oppCount === 3) value -= 300
+    //blocking opp mill
+    else if (oppCount === 2 && pieceCount === 1) value += 30
+    //almost mill
+    else if (pieceCount === 2 && emptyCount === 1) value += 4
+    //Opponent almost mill
+    else if (oppCount === 2 && emptyCount === 1) value -= 4
+
+    return value
+}
+function scoreBoard(board, player, oppPlayer) {
+    var value = 0
+
+    //Giving points for neighbour dots
+    for (var layer of board) {
+        for (var dot of layer) {
+            if (!dot.player) continue
+            if (dot.player.name == player.name) {
+                value += dot.neighbours.length * 2
+            } else {
+                value -= dot.neighbours.length * 2
+            }
+        }
+    }
+    for (var layer of board) {
+        for (var d = 0; d < 8; d++) {
+            d
+            var window
+            if (d % 2 === 0) {
+                //i = 0,2,4,6
+                //Checking window on layers (even indexes)
+                window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
+                value += scoreWindow(window, player, oppPlayer)
+            } else {
+                //i = 1,3,5,7
+                //Checking window between layers (odd indexes)
+                window = [board[0][d], board[1][d], board[2][d]]
+                value += scoreWindow(window, player, oppPlayer)
+            }
+        }
+    }
+
+    return value
+}
+function minimax(board, player, oppPlayer, depth, alpha, beta, isMaximizing) {
+    if (depth === 0) {
+        return [undefined, scoreBoard(board, player, oppPlayer)]
+    }
+    if (player.chipsToAdd !== 0 || oppPlayer.chipsToAdd !== 0) {
+        return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, isMaximizing)
+    } else {
+        if (player.chipCount === 3 || oppPlayer.chipCount === 3) {
+            //Checking wins
+            if (game.checkIfLost(board, oppPlayer)) {
+                console.log("winner")
+                return [undefined, 100000000]
+            } else if (game.checkIfLost(board, player)) {
+                console.log("loser")
+                return [undefined, -100000000]
+            }
+        }
+        return stage2MinMax(board, player, oppPlayer, depth, alpha, beta, isMaximizing)
+    }
+}
+function movePlayerTo(board, player, fromDot, toDot) {
+    board[toDot.l][toDot.d].player = player
+    board[fromDot.l][fromDot.d].player = undefined
+}
+function stage2MinMax(board, player, oppPlayer, depth, alpha, beta, isMaximizing) {
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
-        console.log(playerBlue.checkMovableDots(board))
-        for (var dot of playerBlue.checkMovableDots(board)) {
-            for (var nDot of dot.getNeighbours()) {
 
-                //Making the move
-                nDot.player = playerBlue
-                console.log("before clone",board)
+        for (var fromDot of game.checkMoveableDots(board, player)) {
+            //If player can fly, we check fromDot against every empty dot on the board
+            var neighbours
+            if (player.chipCount === 3) {
+                neighbours = game.getEmptyDots(board)
+            } else {
+                neighbours = fromDot.neighbours
+            }
+            for (var toDot of neighbours) {
+                //toDot has to be empty dot
+                if (toDot.player) continue
+
                 var cBoard = deepClone(board)
-                console.log("after clone",board)
-                let score = minimax(cBoard, playerRed, playerBlue, depth - 1, alpha, beta, false)[1]
-                // bestScore = max(score, bestScore)
+                var cPlayer = deepClone(player)
+                var cOppPlayer = deepClone(oppPlayer)
+                //Making the move
+                movePlayerTo(cBoard, cPlayer, fromDot, toDot)
+
+                let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, false)[1]
+
                 if (score > bestScore) {
                     bestScore = score
-                    bestMove = nDot
+                    bestMove = [fromDot, toDot]
                 }
                 alpha = max(bestScore, alpha)
                 if (alpha >= beta)
-                    break
-
+                    return [bestMove, bestScore]
             }
         }
         return [bestMove, bestScore]
@@ -444,51 +583,153 @@ function minimax(board, playerRed, playerBlue, depth, alpha, beta, isMaximizing)
         let bestScore = Infinity;
         let bestMove
 
-        for (var dot of  playerRed.checkMovableDots(board)) {
-            for (var nDot of dot.getNeighbours()) {
-
-                //Making the move
-                nDot.player = playerRed
+        for (var fromDot of game.checkMoveableDots(board, oppPlayer)) {
+            //If player can fly, we check fromDot against every empty dot on the board
+            var neighbours
+            if (oppPlayer.chipCount === 3) {
+                neighbours = game.getEmptyDots(board)
+            } else {
+                neighbours = fromDot.neighbours
+            }
+            for (var toDot of neighbours) {
+                //toDot has to be empty dot
+                if (toDot.player) continue
 
                 var cBoard = deepClone(board)
-                cBoard[column].push(game.playerRed.name)
-                let score = minimax(cBoard, playerRed, playerBlue, depth - 1, alpha, beta, true)[1]
-                // bestScore = min(score, bestScore);
+                var cPlayer = deepClone(player)
+                var cOppPlayer = deepClone(oppPlayer)
+                //Making the move
+                movePlayerTo(cBoard, cOppPlayer, fromDot, toDot)
+
+                let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, true)[1]
+
                 if (score < bestScore) {
                     bestScore = score
-                    bestMove = nDot
+                    bestMove = [fromDot, toDot]
                 }
                 beta = min(bestScore, beta)
                 if (alpha >= beta)
-                    break
-
+                    return [bestMove, bestScore]
             }
         }
         return [bestMove, bestScore]
     }
 }
-function scoreBoard(board, player, oppPlayer) {
-    var value = 0
 
-    //Checking for new mills
-    if (game.checkNewMills(board, player)) {
-        value += 100
-    } else if (game.checkNewMills(board, oppPlayer)) {
-        value -= 100
+function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, isMaximizing) {
+
+    if (isMaximizing) {
+        let bestScore = -Infinity
+        let bestMove
+
+        for (var dot of game.getEmptyDots(board)) {
+            var cBoard = deepClone(board)
+            var cPlayer = deepClone(player)
+            var cOppPlayer = deepClone(oppPlayer)
+            //Making the move
+            setPlayerTo(cBoard, cPlayer, dot)
+
+            let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, false)[1]
+
+            if (score > bestScore) {
+                bestScore = score
+                bestMove = [dot]
+            }
+            alpha = max(bestScore, alpha)
+            if (alpha >= beta)
+                break
+        }
+        return [bestMove, bestScore]
+    } else {
+        let bestScore = Infinity;
+        let bestMove
+
+        for (var dot of game.getEmptyDots(board)) {
+            var cBoard = deepClone(board)
+            var cPlayer = deepClone(player)
+            var cOppPlayer = deepClone(oppPlayer)
+            //Making the move
+            setPlayerTo(cBoard, cOppPlayer, dot)
+
+            let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, true)[1]
+
+            if (score < bestScore) {
+                bestScore = score
+                bestMove = [dot]
+            }
+            beta = min(bestScore, beta)
+            if (alpha >= beta)
+                break
+        }
+        return [bestMove, bestScore]
     }
-    return value
 }
 function pointInCircle(x, y, cx, cy, radius) {
     var distancesquared = (x - cx) * (x - cx) + (y - cy) * (y - cy);
     return distancesquared <= radius * radius;
 }
+//isMill does not check if dots are next to eachother
 function isMill(player, d1, d2, d3) {
-    if (d1.player === player && d2.player === player && d3.player === player) {
-        return new Mill(d1, d2, d3)
-    }
-    return undefined
 
+    //All dots must have a player
+    if (!d1.player || !d2.player || !d3.player) {
+        // console.log("dots included empty dot")
+        return undefined
+    }
+
+    //All dots must be unique
+    if (d1 === d2 || d2 === d3 || d1 === d3) {
+        // console.log("dots has duplicates")
+        return undefined
+    }
+
+    //All dots must have same player
+    //Have to compare player names cause players are deepcloned so player objects might not match
+    if (d1.player.name != player.name || d2.player.name != player.name || d3.player.name != player.name) {
+        // console.log("dots players didn't match")
+        return undefined
+    }
+
+    //Checking that one of the dots contains 2 of the other dots in its neighbours
+    //Aka, all dots are next to eachother
+    //d2 neighbours should always include d1/d3 cause its the middle dot?
+    if (!d2.neighbours.includes(d1) || !d2.neighbours.includes(d3)) {
+        console.table(d1)
+        console.table(d2)
+        console.table(d3)
+        console.log("dots were not next to eachother")
+        return undefined
+    }
+    // var dots = [d1,d2,d3]
+    // for(var dot of dots) {
+
+    // }
+
+    // return undefined
+    var mill = new Mill(d1, d2, d3)
+    // console.log("mill", mill)
+    return mill
 }
+function isNewMill(player, mill) {
+
+    for (var m of player.mills) {
+        if (areEqual(mill.dots, m.dots)) {
+            return false
+        }
+    }
+    return true
+}
+const areEqual = (first, second) => {
+    if (first.length !== second.length) {
+        return false;
+    };
+    for (let i = 0; i < first.length; i++) {
+        if (!second.includes(first[i])) {
+            return false;
+        };
+    };
+    return true;
+};
 function deepClone(obj) {
     var visitedNodes = [];
     var clonedCopy = [];
@@ -525,4 +766,13 @@ function deepClone(obj) {
         return item; // not object, not array, therefore primitive
     }
     return clone(obj);
+}
+function setPlayerTo(board, player, dot) {
+    // player = player.name == "blue" ? game.playerBlue : game.playerRed
+    for (var d of game.getEmptyDots(board)) {
+        if (d.l === dot.l && d.x === dot.x && d.y === dot.y) {
+            d.player = player
+            break
+        }
+    }
 }
