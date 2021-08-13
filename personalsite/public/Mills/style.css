@@ -6,6 +6,7 @@ html, body {
     align-items: center;
     justify-content: center;
     overscroll-behavior: contain;
+    /* background-image: url("./resources/img/background1.png"); */
   }
   canvas {
     display: block;
