@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 8
+const MAXCHIPCOUNT = 18
 const EASING = 0.15
 var ANGLE = 0.0
 var SPEED = 0.07
