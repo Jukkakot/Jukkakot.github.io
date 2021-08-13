@@ -4,11 +4,13 @@ class Dot {
         this.y = y
         this.l = l
         this.d = d
+        this.id = this.l.toString() + this.d.toString()
         this.suggested = false
         this.animLocX
         this.animLocY
         this.animTargetX
         this.animTargetY
+        this.animPlayer
         this.player
         this.r = this.player ? circleSize * 2 : circleSize
         this.highlight = false
@@ -17,6 +19,7 @@ class Dot {
         this.neighbours = []
         this.moving = false
         this.startChip = startChip
+       
     }
     //Returns dots where this dot can move to
     getNeighbours() {
@@ -205,11 +208,12 @@ class Dot {
     drawAnimation() {
         push()
         imageMode(CENTER);
-        image(this.player.img, this.animLocX, this.animLocY, this.r * 2, this.r * 2);
+        image(this.animPlayer.img, this.animLocX, this.animLocY, this.r * 2, this.r * 2);
         pop()
     }
     setTargetDot(prevDot) {
         this.player = prevDot.player
+        this.animPlayer = prevDot.player
 
         this.animLocX = prevDot.x * prevDot.size();
         this.animLocY = prevDot.y * prevDot.size();
@@ -238,6 +242,7 @@ class Dot {
             }
 
             if (this.animTargetX === this.animLocX && this.animLocY === this.animTargetY) {
+                this.player = this.animPlayer
 
                 this.animLocX = undefined
                 this.animLocY = undefined
@@ -248,6 +253,10 @@ class Dot {
                 var index = game.movingAnimations.indexOf(this)
 
                 game.movingAnimations.splice(index, 1)
+                //This is just to wait for all animations to finish before letting autoplay play another round
+                if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerBlue && !game.eatMode) {
+                    game.playRound(game.findBestMove())
+                }
             } else {
                 this.drawAnimation()
             }

@@ -15,7 +15,7 @@ var movableDot
 var redDot, blueDot
 var restartButton
 const defaultWidth = 800
-const defaultHeight = defaultWidth * 1.25
+const defaultHeight = 1100
 var DEBUG = false
 var AUTOPLAY = false
 function preload() {
@@ -28,13 +28,13 @@ function setup() {
 	restartButton.id("restartButton")
 	restartButton.mousePressed(() => restartPress())
 
-	// restartButton = createButton("Suggestion\n(r)")
-	// restartButton.id("suggestionButton")
-	// restartButton.mousePressed(() => start())
+	suggestionButton = createButton("Suggestion\n(s)")
+	suggestionButton.id("suggestionButton")
+	suggestionButton.mousePressed(() => suggestionPress())
 
-	// restartButton = createButton("BotPlay\n(r)")
-	// restartButton.id("restartButton")
-	// restartButton.mousePressed(() => start())
+	autoPlayButton = createButton("Autoplay\n(a)")
+	autoPlayButton.id("autoPlayButton")
+	autoPlayButton.mousePressed(() => autoPlayButtonPress())
 	start()
 	windowResized()
 }
@@ -44,18 +44,23 @@ function keyPressed(e) {
 	} else if (e.key === "b") {
 		if (game.eatMode) return
 		game.playRound(game.findBestMove())
-
 	} else if (e.key === "s") {
-		if (game.eatMode) return
-		game.setSuggestion(game.findBestMove())
+		suggestionPress()
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 	} else if (e.key === "a") {
-		AUTOPLAY = !AUTOPLAY
-		if (game.turn === game.playerBlue) {
-			if (game.eatMode) return
-			game.playRound(game.findBestMove())
-		}
+		autoPlayButtonPress()
+	}
+}
+function suggestionPress() {
+	if (game.eatMode) return
+	game.setSuggestion(game.findBestMove())
+}
+function autoPlayButtonPress() {
+	AUTOPLAY = !AUTOPLAY
+	if (game.turn === game.playerBlue) {
+		if (game.eatMode) return
+		game.playRound(game.findBestMove())
 	}
 }
 function restartPress() {
@@ -69,10 +74,20 @@ function start() {
 	game = new Game()
 	locked = false
 
-	restartButton.position(cnv.position().x, cnv.position().y + height)
+	restartButton.position(cnv.position().x, cnv.position().y)
 	restartButton.size(circleSize * 5, circleSize * 2)
 	restartButton.style('font-size', circleSize * 0.7 + "px")
 	restartButton.style('background-color', color(200, 200))
+
+	suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
+	suggestionButton.size(circleSize * 5, circleSize * 2)
+	suggestionButton.style('font-size', circleSize * 0.7 + "px")
+	suggestionButton.style('background-color', color(200, 200))
+	
+	autoPlayButton.position(cnv.position().x+ restartButton.width + suggestionButton.width, cnv.position().y)
+	autoPlayButton.size(circleSize * 5, circleSize * 2)
+	autoPlayButton.style('font-size', circleSize * 0.7 + "px")
+	autoPlayButton.style('background-color', color(200, 200))
 }
 function windowResized() {
 	scaledWidth = min(windowWidth, defaultWidth)
@@ -83,10 +98,20 @@ function windowResized() {
 	outBoxSize = min(width, height) - circleSize * 2
 	distance = min(width, height) * 0.28
 
-	restartButton.position(cnv.position().x, cnv.position().y + height)
+	restartButton.position(cnv.position().x, cnv.position().y )
 	restartButton.size(circleSize * 5, circleSize * 2)
 	restartButton.style('font-size', circleSize * 0.7 + "px")
 	restartButton.style('background-color', color(200, 200))
+
+	suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
+	suggestionButton.size(circleSize * 5, circleSize * 2)
+	suggestionButton.style('font-size', circleSize * 0.7 + "px")
+	suggestionButton.style('background-color', color(200, 200))
+
+	autoPlayButton.position(cnv.position().x+ restartButton.width + suggestionButton.width, cnv.position().y)
+	autoPlayButton.size(circleSize * 5, circleSize * 2)
+	autoPlayButton.style('font-size', circleSize * 0.7 + "px")
+	autoPlayButton.style('background-color', color(200, 200))
 
 
 }
@@ -161,8 +186,7 @@ function draw() {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
 	}
-
-
+	autoPlayButton.style('background-color', AUTOPLAY ? color(200,0,0) : color(0,200,0))
 	push()
 	textAlign(CENTER)
 	if (AUTOPLAY) {
@@ -174,7 +198,7 @@ function draw() {
 	textSize(circleSize)
 	fill(0)
 
-	text(floor(fps) + " fps", 0, -height * 0.45)
+	text(floor(fps) + " fps", width/2 - circleSize*2, -height * 0.45)
 
 	if (DEBUG) {
 		//Mouse coords
