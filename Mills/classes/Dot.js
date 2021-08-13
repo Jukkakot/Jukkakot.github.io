@@ -19,7 +19,7 @@ class Dot {
         this.neighbours = []
         this.moving = false
         this.startChip = startChip
-       
+        this.visible = true
     }
     //Returns dots where this dot can move to
     getNeighbours() {
@@ -35,6 +35,9 @@ class Dot {
     }
 
     draw(eatMode) {
+        //visibility is used for eaten chips
+        if(!this.visible) return
+        
         // this.player = game.playerBlue
         // var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()

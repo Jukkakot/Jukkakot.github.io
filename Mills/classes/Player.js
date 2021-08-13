@@ -9,6 +9,8 @@ class Player {
         this.millDots = []
         this.movableDots = []
         this.startChips = []
+        this.eatenChips = []
+        this.eatenChipsCount = 0
     }
     drawMills() {
         this.mills.forEach(mill => mill.draw())

@@ -12,7 +12,7 @@ class Game {
         this.winner
         this.movingAnimations = []
         this.eatableAnimations = []
-        this.initStartChips()
+        this.initExtraChips()
         this.suggestion
     }
     getEmptyDots(board) {
@@ -54,6 +54,7 @@ class Game {
             this.drawRect(outBoxSize - distance * layers)
         }
         this.drawStartChips()
+        this.drawEatenChips()
         noStroke()
         // circle(0, 0, circleSize * 3)
         // tint(this.turn.color)
@@ -134,16 +135,33 @@ class Game {
         }
         return dots
     }
-    initStartChips() {
+    //Initializes start chips and eaten chips
+    initExtraChips() {
         for (var i = 0; i < MAXCHIPCOUNT / 2; i++) {
+            //Start chips
             var dot = new Dot(-1.4 + i / 10, -1.7, -1, -1, true)
             dot.player = this.playerBlue
             this.playerBlue.startChips.push(dot)
 
-            var dot = new Dot(1.4 - i / 10, -1.7, -1, -1, true)
+            dot = new Dot(1.4 - i / 10, -1.7, -1, -1, true)
             dot.player = this.playerRed
             this.playerRed.startChips.push(dot)
+
+            //Eaten chips
+            dot = new Dot(-1.4 + i / 10, 1.7, -1, -1, true)
+            dot.player = this.playerBlue
+            dot.visible = false
+            this.playerBlue.eatenChips.push(dot)
+
+            dot = new Dot(1.4 - i / 10, 1.7, -1, -1, true)
+            dot.player = this.playerRed
+            dot.visible = false
+            this.playerRed.eatenChips.push(dot)
         }
+    }
+    drawEatenChips() {
+        this.playerBlue.eatenChips.forEach(chip => chip.draw())
+        this.playerRed.eatenChips.forEach(chip => chip.draw())
     }
     drawStartChips() {
         this.playerBlue.startChips.forEach(chip => chip.draw())
@@ -166,22 +184,7 @@ class Game {
         if (this.eatMode) {
             if (this.turn.canEat(dot)) {
                 //EATING CHIPS
-
-                dot.player.chipCount--
-
-                if (dot.player.chipCount < 3 && this.gameStarted) {
-                    // console.log(thus.turn.name, "won!")
-                    this.setWinner(this.turn)
-                }
-
-                dot.player = undefined
-                this.eatMode = false
-                this.eatableAnimations = []
-
-                this.switchTurn()
-
-                //Checking the mills again incase had to eat from a mill
-                this.checkNewMills(this.dots, this.turn)
+                this.eatChip(dot)
             }
             return
         } else if (this.gameStarted) {
@@ -212,6 +215,26 @@ class Game {
             //Placing chips (Stage 1)
             this.playRound(dot)
         }
+    }
+    eatChip(dot) {
+        dot.player.chipCount--
+        if (dot.player.chipCount < 3 && this.gameStarted) {
+            // console.log(thus.turn.name, "won!")
+            this.setWinner(this.turn)
+        }
+       
+
+        this.turn.eatenChips[this.turn.eatenChipsCount].setTargetDot(dot)
+        this.turn.eatenChips[this.turn.eatenChipsCount++].visible = true
+        
+        this.eatMode = false
+        this.eatableAnimations = []
+        dot.player = undefined
+        
+        this.switchTurn()
+
+        //Checking the mills again incase had to eat from (at the time) opponents  mill
+        this.checkNewMills(this.dots, this.turn)
     }
     clearSuggestion() {
         if (!this.suggestion) return
@@ -377,7 +400,7 @@ class Game {
                 if (mill) {
                     if (isNewMill(player, mill)) {
                         newMills++
-                    } 
+                    }
                     if (!mills.includes(mill)) {
                         mills.push(mill)
                     }
