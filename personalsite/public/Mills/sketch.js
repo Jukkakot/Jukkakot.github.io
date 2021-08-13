@@ -1,5 +1,5 @@
 const MAXCHIPCOUNT = 18
-const EASING = 0.1
+const EASING = 0.5
 var ANGLE = 0.0
 var SPEED = 0.07
 var outBoxSize
