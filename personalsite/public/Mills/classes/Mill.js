@@ -2,6 +2,9 @@ class Mill {
     constructor(d1, d2, d3) {
         this.dots = [d1, d2, d3]
         this.player = d1.player
+        this.id =   d1.l.toString() + d1.d.toString() + 
+                    d2.l.toString() + d2.d.toString() + 
+                    d3.l.toString() + d3.d.toString()
     }
     draw() {
         push()

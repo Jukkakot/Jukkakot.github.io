@@ -214,18 +214,18 @@ class Game {
         }
     }
     clearSuggestion() {
-        if(!this.suggestion) return
-        for(var dot of this.suggestion) {
+        if (!this.suggestion) return
+        for (var dot of this.suggestion) {
             this.dots[dot.l][dot.d].suggested = false
         }
         this.suggestion = undefined
     }
     setSuggestion(move) {
         this.clearSuggestion()
-        
-        if(this.gameStarted) {
+
+        if (this.gameStarted) {
             this.suggestion = move
-            for(var dot of move) {
+            for (var dot of move) {
                 dot = this.dots[dot.l][dot.d]
                 dot.suggested = true
             }
@@ -234,17 +234,11 @@ class Game {
             dot = this.dots[move.l][move.d]
             dot.suggested = true
         }
-        
-
-        
-
     }
-    placeChip(cDot) {
-        // this.clearSuggestedDot()
-
-        var dot = this.dots[cDot.l][cDot.d]
-
-        setPlayerTo(this.dots, this.turn, dot)
+    placeChip(dot) {
+        dot = this.dots[dot.l][dot.d]
+        dot.player = this.turn
+        // setPlayerTo(this.dots, this.turn, dot)
         this.turn.chipCount++
         this.turn.chipsToAdd--
 
@@ -319,19 +313,18 @@ class Game {
         }
     }
     playRound(move) {
+        if (this.movingAnimations.length > 0) {
+            console.log("no spam clicking")
+            return
+        }
         if (this.eatMode) {
+            return
             //TODO
             //this.eatChip(move)
         } else if (!this.gameStarted && this.turn.chipsToAdd > 0) {
             this.placeChip(move)
         } else {
             this.moveChip(move)
-        }
-        //unhighlighting everything at the end
-        for (var layer of this.dots) {
-            for (var d of layer) {
-                d.highlight = false
-            }
         }
     }
     moveChip(move) {
@@ -343,6 +336,12 @@ class Game {
 
         toDot.setTargetDot(fromDot)
         this.switchTurn()
+        // //unhighlighting everything at the end
+        // for (var layer of this.dots) {
+        //     for (var d of layer) {
+        //         d.highlight = false
+        //     }
+        // }
     }
     checkIfLost(board, player) {
         if (player.chipCount < 3 || !this.checkIfCanMove(player, board)) {
@@ -364,22 +363,21 @@ class Game {
         var mills = []
         for (var layer of board) {
             for (var d = 0; d < 8; d++) {
-                // for (var d in layer) {
-                // d = Number(d)
                 var mill
                 if (d % 2 === 0) {
-                    //i = 0,2,4,6
+                    //d = 0,2,4,6
                     //Checking mills on layers (even indexes)
                     mill = isMill(player, layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8])
-                } else {
-                    //i = 1,3,5,7
+                } else if (layer[d].l === 0) {
+                    //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
+                    //d = 1,3,5,7
                     //Checking mills between layers (odd indexes)
                     mill = isMill(player, board[0][d], board[1][d], board[2][d])
                 }
                 if (mill) {
                     if (isNewMill(player, mill)) {
                         newMills++
-                    }
+                    } 
                     if (!mills.includes(mill)) {
                         mills.push(mill)
                     }
@@ -627,8 +625,8 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, isMaximizing
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
             //Making the move
-            setPlayerTo(cBoard, cPlayer, dot)
-
+            // setPlayerTo(cBoard, cPlayer, dot)
+            cBoard[dot.l][dot.d].player = cPlayer
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, false)[1]
 
             if (score > bestScore) {
@@ -649,8 +647,8 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, isMaximizing
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
             //Making the move
-            setPlayerTo(cBoard, cOppPlayer, dot)
-
+            // setPlayerTo(cBoard, cOppPlayer, dot)
+            cBoard[dot.l][dot.d].player = cOppPlayer
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, true)[1]
 
             if (score < bestScore) {
@@ -700,36 +698,16 @@ function isMill(player, d1, d2, d3) {
         console.log("dots were not next to eachother")
         return undefined
     }
-    // var dots = [d1,d2,d3]
-    // for(var dot of dots) {
-
-    // }
-
-    // return undefined
-    var mill = new Mill(d1, d2, d3)
-    // console.log("mill", mill)
-    return mill
+    return new Mill(d1, d2, d3)
 }
 function isNewMill(player, mill) {
-
     for (var m of player.mills) {
-        if (areEqual(mill.dots, m.dots)) {
+        if (mill.id == m.id) {
             return false
         }
     }
     return true
 }
-const areEqual = (first, second) => {
-    if (first.length !== second.length) {
-        return false;
-    };
-    for (let i = 0; i < first.length; i++) {
-        if (!second.includes(first[i])) {
-            return false;
-        };
-    };
-    return true;
-};
 function deepClone(obj) {
     var visitedNodes = [];
     var clonedCopy = [];
@@ -766,13 +744,4 @@ function deepClone(obj) {
         return item; // not object, not array, therefore primitive
     }
     return clone(obj);
-}
-function setPlayerTo(board, player, dot) {
-    // player = player.name == "blue" ? game.playerBlue : game.playerRed
-    for (var d of game.getEmptyDots(board)) {
-        if (d.l === dot.l && d.x === dot.x && d.y === dot.y) {
-            d.player = player
-            break
-        }
-    }
 }
