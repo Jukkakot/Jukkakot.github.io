@@ -218,11 +218,6 @@ class Game {
     }
     eatChip(dot) {
         dot.player.chipCount--
-        if (dot.player.chipCount < 3 && this.gameStarted) {
-            // console.log(thus.turn.name, "won!")
-            this.setWinner(this.turn)
-        }
-       
 
         this.turn.eatenChips[this.turn.eatenChipsCount].setTargetDot(dot)
         this.turn.eatenChips[this.turn.eatenChipsCount++].visible = true
@@ -324,12 +319,20 @@ class Game {
             this.eatMode = true
             return
         }
-
+        var oppPlayer = this.turn === this.playerRed ? this.playerBlue : this.playerRed
+        if (oppPlayer.chipCount < 3 && this.gameStarted) {
+            // console.log(thus.turn.name, "won!")
+            this.setWinner(this.turn)
+             //Checking the mills again incase had to eat from (at the time) opponents  mill
+            this.checkNewMills(this.dots, oppPlayer)
+            return
+        }
         this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
         //Checking if opponent can move
         if (this.gameStarted && !this.checkIfCanMove(this.turn, this.dots)) {
             var oppPlayer = this.turn === this.playerRed ? this.playerBlue : this.playerRed
             this.setWinner(oppPlayer)
+            return
         }
         if (AUTOPLAY && this.turn === this.playerBlue && !this.eatMode) {
             this.playRound(this.findBestMove())
@@ -443,6 +446,14 @@ class Game {
     }
 
     findBestMove() {
+        if(this.movingAnimations.length > 0) {
+            console.log("Waiting for animations to end")
+            return
+        }
+        if(this.winner) {
+            console.log(this.winner.name,"won the game")
+            return
+        }
         //Only allow this when on stage 1 and not on eating mode
         if (this.eatMode) {
             console.log("Bot can't eat yet")
