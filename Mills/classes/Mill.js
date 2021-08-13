@@ -17,9 +17,6 @@ class Mill {
 
         pop()
     }
-    isSame(mill) {
-        return areEqual(mill.dots, this.dots)
-    }
     contain(dot) {
         for (var d of this.dots) {
             if (dot === d) {

@@ -12,7 +12,7 @@ var mX, mY
 var fps
 var locked
 var movableDot
-var redDot, blueDot
+var redDot, blueDot,backgroundImg,cursorImg
 var restartButton
 var suggestionButton
 var autoPlayButton
@@ -21,8 +21,10 @@ const defaultHeight = 1100
 var DEBUG = false
 var AUTOPLAY = false
 function preload() {
-	redDot = loadImage("./resources/img/redDot.png")
-	blueDot = loadImage("./resources/img/blueDot.png")
+	redDot = loadImage("./resources/img/darkDot2.png")
+	blueDot = loadImage("./resources/img/lightWoodDot.png")
+	backgroundImg = loadImage("./resources/img/background2.jpg")
+	// cursorImg = loadImage("./resources/img/cursor.png")
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultHeight);
@@ -44,7 +46,6 @@ function keyPressed(e) {
 	if (e.key === "r") {
 		restartPress()
 	} else if (e.key === "b") {
-		if (game.eatMode) return
 		game.playRound(game.findBestMove())
 	} else if (e.key === "s") {
 		suggestionPress()
@@ -55,20 +56,17 @@ function keyPressed(e) {
 	}
 }
 function suggestionPress() {
-	if (game.eatMode) return
 	game.setSuggestion(game.findBestMove())
 }
 function autoPlayButtonPress() {
 	AUTOPLAY = !AUTOPLAY
 	if (game.turn === game.playerBlue) {
-		if (game.eatMode) return
 		game.playRound(game.findBestMove())
 	}
 }
 function restartPress() {
 	start()
 	if (AUTOPLAY && game.turn === game.playerBlue) {
-		if (game.eatMode) return
 		game.playRound(game.findBestMove())
 	}
 }
@@ -169,8 +167,9 @@ function mouseReleased() {
 	locked = false
 }
 function draw() {
+	background(backgroundImg)
 	if (frameCount === 1) windowResized()
-	background(150)
+	// background(150)
 	translate(width / 2, height / 2)
 	mX = mouseX - width / 2
 	mY = mouseY - height / 2
