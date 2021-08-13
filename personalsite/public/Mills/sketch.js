@@ -14,6 +14,8 @@ var locked
 var movableDot
 var redDot, blueDot
 var restartButton
+var suggestionButton
+var autoPlayButton
 const defaultWidth = 800
 const defaultHeight = 1100
 var DEBUG = false
@@ -83,8 +85,8 @@ function start() {
 	suggestionButton.size(circleSize * 5, circleSize * 2)
 	suggestionButton.style('font-size', circleSize * 0.7 + "px")
 	suggestionButton.style('background-color', color(200, 200))
-	
-	autoPlayButton.position(cnv.position().x+ restartButton.width + suggestionButton.width, cnv.position().y)
+
+	autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
 	autoPlayButton.size(circleSize * 5, circleSize * 2)
 	autoPlayButton.style('font-size', circleSize * 0.7 + "px")
 	autoPlayButton.style('background-color', color(200, 200))
@@ -98,7 +100,7 @@ function windowResized() {
 	outBoxSize = min(width, height) - circleSize * 2
 	distance = min(width, height) * 0.28
 
-	restartButton.position(cnv.position().x, cnv.position().y )
+	restartButton.position(cnv.position().x, cnv.position().y)
 	restartButton.size(circleSize * 5, circleSize * 2)
 	restartButton.style('font-size', circleSize * 0.7 + "px")
 	restartButton.style('background-color', color(200, 200))
@@ -108,7 +110,7 @@ function windowResized() {
 	suggestionButton.style('font-size', circleSize * 0.7 + "px")
 	suggestionButton.style('background-color', color(200, 200))
 
-	autoPlayButton.position(cnv.position().x+ restartButton.width + suggestionButton.width, cnv.position().y)
+	autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
 	autoPlayButton.size(circleSize * 5, circleSize * 2)
 	autoPlayButton.style('font-size', circleSize * 0.7 + "px")
 	autoPlayButton.style('background-color', color(200, 200))
@@ -116,7 +118,7 @@ function windowResized() {
 
 }
 function touchStarted(e) {
-	if (e.target.id !== "restartButton") {
+	if (e.target.id !== "restartButton" && e.target.id !== "suggestionButton" && e.target.id !== "autoPlayButton") {
 		//Disables double clicking issues when placing chips
 		e.preventDefault()
 	}
@@ -186,7 +188,7 @@ function draw() {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
 	}
-	autoPlayButton.style('background-color', AUTOPLAY ? color(200,0,0) : color(0,200,0))
+	autoPlayButton.style('background-color', AUTOPLAY ? color(200, 0, 0) : color(0, 200, 0))
 	push()
 	textAlign(CENTER)
 	if (AUTOPLAY) {
@@ -198,7 +200,7 @@ function draw() {
 	textSize(circleSize)
 	fill(0)
 
-	text(floor(fps) + " fps", width/2 - circleSize*2, -height * 0.45)
+	text(floor(fps) + " fps", width / 2 - circleSize * 2, -height * 0.45)
 
 	if (DEBUG) {
 		//Mouse coords
