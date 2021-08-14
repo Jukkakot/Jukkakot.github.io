@@ -71,7 +71,7 @@ class Dot {
                 this.r = circleSize * 2.6
                 push()
                 imageMode(CENTER);
-                // tint(100)
+                tint(100) 
                 image(game.turn.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
 
                 pop()

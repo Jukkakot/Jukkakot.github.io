@@ -12,18 +12,20 @@ var mX, mY
 var fps
 var locked
 var movableDot
-var redDot, blueDot,backgroundImg,cursorImg
+var redDot, blueDot, backgroundImg, cursorImg, bAndwDotImg
 var restartButton
 var suggestionButton
 var autoPlayButton
 const defaultWidth = 800
 const defaultHeight = 1100
+const ASPECTRATIO = defaultHeight / defaultWidth
 var DEBUG = false
 var AUTOPLAY = false
 function preload() {
 	redDot = loadImage("./resources/img/darkDot2.png")
 	blueDot = loadImage("./resources/img/lightWoodDot.png")
 	backgroundImg = loadImage("./resources/img/background2.jpg")
+	bAndwDotImg = loadImage("./resources/img/blackAndWhiteDot.png")
 	// cursorImg = loadImage("./resources/img/cursor.png")
 }
 function setup() {
@@ -51,6 +53,10 @@ function keyPressed(e) {
 		suggestionPress()
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
+		if(DEBUG) {
+			console.log("Light Wood",scoreBoard(game.dots, game.playerBlue, game.playerRed))
+			console.log("Dark Wood",scoreBoard(game.dots, game.playerRed, game.playerBlue))
+		}
 	} else if (e.key === "a") {
 		autoPlayButtonPress()
 	}
@@ -94,9 +100,9 @@ function windowResized() {
 	scaledHeight = min(windowHeight, defaultHeight)
 	cnv.resize(scaledWidth, scaledHeight)
 
-	circleSize = floor(min(width, height) / 30)
-	outBoxSize = min(width, height) - circleSize * 2
-	distance = min(width, height) * 0.28
+	circleSize = floor(min(width, height / ASPECTRATIO) / 30)
+	outBoxSize = min(width, height / ASPECTRATIO) - circleSize * 2.5
+	distance = min(width, height / ASPECTRATIO) * 0.28
 
 	restartButton.position(cnv.position().x, cnv.position().y)
 	restartButton.size(circleSize * 5, circleSize * 2)
@@ -205,7 +211,7 @@ function draw() {
 		//Mouse coords
 		fill(0)
 		text(mX + "," + mY, 0, -height * 0.42)
-		// // Show mouse / touch location no screen
+		// Show mouse / touch location no screen
 		stroke(255, 0, 255)
 		strokeWeight(circleSize)
 		point(mX, mY)

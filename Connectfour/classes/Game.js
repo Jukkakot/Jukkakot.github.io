@@ -243,13 +243,14 @@ class Game {
         // var copyGrid = JSON.parse(JSON.stringify(this.grid));
         let move = floor(random(7))
         let bestScore = -Infinity
-        for (var depth = 1; depth < 6; depth++) {
+        for (var depth = 1; depth < 7; depth++) {
             let result = minimax(this.grid, depth, -Infinity, Infinity, true)
             move = result[0]
             bestScore = result[1]
+            console.log("depth", depth, "best score", bestScore, "move", move)
             if (bestScore >= 100000000) break
         }
-        console.log("depth", depth, "best score", bestScore, "move", move, this.grid)
+        
         if (bestScore <= -100000000) {
             //Finding random column to play if ai knows its going to lose
             //otherwise it kind of gives up and just plays the first non full column (Which is boring)
