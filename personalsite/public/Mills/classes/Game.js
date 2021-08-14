@@ -293,7 +293,7 @@ class Game {
 
         var dot = this.getDot(mX, mY)
         if (dot) {
-            if(this.gameStarted && dot.player === this.turn) {
+            if (this.gameStarted && dot.player === this.turn) {
                 //Moving chips
                 cursor(MOVE)
             } else {
@@ -315,21 +315,21 @@ class Game {
 
     }
     checkIfCanMove(player, board) {
-        var movableDots = this.checkMoveableDots(board, player)
+        var movableDots = this.getMoveableDots(board, player)
         player.movableDots = movableDots
         return movableDots.length > 0
     }
-    checkMoveableDots(board, player) {
+    getMoveableDots(board, player) {
         var movableDots = []
         for (var layer of board) {
             for (var dot of layer) {
-
                 //Check if player has 3 chips left or dots neighbours has empty dot
                 if (dot.player && dot.player.name == player.name && (player.chipCount === 3 || dot.neighbours.some(nDot => !nDot.player))) {
                     movableDots.push(dot)
                 }
             }
         }
+        player.movableDots = movableDots
         return movableDots
     }
     switchTurn() {
@@ -362,15 +362,8 @@ class Game {
         }
     }
     playRound(move) {
-        if (this.movingAnimations.length > 0) {
-            console.log("no spam clicking")
-            return
-        }
         //This is just to prevent an error happening
-        if (!move) {
-            console.log(move, "problem?")
-            return
-        }
+        if (!move) return
         var type = move[1]
         var move = move[0]
 
@@ -403,13 +396,6 @@ class Game {
         //         d.highlight = false
         //     }
         // }
-    }
-    checkIfLost(board, player) {
-        if (player.chipCount < 3 || !this.checkIfCanMove(player, board)) {
-            return true
-        } else {
-            return false
-        }
     }
     setWinner(player) {
         this.winner = player
@@ -446,7 +432,6 @@ class Game {
                 }
             }
         }
-
         //Replacing player mills with currently found mills 
         //(This will remove old mills)
         player.mills = mills
@@ -480,20 +465,24 @@ class Game {
         // ANGLE = ANGLE % PI
     }
     getEatableDots(board, player) {
+        //Updating player.mills array
+        game.checkNewMills(board, player)
         var dotsInMill = this.getPlayerMillDots(player)
         var allDots = this.getPlayerDots(board, player)
         var eatableDots = []
 
         //if there is same amount if dots in mills as total player dots, then all of them are eatable
         if (dotsInMill.length === allDots.length) {
+            console.log("All dots are eatable")
             return allDots
         } else {
             //Otherwise have to look for the dots that are not in mills
             for (var dot of allDots) {
-                if (!dotsInMill.includes(dot)) {
+                if (!dotsInMill.some(chip => chip.id == dot.id)) {
                     eatableDots.push(dot)
                 }
             }
+            console.log("returning eatable dots")
             return eatableDots
         }
 
@@ -513,8 +502,10 @@ class Game {
     getPlayerMillDots(player) {
         var dots = []
         for (var mill of player.mills) {
-            for (var dot of mill.dots) {
-                if (!dots.includes(dot)) dots.push(dot)
+            for (var mDot of mill.dots) {
+                if (!dots.some(dot => dot.id == mDot.id)) {
+                    dots.push(mDot)
+                }
             }
         }
         return dots
@@ -528,25 +519,26 @@ class Game {
             console.log(this.winner.name, "won the game")
             return
         }
+
         var player = this.turn === this.playerRed ? deepClone(this.playerRed) : deepClone(this.playerBlue)
         var oppPlayer = this.turn === this.playerRed ? deepClone(this.playerBlue) : deepClone(this.playerRed)
         var cBoard = deepClone(this.dots)
-
+        var stage = getStage(player)
+        console.log("stage", stage)
         let move
         let bestScore = -Infinity
         let type
         //this loop is to prioritize earlier good move (Like winning or making a mill)
-        // for (var depth = 1; depth < 4; depth++) {
-        var depth = 4
-        let result = minimax(cBoard, player, oppPlayer, depth, -Infinity, Infinity, this.eatMode, true)
-        move = result[0]
-        bestScore = result[1]
-        type = result[2]
-        // if (bestScore >= 200) {
-        //     console.log("found early good move")
-        //     break
-        // }
-        // }
+        for (var depth = 1; depth < 3; depth++) {
+            var depth = 2
+            let result = minimax(cBoard, player, oppPlayer, depth, -Infinity, Infinity, this.eatMode, true)
+            move = result[0]
+            bestScore = result[1]
+            type = result[2]
+            if (bestScore >= 100000000) {
+                break
+            }
+        }
         if (!move) {
             console.log("Couldn't find a move")
             return
@@ -566,49 +558,196 @@ class Game {
         return [move, type]
     }
 }
-function scoreWindow(window, player, oppPlayer) {
-    if (window.length !== 3) {
-        console.log("not 3 length window", window)
-    }
-    var value = 0
-
+function scoreWindow(board, window, player, oppPlayer, scoreObject) {
     var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
     var emptyCount = window.filter(chip => !chip.player).length
     var oppCount = window.filter(chip => chip.player && chip.player.name == oppPlayer.name).length
-
-    if (pieceCount + emptyCount + oppCount !== 3) {
-        console.log(pieceCount, emptyCount, oppCount, window)
-        console.log("Shouldn't happen?")
+    var stage = getStage(player)
+    switch (stage) {
+        case (1):
+            return stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject)
+        case (2):
+            return stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject)
+        case (3):
+            return stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject)
+        default:
+            console.log("Player has won or lost?")
     }
+}
+function stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) {
+    var value = 0
 
     //Mill
-    if (pieceCount === 3) value += 400
-    //OppMill
-    else if (oppCount === 3) value -= 300
+    if (pieceCount === 3) {
+        scoreObject.s1.mill++
+        value += 1000
+    }
     //blocking opp mill
-    else if (oppCount === 2 && pieceCount === 1) value += 100
+    else if (oppCount === 2 && pieceCount === 1) {
+        scoreObject.s1.blockOppMill++
+        value += 200
+    }
     //almost mill
-    else if (pieceCount === 2 && emptyCount === 1) value += 50
-    //Opponent almost mill
-    else if (oppCount === 2 && emptyCount === 1) value -= 50
+    else if (pieceCount === 2 && emptyCount === 1) {
+        scoreObject.s1.almostMill++
+        value += 50
+    }
+    return value
+}
+function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) {
+    var value = 0
+    var emptyDot
+    var playerDots = window.filter(chip => chip.player && chip.player.name == player.name)
+    if (emptyCount === 1) {
+        emptyDot = window.filter(chip => !chip.player)[0]
+    }
+    var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
+    var oppStage = getStage(oppPlayer)
+    //Mill
+    if (pieceCount === 3) {
+        scoreObject.s2.mill++
+        value += 1000
+    }
+    //Syhky miilu is finnish and means double mill
+    //which happens when you have 2 mills next to eachother and can get a mill every turn
+    else if (pieceCount === 2 && emptyCount === 1 &&
+        emptyDot.neighbours.some(dot => dot.player && dot.player.name == player.name &&
+            !playerDots.some(pDot => pDot.id == dot.id) &&
+            player.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
+        scoreObject.s2.doubleMill++
+        value += 3000
+    }
+    //Opponent mill is blocked from opening
+    else if (oppCount === 3 && oppStage === 2 &&
+        !oppDots.some(dot => dot.neighbours.some(chip => !chip.player))) {
+        scoreObject.s2.blockOppMillStuck++
+        value += 900
+    }
+    //blocking opp mill stage 3
+    else if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
+        scoreObject.s2.blockOppMillStage3++
+        value += 900
+    }
+    //blocking opp mill stage 2
+    else if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
+        playerDots[0].neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
+            !oppDots.some(chip => chip.id == dot.id))) {
+        scoreObject.s2.blockOppMillStage2++
+        value += 900
+    }
+    else if (pieceCount === 2 && emptyCount === 1) {
+        //Checking that the empty dot does not have opponent player dot in neighbour dots and
+        //that it has one own chips in them
+        if (!emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
+            emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name &&
+                !playerDots.some(dot => dot.id == chip.id))) {
+            //"safe" Open mill as in opponent player cant block it on next move 
+            scoreObject.s2.safeOpenMill++
+            value += 800
+        }
+    }
+    // else if (oppCount === 2 && emptyCount === 1) {
+    //     if (emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
+    //         !oppDots.some(dot => dot.id == chip.id)) &&
+    //         !emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name)) {
+    //         //opponent open safe mill
+    //         //as in i cant block the mill
+    //         scoreObject.s2.oppSafeOpenMill++
+    //         value -= 300
+    //     }
+    // }
+
 
     return value
 }
-function scoreBoard(board, player, oppPlayer) {
+function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) {
     var value = 0
+    var emptyDot
+    var oppStage = getStage(oppPlayer)
+    var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
+    if (emptyCount === 1) {
+        emptyDot = window.filter(chip => !chip.player)[0]
+    }
+    var playerDot
+    if (pieceCount === 1) {
+        playerDot = window.filter(chip => chip.player && chip.player.name == player.name)[0]
+    }
+    //Mill
+    if (pieceCount === 3) {
+        scoreObject.s3.mill++
+        value += 1000
+    }
+    //blocking opp mill when opp isnt on stage 3
+    else if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
+        playerDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
+            !oppDots.some(dot => dot.id == chip.id))) {
+        scoreObject.s3.blockOppMillStage2++
+        value += 200
+    }
+    else if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
+        scoreObject.s3.blockOppMillStage3++
+        value += 200
+    }
+    //almost mill
+    else if (pieceCount === 2 && emptyCount === 1) {
+        scoreObject.s3.almostMill++
+        value += 50
+    }
 
-    //Giving points for neighbour dots
-    for (var layer of board) {
-        for (var dot of layer) {
-            if (!dot.player) continue
-            if (dot.player.name == player.name) {
-                value += dot.neighbours.length
-            }
-            //  else {
-            //     value -= dot.neighbours.length
-            // }
+    return value
+}
+function getStage(player) {
+    if (player.chipsToAdd > 0) {
+        return 1
+    } else if (player.chipCount === 3) {
+        return 3
+    } else if (player.chipsToAdd === 0) {
+        return 2
+    } else {
+        console.log("returning 0 stage")
+        return 0
+    }
+}
+function scoreBoard(board, player, oppPlayer) {
+    //Object to store info about where the different points for each board is coming from
+    //Helpful for debugging
+    var scoreObject = {
+        def: {
+            neighbours: 0,
+        },
+        s1: {
+            mill: 0,
+            blockOppMill: 0,
+            almostMill: 0
+        },
+        s2: {
+            mill: 0,
+            doubleMill: 0,
+            blockOppMillStage2: 0,
+            blockOppMillStage3: 0,
+            safeOpenMill: 0,
+            blockOppMillStuck: 0
+        },
+        s3: {
+            mill: 0,
+            blockOppMillStage2: 0,
+            blockOppMillStage3: 0,
+            almostMill: 0,
         }
     }
+    var value = 0
+    if (getStage(player) === 1) {
+        //Giving points for each neighbour dot of players dots
+        for (var dot of game.getPlayerDots(board, player)) {
+            scoreObject.def.neighbours += dot.neighbours.length
+            value += dot.neighbours.length
+        }
+    } else {
+        //Stage 2 & 3
+        //Giving points from each moveable dot
+        // value += game.getMoveableDots(board, player).length * 5
+    }
+
     for (var layer of board) {
         for (var d = 0; d < 8; d++) {
             var window
@@ -616,39 +755,74 @@ function scoreBoard(board, player, oppPlayer) {
                 //d = 0,2,4,6
                 //Checking window on layers (even indexes)
                 window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
-                value += scoreWindow(window, player, oppPlayer)
+                value += scoreWindow(board, window, player, oppPlayer, scoreObject)
             } else if (layer[d].l === 0) {
                 //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
                 //d = 1,3,5,7
                 //Checking window between layers (odd indexes)
                 window = [board[0][d], board[1][d], board[2][d]]
-                value += scoreWindow(window, player, oppPlayer)
+                value += scoreWindow(board, window, player, oppPlayer, scoreObject)
             }
         }
     }
-
+    if (DEBUG) {
+        console.log("scoreObject", scoreObject)
+    }
     return value
 }
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
     if (depth === 0) {
-        return [undefined, scoreBoard(board, player, oppPlayer)]
-    }
-    if (eatmode) {
-        return eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
-    } else if (player.chipsToAdd !== 0 || oppPlayer.chipsToAdd !== 0) {
-        return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
-    } else {
-        if (player.chipCount === 3 || oppPlayer.chipCount === 3) {
-            //Checking wins
-            if (game.checkIfLost(board, oppPlayer)) {
-                console.log("winner")
-                return [undefined, 100000000]
-            } else if (game.checkIfLost(board, player)) {
-                console.log("loser")
-                return [undefined, -100000000]
-            }
+        if (isMaximizing) {
+            return [undefined, scoreBoard(board, player, oppPlayer)]
+        } else {
+            return [undefined, scoreBoard(board, oppPlayer, player)]
         }
-        return stage2MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+    }
+    if (isMaximizing) {
+        if (eatmode) {
+            //isMaximizing tells which player is about to eat
+            //And if then the opponent player is on stage 3 = is flying = has 3 chips left,
+            // it means the one eating has won
+            if (getStage(oppPlayer) === 3) {
+                return [undefined, 100000000]
+            } else {
+                return eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+            }
+        } else if (getStage(player) === 1) {
+            return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+        } else if (getStage(player) === 2 || getStage(player) === 3) {
+            //Won by not being able to move
+            if (!game.checkIfCanMove(oppPlayer, board)) {
+                return [undefined, 100000000]
+            } else {
+                return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+            }
+
+        } else {
+            console.log("Shouldnt happen?")
+        }
+    } else {
+        if (eatmode) {
+            //isMaximizing tells which player is about to eat
+            //And if then the opponent player is on stage 3 = is flying = has 3 chips left,
+            // it means the one eating has won'
+            if (getStage(player) === 3) {
+                return [undefined, -100000000]
+            } else {
+                return eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+            }
+        } else if (getStage(oppPlayer) === 1) {
+            return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+        } else if (getStage(oppPlayer) === 2 || getStage(oppPlayer) === 3) {
+            //Won by not being able to move
+            if (!game.checkIfCanMove(player, board)) {
+                return [undefined, -100000000]
+            } else {
+                return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
+            }
+        } else {
+            console.log("Shouldnt happen?")
+        }
     }
 }
 function movePlayerTo(board, player, fromDot, toDot) {
@@ -659,13 +833,14 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
-        console.log(game.getEatableDots(board, oppPlayer))
-        for (var dot of game.getEatableDots(board, oppPlayer)) {
+        // console.log(game.getEatableDots(board, oppPlayer))
+        var eatableDots = game.getEatableDots(board, oppPlayer)
+        for (var dot of eatableDots) {
             var cBoard = deepClone(board)
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
             //Making the move
-            cBoard[dot.l][dot.d].player.chipCount--
+            cOppPlayer.chipCount--
             cBoard[dot.l][dot.d].player = undefined
 
             //Checking mills again incase ate from a mill
@@ -687,14 +862,14 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
     } else {
         let bestScore = Infinity;
         let bestMove
-        console.log(game.getEatableDots(board, player))
-        for (var dot of game.getEatableDots(board, player)) {
+        var eatableDots = game.getEatableDots(board, player)
+        for (var dot of eatableDots) {
             var cBoard = deepClone(board)
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
 
             //Making the move
-            cBoard[dot.l][dot.d].player.chipCount--
+            oppPlayer.chipCount--
             cBoard[dot.l][dot.d].player = undefined
 
             //Checking mills again incase ate from a mill
@@ -715,12 +890,12 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
         return [bestMove, bestScore, "eating"]
     }
 }
-function stage2MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
+function stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
 
-        for (var fromDot of game.checkMoveableDots(board, player)) {
+        for (var fromDot of game.getMoveableDots(board, player)) {
             //If player can fly, we check fromDot against every empty dot on the board
             var neighbours
             if (player.chipCount === 3) {
@@ -754,7 +929,7 @@ function stage2MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
         let bestScore = Infinity;
         let bestMove
 
-        for (var fromDot of game.checkMoveableDots(board, oppPlayer)) {
+        for (var fromDot of game.getMoveableDots(board, oppPlayer)) {
             //If player can fly, we check fromDot against every empty dot on the board
             var neighbours
             if (oppPlayer.chipCount === 3) {
@@ -800,6 +975,8 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             //Making the move
             // setPlayerTo(cBoard, cPlayer, dot)
             cBoard[dot.l][dot.d].player = cPlayer
+            cPlayer.chipsToAdd--
+            cPlayer.chipCount++
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, eatmode, false)[1]
 
             if (score > bestScore) {
@@ -822,6 +999,8 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             //Making the move
             // setPlayerTo(cBoard, cOppPlayer, dot)
             cBoard[dot.l][dot.d].player = cOppPlayer
+            cOppPlayer.chipsToAdd--
+            cOppPlayer.chipCount++
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, eatmode, true)[1]
 
             if (score < bestScore) {
