@@ -146,12 +146,10 @@ class Dot {
     }
     canMove() {
         if (this.startChip) return false
-        if (this.player && this.player.chipCount <= 3) return true
+        //Always moveable if player is on stage 3 (flying)
+        if (this.player && getStage(this.player) === 3) return true
         //Checking for empty dot in neighbour dots
-        for (var dot of this.neighbours) {
-            if (!dot.player) return true
-        }
-        return false
+        return this.neighbours.some(dot => !dot.player)
     }
     setEatableDot() {
         game.eatableAnimations.push(this)
@@ -181,8 +179,8 @@ class Dot {
             return
         }
         push()
-        strokeWeight(this.r / 30)
-        stroke(color(0, 255, 160))
+        strokeWeight(this.r / 15)
+        stroke(color(0, 200, 40))
         circle(this.x * this.size(), this.y * this.size(), this.r * 1.1)
         imageMode(CENTER);
         image(this.player.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
