@@ -399,10 +399,13 @@ class Game {
     }
     setWinner(player) {
         this.winner = player
-        restartButton.size(circleSize * 15, circleSize * 3)
+        restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
         restartButton.style('font-size', circleSize * 2 + "px")
-        restartButton.style('background-color', color(0, 255, 0, 200))
+        restartButton.style('background', "transparent  url('./resources/img/woodenButton.png') no-repeat center top")
+		restartButton.style("background-size", "cover")
+        
+        // restartButton.style('background-color', color(0, 255, 0, 200))
     }
     checkNewMills(board, player) {
         // console.log("checking for mill",player.name)

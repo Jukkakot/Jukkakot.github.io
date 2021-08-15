@@ -26,6 +26,7 @@ function preload() {
 	blueDot = loadImage("./resources/img/lightWoodDot.png")
 	backgroundImg = loadImage("./resources/img/background2.jpg")
 	bAndwDotImg = loadImage("./resources/img/blackAndWhiteDot.png")
+	// buttonImg = loadImage("./resources/img/woodenButton.png")
 	// cursorImg = loadImage("./resources/img/cursor.png")
 }
 function setup() {
@@ -53,9 +54,9 @@ function keyPressed(e) {
 		suggestionPress()
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
-		if(DEBUG) {
-			console.log("Light Wood",scoreBoard(game.dots, game.playerBlue, game.playerRed))
-			console.log("Dark Wood",scoreBoard(game.dots, game.playerRed, game.playerBlue))
+		if (DEBUG) {
+			console.log("Light Wood", scoreBoard(game.dots, game.playerBlue, game.playerRed))
+			console.log("Dark Wood", scoreBoard(game.dots, game.playerRed, game.playerBlue))
 		}
 	} else if (e.key === "a") {
 		autoPlayButtonPress()
@@ -80,20 +81,19 @@ function start() {
 	game = new Game()
 	locked = false
 
-	restartButton.position(cnv.position().x, cnv.position().y)
-	restartButton.size(circleSize * 5, circleSize * 2)
-	restartButton.style('font-size', circleSize * 0.7 + "px")
-	restartButton.style('background-color', color(200, 200))
+	// restartButton.position(cnv.position().x, cnv.position().y)
+	// restartButton.size(circleSize * 5, circleSize * 2)
+	// restartButton.style('font-size', circleSize * 0.7 + "px")
 
-	suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
-	suggestionButton.size(circleSize * 5, circleSize * 2)
-	suggestionButton.style('font-size', circleSize * 0.7 + "px")
-	suggestionButton.style('background-color', color(200, 200))
+	// suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
+	// suggestionButton.size(circleSize * 5, circleSize * 2)
+	// suggestionButton.style('font-size', circleSize * 0.7 + "px")
 
-	autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
-	autoPlayButton.size(circleSize * 5, circleSize * 2)
-	autoPlayButton.style('font-size', circleSize * 0.7 + "px")
-	autoPlayButton.style('background-color', color(200, 200))
+
+	// autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
+	// autoPlayButton.size(circleSize * 5, circleSize * 2)
+	// autoPlayButton.style('font-size', circleSize * 0.7 + "px")
+	windowResized()
 }
 function windowResized() {
 	scaledWidth = min(windowWidth, defaultWidth)
@@ -104,20 +104,22 @@ function windowResized() {
 	outBoxSize = min(width, height / ASPECTRATIO) - circleSize * 2.5
 	distance = min(width, height / ASPECTRATIO) * 0.28
 
+	var buttonWidth = circleSize * 7
+	var buttonHeight = buttonWidth / 2.5
+
 	restartButton.position(cnv.position().x, cnv.position().y)
-	restartButton.size(circleSize * 5, circleSize * 2)
+	restartButton.size(buttonWidth, buttonHeight)
 	restartButton.style('font-size', circleSize * 0.7 + "px")
-	restartButton.style('background-color', color(200, 200))
 
 	suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
-	suggestionButton.size(circleSize * 5, circleSize * 2)
+	suggestionButton.size(buttonWidth, buttonHeight)
 	suggestionButton.style('font-size', circleSize * 0.7 + "px")
-	suggestionButton.style('background-color', color(200, 200))
 
 	autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
-	autoPlayButton.size(circleSize * 5, circleSize * 2)
+	autoPlayButton.size(buttonWidth, buttonHeight)
 	autoPlayButton.style('font-size', circleSize * 0.7 + "px")
-	autoPlayButton.style('background-color', color(200, 200))
+	// autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
+	// autoPlayButton.style("background-size", "cover")
 
 
 }
@@ -193,13 +195,21 @@ function draw() {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
 	}
-	autoPlayButton.style('background-color', AUTOPLAY ? color(200, 0, 0) : color(0, 200, 0))
+	if (AUTOPLAY) {
+		autoPlayButton.style('background', "transparent  url('./resources/img/redButton.png') no-repeat center top")
+		autoPlayButton.style("background-size", "cover")
+	} else {
+		autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
+		autoPlayButton.style("background-size", "cover")
+	}
+
+
 	push()
 	textAlign(CENTER)
 	if (AUTOPLAY) {
 		fill(0)
 		textSize(circleSize * 1.5)
-		text("AUTOPLAY", 0, -height * 0.40)
+		text("AUTOPLAY", 0, -height * 0.38)
 	}
 	//Displaying fps
 	textSize(circleSize)
