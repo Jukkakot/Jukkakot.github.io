@@ -2,7 +2,7 @@ import React from "react"
 import mineImg from "./resources/img/minesweeper.png"
 import battleImg from "./resources/img/Battleship.png"
 import connectImg from "./resources/img/newConnect4.png"
-import millsImg from "./resources/img/mills.png"
+import millsImg from "./resources/img/mills pic 2.2.png"
 import "./resources/css/app.css"
 function App() {
   return (

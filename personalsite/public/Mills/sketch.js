@@ -22,8 +22,8 @@ const ASPECTRATIO = defaultHeight / defaultWidth
 var DEBUG = false
 var AUTOPLAY = false
 function preload() {
-	redDot = loadImage("./resources/img/darkDot2.png")
-	blueDot = loadImage("./resources/img/lightWoodDot.png")
+	redDot = loadImage("./resources/img/darkDotSharp.png")
+	blueDot = loadImage("./resources/img/lightDotSharp.png")
 	backgroundImg = loadImage("./resources/img/background2.jpg")
 	bAndwDotImg = loadImage("./resources/img/blackAndWhiteDot.png")
 	// buttonImg = loadImage("./resources/img/woodenButton.png")
@@ -55,8 +55,10 @@ function keyPressed(e) {
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
-			console.log("Light Wood", scoreBoard(game.dots, game.playerBlue, game.playerRed))
-			console.log("Dark Wood", scoreBoard(game.dots, game.playerRed, game.playerBlue))
+			console.log("Light Wood")
+			console.log(scoreBoard(game.dots, game.playerBlue, game.playerRed))
+			console.log("Dark Wood")
+			console.log(scoreBoard(game.dots, game.playerRed, game.playerBlue))
 		}
 	} else if (e.key === "a") {
 		autoPlayButtonPress()
