@@ -20,7 +20,7 @@ const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
 var DEBUG = false
-var AUTOPLAY = false
+var AUTOPLAY = true
 function preload() {
 	redDot = loadImage("./resources/img/darkDotSharp.png")
 	blueDot = loadImage("./resources/img/lightDotSharp.png")
