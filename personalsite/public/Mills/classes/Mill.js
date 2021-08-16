@@ -8,9 +8,8 @@ class Mill {
     }
     draw() {
         push()
-
         stroke(this.player.color)
-        strokeWeight(circleSize / 5)
+        strokeWeight(circleSize / 3)
         var d1 = this.dots[0]
         var d2 = this.dots[2]
         line(d1.x * d1.size(), d1.y * d1.size(), d2.x * d2.size(), d2.y * d2.size())
@@ -18,11 +17,6 @@ class Mill {
         pop()
     }
     contain(dot) {
-        for (var d of this.dots) {
-            if (dot === d) {
-                return true
-            }
-        }
-        return false
+        return this.dots.includes(dot)
     }
 }

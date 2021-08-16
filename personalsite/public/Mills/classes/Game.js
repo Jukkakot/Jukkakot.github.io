@@ -4,7 +4,7 @@ class Game {
         this.prevDot
         this.prevHover
         this.playerDark = new Player(color(100, 60, 20), darkDot, "Dark wood")
-        this.playerLight = new Player(color(210, 170, 130), lightDot, "Light wood")
+        this.playerLight = new Player(color(145, 132, 102), lightDot, "Light wood")
         this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
         this.gameStarted = false
         this.eatMode = false
@@ -540,7 +540,6 @@ class Game {
         var oppPlayer = this.turn === this.playerDark ? deepClone(this.playerLight) : deepClone(this.playerDark)
         var cBoard = deepClone(this.dots)
 
-        console.log("player", getStage(player), "opp", getStage(oppPlayer))
         let move
         let bestScore = -Infinity
         let type
@@ -588,15 +587,9 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
     var stage = getStage(player)
     //New mill
     if (pieceCount === 3 && !game.isSameWindow(window)) {
-        if (DEBUG) console.log("newMill", window)
-        //this means player wins
-        if (getStage(oppPlayer) === 3) {
-            console.log(oppPlayer.name, oppPlayer.chipCount)
-            console.log("player", player.name, "wins from", window[0].l, window[0].d, "to", window[2].l, window[2].d)
-            return 100000000
-        }
-
-        scoreObject.def.newMill++
+        //Win
+        if (getStage(oppPlayer) === 3) return 100000000
+        scoreObject.update("newMill")
         value += 2000
     }
     switch (stage) {
@@ -615,22 +608,48 @@ function stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
     var oppStage = getStage(oppPlayer)
     var playerDots = window.filter(chip => chip.player && chip.player.name == player.name)
     var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
+    var emptyDot = window.filter(chip => !chip.player)[0]
     //blocking opp mill
     if (oppStage === 1 && oppCount === 2 && pieceCount === 1) {
-        scoreObject.s1.blockOppMill++
-        value += 200
+        scoreObject.update("blockOppMill")
+        value += 300
     }
     //blocking opp mill stage 2
     else if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         playerDots[0].neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
             !oppDots.some(chip => chip.id == dot.id))) {
-        scoreObject.s1.blockOppMillStage2++
-        value += 200
+        scoreObject.update("blockOppMillStage2")
+        value += 300
     }
     //almost mill
     else if (pieceCount === 2 && emptyCount === 1) {
-        scoreObject.s1.almostMill++
-        value += 100
+        scoreObject.update("s1.almostMill")
+        value += 200
+    }
+    //making safe open mill with last chip
+    //opponent being stage 2 means that player is placing its last chip
+    else if (oppStage === 2 && pieceCount === 2 && emptyCount === 1 && !emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
+        emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name &&
+            !playerDots.some(dot => dot.id == chip.id))) {
+        //"safe" Open mill as in opponent player cant block it on next move 
+        scoreObject.update("safeOpenMill")
+        value += 200
+
+    }
+
+
+    //opp almost mill stage 1
+    else if (oppStage === 1 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppAlmostMillStage1")
+        value -= 200
+    }
+
+    //blocking opp mill stage 2
+    else if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        emptyDot.neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
+            !oppDots.some(chip => chip.id == dot.id))) {
+        scoreObject.update("blockOppMillStage2")
+        value -= 200
     }
 
     return value
@@ -651,55 +670,57 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
         emptyDot.neighbours.some(dot => dot.player && dot.player.name == player.name &&
             !playerDots.some(pDot => pDot.id == dot.id) &&
             player.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
-        scoreObject.s2.doubleMill++
+        scoreObject.update("doubleMill")
         value += 5000
     }
-    else if (pieceCount === 2 && emptyCount === 1) {
-        //Checking that the empty dot does not have opponent player dot in neighbour dots and
-        //that it has one own chips in them
-        if (!emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
-            emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name &&
-                !playerDots.some(dot => dot.id == chip.id))) {
-            //"safe" Open mill as in opponent player cant block it on next move 
-            scoreObject.s2.safeOpenMill++
-            value += 1000
-        }
+    //"safe" Open mill as in opponent player cant block it on next move 
+    else if (pieceCount === 2 && emptyCount === 1 && !emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
+        emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name &&
+            !playerDots.some(dot => dot.id == chip.id))) {
+        scoreObject.update("safeOpenMill")
+        //good to be less than 1000 because double safe open mill happens, and it would be same value as new mill
+        value += 800
     }
     //Opponent mill is blocked from opening
     else if (oppCount === 3 && oppStage === 2 &&
-        oppDots.every(dot => !dot.neighbours.some(chip => !chip.player))) {
-        scoreObject.s2.blockOppMillStuck++
+        oppDots.every(dot => dot.neighbours.every(chip => chip.player))) {
+        scoreObject.update("blockOppMillStuck")
         value += 300
     }
     //blocking opp mill stage 3
     else if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
-        scoreObject.s2.blockOppMillStage3++
+        scoreObject.update("blockOppMillStage3")
         value += 300
     }
     //blocking opp mill stage 2
     else if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         playerDots[0].neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
             !oppDots.some(chip => chip.id == dot.id))) {
-        scoreObject.s2.blockOppMillStage2++
+        scoreObject.update("blockOppMillStage2")
         value += 300
     }
-    //Mill
-    else if (pieceCount === 3) {
-        scoreObject.s2.mill++
-        value += 100
+
+    //opponent safe open mill
+    else if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
+            !oppDots.some(dot => dot.id == chip.id))) {
+        scoreObject.update("oppSafeOpenMillStage2")
+        value -= 500
     }
-    // else if (oppCount === 2 && emptyCount === 1) {
-    //     if (emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
-    //         !oppDots.some(dot => dot.id == chip.id)) &&
-    //         !emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name)) {
-    //         //opponent open safe mill
-    //         //as in i cant block the mill
-    //         scoreObject.s2.oppSafeOpenMill++
-    //         value -= 300
-    //     }
-    // }
-
-
+    //opponent open mill
+    else if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppOpenMillStage3")
+        value -= 500
+    }
+    //Syhky miilu is finnish and means double mill
+    //which happens when you have 2 mills next to eachother and can get a mill every turn
+    if (oppCount === 2 && emptyCount === 1 &&
+        emptyDot.neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
+            !oppDots.some(pDot => pDot.id == dot.id) &&
+            oppPlayer.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
+        scoreObject.update("doubleMill")
+        value -= 5000
+    }
     return value
 }
 function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) {
@@ -719,21 +740,33 @@ function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
     if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         playerDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
             !oppDots.some(dot => dot.id == chip.id))) {
-        scoreObject.s3.blockOppMillStage2++
-        value += 3000
+        scoreObject.update("blockOppMillStage2")
+        value += 2500
     }
     //blocking opp mill when opp is on stage 3
     //this is also important because player will lose on next move otherwise
     else if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
-        scoreObject.s3.blockOppMillStage3++
-        value += 3000
+        scoreObject.update("blockOppMillStage3")
+        value += 2500
     }
     //almost mill
     else if (pieceCount === 2 && emptyCount === 1) {
-        scoreObject.s3.almostMill++
-        value += 500
+        scoreObject.update("almostMill")
+        value += 800
     }
 
+    //opponent safe open mill
+    else if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
+            !oppDots.some(dot => dot.id == chip.id))) {
+        scoreObject.update("oppOpenMillStage2")
+        value -= 3000
+    }
+    //opponent open mill
+    else if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppOpenMillStage3")
+        value -= 3000
+    }
     return value
 }
 function getStage(player) {
@@ -753,63 +786,31 @@ function scoreBoard(board, player, oppPlayer) {
     //Object to store info about where the different points for each board is coming from
     //Helpful for debugging
     var scoreObject = {
-        def: {
-            newMill: 0,
-            neighbours: 0,
-            moveablepDots: 0,
-        },
-        s1: {
-            blockOppMill: 0,
-            almostMill: 0,
-            blockOppMillStage2: 0,
-        },
-        s2: {
-            mill: 0,
-            doubleMill: 0,
-            blockOppMillStage2: 0,
-            blockOppMillStage3: 0,
-            safeOpenMill: 0,
-            blockOppMillStuck: 0
-        },
-        s3: {
-            blockOppMillStage2: 0,
-            blockOppMillStage3: 0,
-            almostMill: 0,
+        update: function (property) {
+            this[property] ? this[property]++ : this[property] = 1
         }
     }
-    // if (player.name == game.playerLight.name) {
-    //     //checking the not cloned players mills against this cloned player
-    //     // var playerMills = game.getMills(game.dots, game.playerLight)
-    //     // var playerMills = game.getMills(board,player)
-    //     if (game.getMills(board, player).some(mill => isNewMill(game.playerLight, mill))) {
-    //         scoreObject.def.newMills++
-    //         value += 1000
-    //     } else {
-    //         console.log("light", player.mills, game.playerLight.mills)
-    //     }
-    // } else {
-    //     //checking the not cloned players mills against this cloned player
-    //     // var playerMills = game.getMills(game.dots, game.playerDark)
-    //     if (game.getMills(board, player).some(mill => isNewMill(game.playerDark, mill))) {
-    //         scoreObject.def.newMills++
-    //         value += 1000
-    //     } else {
-    //         console.log("dark", player.mills, game.playerDark.mills)
-    //     }
-    // }
-
     if (getStage(player) === 1) {
         //Giving points for each neighbour dot of players dots
         for (var dot of game.getPlayerDots(board, player)) {
-            scoreObject.def.neighbours += dot.neighbours.length
+            scoreObject.neighbours = dot.neighbours.length
             value += dot.neighbours.length
         }
     } else {
         //Stage 2 & 3
-        //Removing 10 points for each moveable dot
-        var moveablepDots = game.getMoveableDots(board, player).length
-        value += moveablepDots * 10
-        scoreObject.def.moveablepDots += moveablepDots
+        //Adding 100 points for each moveable dot
+        var dotCount = game.getPlayerDots(board, player).length
+        value += dotCount * 100
+        scoreObject.dotCount = dotCount
+        
+        //Adding 100 points for each moveable dot
+        var moveableDots = game.getMoveableDots(board, player).length
+        value += moveableDots * 100
+        scoreObject.moveablepDots = moveableDots
+        
+        //player loses if cant move
+        if (moveableDots === 0) return -100000000
+        
     }
 
     for (var layer of board) {
@@ -830,11 +831,17 @@ function scoreBoard(board, player, oppPlayer) {
         }
     }
     if (DEBUG) {
+        //This is helpful when looking at where the score comes from for a board
         console.log("scoreObject", scoreObject)
     }
     return value
 }
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
+    if (getStage(oppPlayer) !== 1 && player.chipCount < 3) {
+        return [undefined, -100000000]
+    } else if (getStage(oppPlayer) !== 1 && oppPlayer.chipCount < 3) {
+        return [undefined, 100000000]
+    }
     if (depth === 0) {
         if (isMaximizing) {
             return [undefined, scoreBoard(board, player, oppPlayer)]
@@ -884,11 +891,10 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             cBoard[dot.l][dot.d].player = undefined
 
             //Checking mills again incase ate from a mill
-            cPlayer.mills = game.getMills(cBoard, cPlayer)
+            // cPlayer.mills = game.getMills(cBoard, cPlayer)
             cOppPlayer.mills = game.getMills(cBoard, cOppPlayer)
 
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth, alpha, beta, false, false)[1]
-
             if (score > bestScore) {
                 bestScore = score
                 bestMove = dot
@@ -916,7 +922,7 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
 
             //Checking mills again incase ate from a mill
             cPlayer.mills = game.getMills(cBoard, cPlayer)
-            cOppPlayer.mills = game.getMills(cBoard, cOppPlayer)
+            // cOppPlayer.mills = game.getMills(cBoard, cOppPlayer)
 
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth, alpha, beta, false, true)[1]
 

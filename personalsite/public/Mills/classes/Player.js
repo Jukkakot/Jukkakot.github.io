@@ -16,12 +16,7 @@ class Player {
         this.mills.forEach(mill => mill.draw())
     }
     isNewMill(mill) {
-        for (var m of this.mills) {
-            if (m.isSame(mill)) {
-                return false
-            }
-        }
-        return true
+        return this.mills.some(m => !m.isSame(mill))
     }
     canEat(dot) {
         var oppPlayer = game.turn === game.playerDark ? game.playerLight : game.playerDark
@@ -42,12 +37,7 @@ class Player {
         return uniqueDots.length === this.chipCount
     }
     dotIsInMill(dot) {
-        for (var mill of this.mills) {
-            if (mill.contain(dot)) {
-                return true
-            }
-        }
-        return false
+        return this.mills.some(m => m.contain(dot))
     }
     checkMovableDots(board) {
         var movableDots = []
