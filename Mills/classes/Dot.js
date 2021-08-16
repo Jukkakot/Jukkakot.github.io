@@ -87,9 +87,9 @@ class Dot {
         if (!this.startChip && DEBUG) {
             var l = this.l
             var d = this.d
-            fill(255, 255, 0)
+            fill(0, 0, 255)
             textAlign(CENTER)
-            textSize(circleSize * 0.7)
+            textSize(circleSize * 0.75)
             text("L" + l + "," + "D" + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
             text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
         }
