@@ -38,7 +38,7 @@ class Dot {
         //visibility is used for eaten chips
         if(!this.visible) return
 
-        // this.player = game.playerBlue
+        // this.player = game.playerLight
         // var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()
         if (this.player && !this.moving) {
@@ -255,7 +255,7 @@ class Dot {
 
                 game.movingAnimations.splice(index, 1)
                 //This is just to wait for all animations to finish before letting autoplay play another round
-                if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerBlue) {
+                if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerLight) {
                     game.playRound(game.findBestMove())
                 }
             } else {

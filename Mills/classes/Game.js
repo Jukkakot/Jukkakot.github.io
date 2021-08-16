@@ -3,10 +3,9 @@ class Game {
         this.dots = this.initDots()
         this.prevDot
         this.prevHover
-        this.playerRed = new Player(color(255, 0, 0), redDot, "red")
-        this.playerBlue = new Player(color(0, 170, 255), blueDot, "blue")
-        this.turn = random(1) < 0.5 ? this.playerRed : this.playerBlue
-        // this.turn = this.playerBlue
+        this.playerDark = new Player(color(100, 60, 20), darkDot, "Dark wood")
+        this.playerLight = new Player(color(210, 170, 130), lightDot, "Light wood")
+        this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
         this.gameStarted = false
         this.eatMode = false
         this.winner
@@ -63,10 +62,10 @@ class Game {
 
         textAlign(CENTER)
         if (this.winner) {
-            textSize(circleSize * 5)
+            textSize(circleSize * 4)
             stroke(this.winner.color)
-            text(this.winner.name + " won!", 0, 0)
-            pop()
+            fill(color(255, 255, 255))
+            text(this.winner.name + " won!", 0, -circleSize)
         } else {
 
             imageMode(CENTER);
@@ -82,9 +81,9 @@ class Game {
                 text("Place a chip", 0, +circleSize * 3)
             }
             // fill(this.turn.color)
-            pop()
-        }
 
+        }
+        pop()
     }
     drawRect(w) {
         push()
@@ -140,35 +139,36 @@ class Game {
         for (var i = 0; i < MAXCHIPCOUNT / 2; i++) {
             //Start chips
             var dot = new Dot(-1.4 + i / 10, -1.7, -1, -1, true)
-            dot.player = this.playerBlue
-            this.playerBlue.startChips.push(dot)
+            dot.player = this.playerLight
+            this.playerLight.startChips.push(dot)
 
             dot = new Dot(1.4 - i / 10, -1.7, -1, -1, true)
-            dot.player = this.playerRed
-            this.playerRed.startChips.push(dot)
+            dot.player = this.playerDark
+            this.playerDark.startChips.push(dot)
 
             //Eaten chips
             dot = new Dot(-1.4 + i / 10, 1.7, -1, -1, true)
-            dot.player = this.playerBlue
+            dot.player = this.playerLight
             dot.visible = false
-            this.playerBlue.eatenChips.push(dot)
+            this.playerLight.eatenChips.push(dot)
 
             dot = new Dot(1.4 - i / 10, 1.7, -1, -1, true)
-            dot.player = this.playerRed
+            dot.player = this.playerDark
             dot.visible = false
-            this.playerRed.eatenChips.push(dot)
+            this.playerDark.eatenChips.push(dot)
         }
     }
     drawEatenChips() {
-        this.playerBlue.eatenChips.forEach(chip => chip.draw())
-        this.playerRed.eatenChips.forEach(chip => chip.draw())
+        this.playerLight.eatenChips.forEach(chip => chip.draw())
+        this.playerDark.eatenChips.forEach(chip => chip.draw())
     }
     drawStartChips() {
-        this.playerBlue.startChips.forEach(chip => chip.draw())
-        this.playerRed.startChips.forEach(chip => chip.draw())
+        this.playerLight.startChips.forEach(chip => chip.draw())
+        this.playerDark.startChips.forEach(chip => chip.draw())
     }
     click() {
         if (this.winner) return
+        if (AUTOPLAY && this.turn === this.playerLight) return
         var dot = this.getDot(mX, mY)
         if (!dot) {
             //unhighlight everything
@@ -276,7 +276,7 @@ class Game {
         dot.setTargetDot(prevDot)
 
         //Checking if all chips has been added
-        this.gameStarted = this.playerRed.chipsToAdd + this.playerBlue.chipsToAdd === 0
+        this.gameStarted = this.playerDark.chipsToAdd + this.playerLight.chipsToAdd === 0
 
         this.switchTurn()
 
@@ -315,6 +315,7 @@ class Game {
 
     }
     checkIfCanMove(player, board) {
+        if (getStage(player) === 1) return true
         var movableDots = this.getMoveableDots(board, player)
         player.movableDots = movableDots
         return movableDots.length > 0
@@ -332,6 +333,9 @@ class Game {
         player.movableDots = movableDots
         return movableDots
     }
+    checkIfLost(player) {
+        return (player.chipCount + player.chipsToAdd) < 3 || !this.checkIfCanMove(player, this.dots)
+    }
     switchTurn() {
         this.clearSuggestion()
 
@@ -343,23 +347,20 @@ class Game {
         }
         this.turn.mills = this.getMills(this.dots, this.turn)
 
-        var oppPlayer = this.turn === this.playerRed ? this.playerBlue : this.playerRed
 
-        if (this.gameStarted && (oppPlayer.chipCount < 3 || !this.checkIfCanMove(oppPlayer, this.dots))) {
-            // console.log(thus.turn.name, "won!")
-            this.setWinner(this.turn)
-            //Checking the mills again incase had to eat from (at the time) opponents  mill
-            oppPlayer.mills = this.getMills(this.dots, oppPlayer)
-            return
-        }
-        this.turn = this.turn === this.playerRed ? this.playerBlue : this.playerRed
-        //Checking if opponent can move
-        if (this.gameStarted && !this.checkIfCanMove(this.turn, this.dots)) {
-            var oppPlayer = this.turn === this.playerRed ? this.playerBlue : this.playerRed
+
+        if (this.checkIfLost(this.turn)) {
+            var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
             this.setWinner(oppPlayer)
             return
         }
-        if (AUTOPLAY && this.turn === this.playerBlue) {
+        this.turn = this.turn === this.playerDark ? this.playerLight : this.playerDark
+        if (this.checkIfLost(this.turn)) {
+            var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
+            this.setWinner(oppPlayer)
+            return
+        }
+        if (AUTOPLAY && this.turn === this.playerLight) {
             cursor(WAIT)
             this.playRound(this.findBestMove())
             cursor(ARROW)
@@ -402,6 +403,11 @@ class Game {
         // }
     }
     setWinner(player) {
+        var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
+        //Checking the mills again incase had to eat from (at the time) opponents  mill
+        //This is to clear mill lines from not anymore mills
+        oppPlayer.mills = this.getMills(this.dots, oppPlayer)
+
         this.winner = player
         restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
@@ -450,8 +456,8 @@ class Game {
         return mills.some(mill => isNewMill(player, mill))
     }
     drawMills() {
-        this.playerBlue.drawMills()
-        this.playerRed.drawMills()
+        this.playerLight.drawMills()
+        this.playerDark.drawMills()
     }
     //Returns a dot at given coordinates (Like cursor place)
     getDot(x, y) {
@@ -522,7 +528,7 @@ class Game {
     }
     findBestMove() {
         if (this.movingAnimations.length > 0) {
-            console.log("Waiting for animations to end")
+            // console.log("Waiting for animations to end")
             return
         }
         if (this.winner) {
@@ -530,11 +536,11 @@ class Game {
             return
         }
 
-        var player = this.turn === this.playerRed ? deepClone(this.playerRed) : deepClone(this.playerBlue)
-        var oppPlayer = this.turn === this.playerRed ? deepClone(this.playerBlue) : deepClone(this.playerRed)
+        var player = this.turn === this.playerDark ? deepClone(this.playerDark) : deepClone(this.playerLight)
+        var oppPlayer = this.turn === this.playerDark ? deepClone(this.playerLight) : deepClone(this.playerDark)
         var cBoard = deepClone(this.dots)
-        var stage = getStage(player)
-        console.log("stage", stage)
+        // var stage = getStage(player)
+        // console.log("stage", stage)
         let move
         let bestScore = -Infinity
         let type
@@ -772,24 +778,24 @@ function scoreBoard(board, player, oppPlayer) {
             almostMill: 0,
         }
     }
-    // if (player.name == game.playerBlue.name) {
+    // if (player.name == game.playerLight.name) {
     //     //checking the not cloned players mills against this cloned player
-    //     // var playerMills = game.getMills(game.dots, game.playerBlue)
+    //     // var playerMills = game.getMills(game.dots, game.playerLight)
     //     // var playerMills = game.getMills(board,player)
-    //     if (game.getMills(board, player).some(mill => isNewMill(game.playerBlue, mill))) {
+    //     if (game.getMills(board, player).some(mill => isNewMill(game.playerLight, mill))) {
     //         scoreObject.def.newMills++
     //         value += 1000
     //     } else {
-    //         console.log("light", player.mills, game.playerBlue.mills)
+    //         console.log("light", player.mills, game.playerLight.mills)
     //     }
     // } else {
     //     //checking the not cloned players mills against this cloned player
-    //     // var playerMills = game.getMills(game.dots, game.playerRed)
-    //     if (game.getMills(board, player).some(mill => isNewMill(game.playerRed, mill))) {
+    //     // var playerMills = game.getMills(game.dots, game.playerDark)
+    //     if (game.getMills(board, player).some(mill => isNewMill(game.playerDark, mill))) {
     //         scoreObject.def.newMills++
     //         value += 1000
     //     } else {
-    //         console.log("dark", player.mills, game.playerRed.mills)
+    //         console.log("dark", player.mills, game.playerDark.mills)
     //     }
     // }
 
