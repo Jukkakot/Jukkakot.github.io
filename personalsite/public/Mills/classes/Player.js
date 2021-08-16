@@ -24,7 +24,7 @@ class Player {
         return true
     }
     canEat(dot) {
-        var oppPlayer = game.turn === game.playerRed ? game.playerBlue : game.playerRed
+        var oppPlayer = game.turn === game.playerDark ? game.playerLight : game.playerDark
         //Dot has to be opponent player AND
         //Either all dots in are mill or this dot is not in a mill
         return (dot.player && dot.player.name == oppPlayer.name && (dot.player.allDotsInMill() || !dot.player.dotIsInMill(dot)))

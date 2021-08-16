@@ -12,7 +12,7 @@ var mX, mY
 var fps
 var locked
 var movableDot
-var redDot, blueDot, backgroundImg, cursorImg, bAndwDotImg
+var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg
 var restartButton
 var suggestionButton
 var autoPlayButton
@@ -22,8 +22,8 @@ const ASPECTRATIO = defaultHeight / defaultWidth
 var DEBUG = false
 var AUTOPLAY = true
 function preload() {
-	redDot = loadImage("./resources/img/darkDotSharp.png")
-	blueDot = loadImage("./resources/img/lightDotSharp.png")
+	darkDot = loadImage("./resources/img/darkDotSharp.png")
+	lightDot = loadImage("./resources/img/lightDotSharp.png")
 	backgroundImg = loadImage("./resources/img/background2.jpg")
 	bAndwDotImg = loadImage("./resources/img/blackAndWhiteDot.png")
 	// buttonImg = loadImage("./resources/img/woodenButton.png")
@@ -56,9 +56,9 @@ function keyPressed(e) {
 		DEBUG = !DEBUG
 		if (DEBUG) {
 			console.log("Light Wood")
-			console.log(scoreBoard(game.dots, game.playerBlue, game.playerRed))
+			console.log(scoreBoard(game.dots, game.playerLight, game.playerDark))
 			console.log("Dark Wood")
-			console.log(scoreBoard(game.dots, game.playerRed, game.playerBlue))
+			console.log(scoreBoard(game.dots, game.playerDark, game.playerLight))
 		}
 	} else if (e.key === "a") {
 		autoPlayButtonPress()
@@ -69,33 +69,25 @@ function suggestionPress() {
 }
 function autoPlayButtonPress() {
 	AUTOPLAY = !AUTOPLAY
-	if (game.turn === game.playerBlue) {
+	if (AUTOPLAY && game.turn === game.playerLight) {
 		game.playRound(game.findBestMove())
 	}
 }
 function restartPress() {
 	start()
-	if (AUTOPLAY && game.turn === game.playerBlue) {
+	if (AUTOPLAY && game.turn === game.playerLight) {
 		game.playRound(game.findBestMove())
 	}
 }
 function start() {
 	game = new Game()
 	locked = false
-
-	// restartButton.position(cnv.position().x, cnv.position().y)
-	// restartButton.size(circleSize * 5, circleSize * 2)
-	// restartButton.style('font-size', circleSize * 0.7 + "px")
-
-	// suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
-	// suggestionButton.size(circleSize * 5, circleSize * 2)
-	// suggestionButton.style('font-size', circleSize * 0.7 + "px")
-
-
-	// autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
-	// autoPlayButton.size(circleSize * 5, circleSize * 2)
-	// autoPlayButton.style('font-size', circleSize * 0.7 + "px")
 	windowResized()
+
+	//This is to auto play the first move for light wood player when loading the site
+	if (AUTOPLAY && game.turn === game.playerLight) {
+		game.playRound(game.findBestMove())
+	}
 }
 function windowResized() {
 	scaledWidth = min(windowWidth, defaultWidth)
