@@ -539,8 +539,8 @@ class Game {
         var player = this.turn === this.playerDark ? deepClone(this.playerDark) : deepClone(this.playerLight)
         var oppPlayer = this.turn === this.playerDark ? deepClone(this.playerLight) : deepClone(this.playerDark)
         var cBoard = deepClone(this.dots)
-        // var stage = getStage(player)
-        // console.log("stage", stage)
+
+        console.log("player", getStage(player), "opp", getStage(oppPlayer))
         let move
         let bestScore = -Infinity
         let type
@@ -576,7 +576,7 @@ class Game {
     //Checks if given window is the same in this.dots board
     //Used when looking for new mills
     isSameWindow(window) {
-        return window.every(dot => this.dots[dot.l][dot.d].player && this.dots[dot.l][dot.d].player.name === dot.player.name)
+        return window.every(wDot => this.dots[wDot.l][wDot.d].player && this.dots[wDot.l][wDot.d].player.name === wDot.player.name)
     }
 }
 
@@ -588,6 +588,14 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
     var stage = getStage(player)
     //New mill
     if (pieceCount === 3 && !game.isSameWindow(window)) {
+        if (DEBUG) console.log("newMill", window)
+        //this means player wins
+        if (getStage(oppPlayer) === 3) {
+            console.log(oppPlayer.name, oppPlayer.chipCount)
+            console.log("player", player.name, "wins from", window[0].l, window[0].d, "to", window[2].l, window[2].d)
+            return 100000000
+        }
+
         scoreObject.def.newMill++
         value += 2000
     }
@@ -619,15 +627,10 @@ function stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
         scoreObject.s1.blockOppMillStage2++
         value += 200
     }
-    //Mill
-    else if (pieceCount === 3) {
-        scoreObject.s1.mill++
-        value += 100
-    }
     //almost mill
     else if (pieceCount === 2 && emptyCount === 1) {
         scoreObject.s1.almostMill++
-        value += 50
+        value += 100
     }
 
     return value
@@ -659,26 +662,26 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
                 !playerDots.some(dot => dot.id == chip.id))) {
             //"safe" Open mill as in opponent player cant block it on next move 
             scoreObject.s2.safeOpenMill++
-            value += 800
+            value += 1000
         }
     }
     //Opponent mill is blocked from opening
     else if (oppCount === 3 && oppStage === 2 &&
-        !oppDots.some(dot => dot.neighbours.some(chip => !chip.player))) {
+        oppDots.every(dot => !dot.neighbours.some(chip => !chip.player))) {
         scoreObject.s2.blockOppMillStuck++
-        value += 200
+        value += 300
     }
     //blocking opp mill stage 3
     else if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
         scoreObject.s2.blockOppMillStage3++
-        value += 200
+        value += 300
     }
     //blocking opp mill stage 2
     else if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         playerDots[0].neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
             !oppDots.some(chip => chip.id == dot.id))) {
         scoreObject.s2.blockOppMillStage2++
-        value += 200
+        value += 300
     }
     //Mill
     else if (pieceCount === 3) {
@@ -711,26 +714,24 @@ function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
     if (pieceCount === 1) {
         playerDot = window.filter(chip => chip.player && chip.player.name == player.name)[0]
     }
-    //Mill
-    if (pieceCount === 3) {
-        scoreObject.s3.mill++
-        value += 100
-    }
-    //blocking opp mill when opp isnt on stage 3
-    else if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
+    //blocking opp mill when opp is on stage 2
+    //this is important because player will lose on next move otherwise
+    if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         playerDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
             !oppDots.some(dot => dot.id == chip.id))) {
         scoreObject.s3.blockOppMillStage2++
-        value += 200
+        value += 3000
     }
+    //blocking opp mill when opp is on stage 3
+    //this is also important because player will lose on next move otherwise
     else if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
         scoreObject.s3.blockOppMillStage3++
-        value += 200
+        value += 3000
     }
     //almost mill
     else if (pieceCount === 2 && emptyCount === 1) {
         scoreObject.s3.almostMill++
-        value += 50
+        value += 500
     }
 
     return value
@@ -755,10 +756,9 @@ function scoreBoard(board, player, oppPlayer) {
         def: {
             newMill: 0,
             neighbours: 0,
-            unMoveableOppDots: 0,
+            moveablepDots: 0,
         },
         s1: {
-            mill: 0,
             blockOppMill: 0,
             almostMill: 0,
             blockOppMillStage2: 0,
@@ -772,7 +772,6 @@ function scoreBoard(board, player, oppPlayer) {
             blockOppMillStuck: 0
         },
         s3: {
-            mill: 0,
             blockOppMillStage2: 0,
             blockOppMillStage3: 0,
             almostMill: 0,
@@ -807,10 +806,10 @@ function scoreBoard(board, player, oppPlayer) {
         }
     } else {
         //Stage 2 & 3
-        //Removing 10 points for each unmoveable opponent dot
-        var unMoveableOppDots = game.getMoveableDots(board, oppPlayer).length
-        value -= unMoveableOppDots * 10
-        scoreObject.def.unMoveableOppDots += unMoveableOppDots
+        //Removing 10 points for each moveable dot
+        var moveablepDots = game.getMoveableDots(board, player).length
+        value += moveablepDots * 10
+        scoreObject.def.moveablepDots += moveablepDots
     }
 
     for (var layer of board) {
@@ -848,31 +847,20 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
             return eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else if (getStage(player) === 1) {
             return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
-        } else if (getStage(player) === 2 || getStage(player) === 3) {
-            //Won by not being able to move
-            if (oppPlayer.chipCount < 3 || !game.checkIfCanMove(oppPlayer, board)) {
-                return [undefined, 100000000]
-            } else {
-                return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
-            }
-
         } else {
-            console.log("Shouldnt happen?")
+            //Won by opponent not being able to move
+            if (getStage(oppPlayer) !== 1 && !game.checkIfCanMove(oppPlayer, board)) return [undefined, 100000000]
+            return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         }
     } else {
         if (eatmode) {
             return eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else if (getStage(oppPlayer) === 1) {
             return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
-        } else if (getStage(oppPlayer) === 2 || getStage(oppPlayer) === 3) {
-            //Won by not being able to move
-            if (player.chipCount < 3 || !game.checkIfCanMove(player, board)) {
-                return [undefined, -100000000]
-            } else {
-                return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
-            }
         } else {
-            console.log("Shouldnt happen?")
+            //Won by opponent not being able to move
+            if (getStage(player) !== 1 && !game.checkIfCanMove(player, board)) return [undefined, 100000000]
+            return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         }
     }
 }
@@ -884,19 +872,20 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
-        // console.log(game.getEatableDots(board, oppPlayer))
+
         var eatableDots = game.getEatableDots(board, oppPlayer)
         for (var dot of eatableDots) {
+            if (getStage(oppPlayer) === 3) return [dot, 100000000, "eating"]
             var cBoard = deepClone(board)
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
             //Making the move
-            cOppPlayer.chipCount--
+            // cOppPlayer.chipCount--
             cBoard[dot.l][dot.d].player = undefined
 
             //Checking mills again incase ate from a mill
             cPlayer.mills = game.getMills(cBoard, cPlayer)
-            oppPlayer.mills = game.getMills(cBoard, oppPlayer)
+            cOppPlayer.mills = game.getMills(cBoard, cOppPlayer)
 
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth, alpha, beta, false, false)[1]
 
@@ -911,22 +900,23 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
 
         return [bestMove, bestScore, "eating"]
     } else {
-        console.log(oppPlayer.name, "is eating")
         let bestScore = Infinity;
         let bestMove
+
         var eatableDots = game.getEatableDots(board, player)
         for (var dot of eatableDots) {
+            if (getStage(player) === 3) return [dot, 100000000, "eating"]
             var cBoard = deepClone(board)
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
 
             //Making the move
-            oppPlayer.chipCount--
+            // cPlayer.chipCount--
             cBoard[dot.l][dot.d].player = undefined
 
             //Checking mills again incase ate from a mill
             cPlayer.mills = game.getMills(cBoard, cPlayer)
-            oppPlayer.mills = game.getMills(cBoard, oppPlayer)
+            cOppPlayer.mills = game.getMills(cBoard, cOppPlayer)
 
             let score = minimax(cBoard, cPlayer, cOppPlayer, depth, alpha, beta, false, true)[1]
 
