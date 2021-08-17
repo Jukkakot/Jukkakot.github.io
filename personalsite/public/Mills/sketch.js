@@ -1,5 +1,6 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.15
+var idNumber = 0
 var ANGLE = 0.0
 var SPEED = 0.07
 var outBoxSize
@@ -21,6 +22,9 @@ const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
 var DEBUG = false
 var AUTOPLAY = true
+function getIdNumber() {
+	return idNumber++
+}
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
 	lightDot = loadImage("./resources/img/lightDotSharp.png")
@@ -55,6 +59,8 @@ function keyPressed(e) {
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
+			console.log("stages",game.playerDark.name, getStage(game.playerDark), game.playerLight.name, getStage(game.playerLight))
+			
 			console.log("Light Wood")
 			console.log(scoreBoard(game.dots, game.playerLight, game.playerDark))
 			console.log("Dark Wood")
