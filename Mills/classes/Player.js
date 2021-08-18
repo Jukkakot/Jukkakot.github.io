@@ -11,6 +11,9 @@ class Player {
         this.startChips = []
         this.eatenChips = []
         this.eatenChipsCount = 0
+        //Stage 3 turns is to encourage staying "alive" when player hits stage 3
+        //This is benefical because opponent could make a mistake and therefore player could still win
+        this.stage3Turns = 0
     }
     drawMills() {
         this.mills.forEach(mill => mill.draw())
