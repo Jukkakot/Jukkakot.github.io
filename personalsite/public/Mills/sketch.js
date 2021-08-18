@@ -89,7 +89,8 @@ function start() {
 	game = new Game()
 	locked = false
 	windowResized()
-
+	suggestionButton.style("visibility", "visible")
+	autoPlayButton.style("visibility", "visible")
 	//This is to auto play the first move for light wood player when loading the site
 	if (AUTOPLAY && game.turn === game.playerLight) {
 		game.playRound(game.findBestMove())
@@ -206,7 +207,7 @@ function draw() {
 
 	push()
 	textAlign(CENTER)
-	if (AUTOPLAY) {
+	if (AUTOPLAY && !game.winner) {
 		fill(0)
 		textSize(circleSize * 1.5)
 		text("AUTOPLAY", 0, -height * 0.38)
