@@ -400,7 +400,8 @@ class Game {
         restartButton.style('font-size', circleSize * 2 + "px")
         restartButton.style('background', "transparent  url('./resources/img/woodenButton.png') no-repeat center top")
         restartButton.style("background-size", "cover")
-
+        suggestionButton.style("visibility", "hidden")
+        autoPlayButton.style("visibility", "hidden")
         // restartButton.style('background-color', color(0, 255, 0, 200))
     }
     getUpdatedMills(board, player) {
@@ -946,7 +947,7 @@ function scoreBoard(board, player, oppPlayer) {
     return value
 }
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
-    if (depth === 0) {
+    if (depth < 1) {
         // return [undefined, scoreBoard(board, player, oppPlayer)]
         if (isMaximizing) {
             return [undefined, scoreBoard(board, player, oppPlayer)]
@@ -1017,7 +1018,10 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
 
         var eatableDots = game.getEatableDots(board, oppPlayer)
         for (var dot of eatableDots) {
-            if (getStage(oppPlayer) === 3) return [dot, 100080085, "eating"]
+            if (getStage(oppPlayer) === 3) {
+                console.log(player.name, "win")
+                return [dot, 100080085, "eating"]
+            }
             var cBoard = deepClone(board)
             var cPlayer = deepClone(player)
             // var cPlayer = player
@@ -1047,7 +1051,10 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
 
         var eatableDots = game.getEatableDots(board, player)
         for (var dot of eatableDots) {
-            if (getStage(player) === 3) return [dot, 100080085, "eating"]
+            if (getStage(player) === 3) {
+                console.log(oppPlayer.name, "win")
+                return [dot, 100080085, "eating"]
+            }
             var cBoard = deepClone(board)
             var cPlayer = deepClone(player)
             var cOppPlayer = deepClone(oppPlayer)
