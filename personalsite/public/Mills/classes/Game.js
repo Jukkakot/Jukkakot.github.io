@@ -303,7 +303,7 @@ class Game {
 
     }
     checkIfCanMove(player, board) {
-        if (getStage(player) === 1) return true
+        if (getStage(player) !== 2) return true
         var movableDots = this.getMoveableDots(board, player)
         return movableDots.length > 0
     }
@@ -972,10 +972,10 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
             return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else {
             //Won by opponent not being able to move
-            if (getStage(player) === 2 && !game.checkIfCanMove(player, board)) {
+            if (!game.checkIfCanMove(player, board)) {
                 console.log(oppPlayer.name, "win")
                 return [undefined, -100000000]
-            } else if (getStage(oppPlayer) === 2 && !game.checkIfCanMove(oppPlayer, board)) {
+            } else if (!game.checkIfCanMove(oppPlayer, board)) {
                 console.log(player.name, "win")
                 return [undefined, 100000000]
             }
@@ -996,10 +996,10 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
             return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else {
             //Won by opponent not being able to move
-            if (getStage(player) === 2 && !game.checkIfCanMove(player, board)) {
+            if (!game.checkIfCanMove(player, board)) {
                 console.log(oppPlayer.name, "win")
                 return [undefined, 100000000]
-            } else if (getStage(oppPlayer) === 2 && !game.checkIfCanMove(oppPlayer, board)) {
+            } else if (!game.checkIfCanMove(oppPlayer, board)) {
                 console.log(player.name, "win")
                 return [undefined, -100000000]
             }
@@ -1115,6 +1115,11 @@ function stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, is
                 // var cOppPlayer = oppPlayer
                 //Making the move
                 movePlayerTo(cBoard, cPlayer, fromDot, toDot)
+                //Won by opponent not being able to move
+                if (!game.checkIfCanMove(cOppPlayer, cBoard)) {
+                    console.log(player.name, "win")
+                    return [[fromDot, toDot], 100000000, "moving"]
+                }
                 if (getStage(cPlayer) === 3) {
                     cPlayer.stage3Turns++
                 }
@@ -1167,6 +1172,10 @@ function stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, is
                 var cOppPlayer = deepClone(oppPlayer)
                 //Making the move
                 movePlayerTo(cBoard, cOppPlayer, fromDot, toDot)
+                if (!game.checkIfCanMove(cPlayer, cBoard)) {
+                    console.log(cOppPlayer.name, "win")
+                    return [[fromDot, toDot], 100000000, "moving"]
+                }
                 if (getStage(cOppPlayer) === 3) {
                     cOppPlayer.stage3Turns++
                 }
