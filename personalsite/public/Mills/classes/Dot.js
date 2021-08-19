@@ -1,5 +1,5 @@
 class Dot {
-    constructor(x, y, l, d, startChip) {
+    constructor(x, y, l, d, extraChip) {
         this.x = x
         this.y = y
         this.l = l
@@ -10,6 +10,8 @@ class Dot {
         this.animLocY
         this.animTargetX
         this.animTargetY
+        //Animation player is needed if game is going really fast so that it dosent matter if dots
+        //Player is changed in the middle of animation again
         this.animPlayer
         this.player
         this.r = this.player ? circleSize * 2 : circleSize
@@ -18,7 +20,7 @@ class Dot {
         this.hover = false
         this.neighbours = []
         this.moving = false
-        this.startChip = startChip
+        this.extraChip = extraChip
         this.visible = true
     }
     //Returns dots where this dot can move to
@@ -30,23 +32,22 @@ class Dot {
         }
     }
     size() {
-        if (this.startChip) return (outBoxSize - distance) / 2
+        if (this.extraChip) return (outBoxSize - distance) / 2
         return (outBoxSize - distance * this.l) / 2
     }
 
     draw(eatMode) {
         //visibility is used for eaten chips
-        if(!this.visible) return
+        if (!this.visible) return
 
         // this.player = game.playerLight
         // var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()
         if (this.player && !this.moving) {
             //Drawing player chip
+            if (this.hover) this.r *= 1.3
             this.r = circleSize * 2
             strokeWeight(this.r / 10)
-
-            if (this.hover) this.r *= 1.3
 
             if (eatMode && this.player.canEat(this)) {
                 if (game.eatableAnimations.indexOf(this) === -1) {
@@ -57,8 +58,6 @@ class Dot {
             } else {
                 this.drawDefault()
             }
-            
-
             //Highlighting circle around the chip
             if (this.highlight) {
                 stroke(this.hlColor)
@@ -72,7 +71,7 @@ class Dot {
                 this.r = circleSize * 2.6
                 push()
                 imageMode(CENTER);
-                tint(100) 
+                tint(100)
                 image(game.turn.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
 
                 pop()
@@ -85,7 +84,7 @@ class Dot {
             this.drawSuggested()
         }
         //Text labels to help debugging
-        if (!this.startChip && DEBUG) {
+        if (!this.extraChip && DEBUG) {
             var l = this.l
             var d = this.d
             fill(0, 0, 255)
@@ -134,7 +133,7 @@ class Dot {
                 }
             } else {
                 //Highlighting all empty dots
-                var emptyDots = game.getEmptyDots(game.dots)
+                var emptyDots = getEmptyDots(game.dots)
                 emptyDots.forEach(dot => {
                     dot.highlight = true
                     dot.hlColor = color(0, 255, 0)
@@ -146,7 +145,7 @@ class Dot {
         return false
     }
     canMove() {
-        if (this.startChip) return false
+        if (this.extraChip) return false
         //Always moveable if player is on stage 3 (flying)
         if (this.player && getStage(this.player) === 3) return true
         //Checking for empty dot in neighbour dots
@@ -174,6 +173,7 @@ class Dot {
         pop()
     }
     drawMoveable() {
+        //This is to not make the chip appear at the final position untill the animation has finished
         var index = game.movingAnimations.indexOf(this)
         if (index >= 0) {
             this.drawEmpty()
@@ -188,6 +188,7 @@ class Dot {
         pop()
     }
     drawDefault() {
+        //This is to not make the chip appear at the final position untill the animation has finished
         var index = game.movingAnimations.indexOf(this)
         if (index >= 0) {
             this.drawEmpty()
@@ -199,6 +200,7 @@ class Dot {
         pop()
     }
     drawEmpty() {
+        if (this.extraChip) return
         push()
         this.r = circleSize
         noStroke()
@@ -210,7 +212,7 @@ class Dot {
     drawAnimation() {
         push()
         imageMode(CENTER);
-        image(this.animPlayer.img, this.animLocX, this.animLocY, this.r * 2, this.r * 2);
+        image(this.animPlayer.img, this.animLocX, this.animLocY, circleSize * 2, circleSize * 2);
         pop()
     }
     setTargetDot(prevDot) {
@@ -224,6 +226,18 @@ class Dot {
         this.animTargetY = this.y * this.size()
         // console.log("From", this.animLocX, this.animLocY, "To", this.animTargetX, this.animTargetY)
         prevDot.player = undefined
+        // Making sure to remove the dot from moving animations if its already there
+        //This helps during fast pace autoplay graphical glitches
+        var index = game.movingAnimations.indexOf(this)
+        if (index >= 0) {
+            this.visible = true
+            this.animLocX = undefined
+            this.animLocY = undefined
+
+            this.animTargetX = undefined
+            this.animTargetY = undefined
+            game.movingAnimations.splice(index, 1)
+        }
         game.movingAnimations.push(this)
     }
     updateMovingAnimation() {
@@ -245,7 +259,7 @@ class Dot {
             //Animation has been finished
             if (this.animTargetX === this.animLocX && this.animLocY === this.animTargetY) {
                 // this.player = this.animPlayer
-
+                this.visible = true
                 this.animLocX = undefined
                 this.animLocY = undefined
 
@@ -257,7 +271,7 @@ class Dot {
                 game.movingAnimations.splice(index, 1)
                 //This is just to wait for all animations to finish before letting autoplay play another round
                 // if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerLight) {
-                    
+
                 //     game.playRound(game.findBestMove())
                 // }
             } else {

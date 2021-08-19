@@ -15,22 +15,35 @@ class Game {
         this.suggestion
         //Total turns this game has had
         this.totalTurns = 0
+        this.difficulty = 2
+        this.worker
+        this.initWorker()
+    }
+    initWorker() {
+        if (this.worker) {
+            this.worker.terminate()
+            this.worker = undefined
+            loadingGif.hide()
+        }
         this.worker = new Worker("classes/Worker.js")
         this.worker.onmessage = function (e) {
             var data = e.data
             switch (data.cmd) {
                 case "findMove":
                     game.playRound(data.move)
+                    if (!game.turn.autoPlay) loadingGif.hide()
+
                     break;
                 case "suggestion":
                     game.setSuggestion(data.move)
+                    if (!game.turn.autoPlay) loadingGif.hide()
                     break;
             };
         }
-
-
     }
     findBestMove(cmd) {
+        // cursor(WAIT)
+        loadingGif.show()
         var data = {
             game: deepClone(this),
             cmd: cmd,
@@ -82,14 +95,12 @@ class Game {
         this.drawStartChips()
         this.drawEatenChips()
         noStroke()
-        // circle(0, 0, circleSize * 3)
-        // tint(this.turn.color)
 
         this.drawMills()
 
         textAlign(CENTER)
         if (this.winner) {
-            textSize(circleSize * 4)
+            textSize(circleSize * 2.5)
             stroke(this.winner.color)
             fill(color(255, 255, 255))
             text(this.winner.name + " won!", 0, -circleSize)
@@ -97,17 +108,17 @@ class Game {
 
             imageMode(CENTER);
             image(this.turn.img, 0, 0, circleSize * 3, circleSize * 3);
+            // image(this.turn.img, 0, 0, circleSize * 3, circleSize * 3);
             noStroke()
-            textSize(circleSize)
+            textSize(circleSize * 0.8)
             // fill(0)
             if (this.gameStarted) {
-                text("Turn:", -circleSize * 3, +circleSize / 5)
+                text(this.turn.name + " turn", 0, circleSize * 3)
             } else if (this.eatMode) {
-                text("Mill!", 0, +circleSize * 3)
+                text("Mill!", 0, circleSize * 3)
             } else {
-                text("Place a chip", 0, +circleSize * 3)
+                text("Place a chip", 0, circleSize * 3)
             }
-            // fill(this.turn.color)
 
         }
         pop()
@@ -194,8 +205,7 @@ class Game {
         this.playerDark.startChips.forEach(chip => chip.draw())
     }
     click() {
-        if (AUTOPLAY || this.winner) return
-        // if (AUTOPLAY && this.turn === this.playerLight) return
+        if (this.turn.autoPlay || this.winner) return
         var dot = this.getDot(mX, mY)
         if (!dot) {
             //unhighlight everything
@@ -353,18 +363,13 @@ class Game {
         //Checking for new mills before switching turn
         if (isNewMills(this.dots, this.turn)) {
             this.eatMode = true
-            if (AUTOPLAY) {
-                cursor(WAIT)
+            if (this.turn.autoPlay) {
+                // cursor(WAIT)
                 game.findBestMove("findMove")
-                // this.playRound(this.findBestMove())
-                // game.findBestMove("findMove").then(function (value) {
-                //     game.playRound(value.data.move)
-                // }).catch((error) => {
-                //     console.error(error);
-                // });
-                cursor(ARROW)
+                // cursor(ARROW)
             }
             //Mills are made not new in eatChip method as soon as player has eaten a chip
+            // cursor(ARROW)
             return
         }
 
@@ -382,16 +387,10 @@ class Game {
             this.setWinner(oppPlayer)
             return
         }
-        if (AUTOPLAY) {
-            cursor(WAIT)
-            // game.findBestMove("findMove").then(function (value) {
-            //     game.playRound(value.data.move)
-            // }).catch((error) => {
-            //     console.error(error);
-            // });
+        if (this.turn.autoPlay) {
             game.findBestMove("findMove")
-            cursor(ARROW)
         }
+        // cursor(ARROW)
     }
     playRound(move) {
         // console.log("move",move)
@@ -423,14 +422,11 @@ class Game {
 
         toDot.setTargetDot(fromDot)
         this.switchTurn()
-        // //unhighlighting everything at the end
-        // for (var layer of this.dots) {
-        //     for (var d of layer) {
-        //         d.highlight = false
-        //     }
-        // }
     }
     setWinner(player) {
+        this.worker.terminate()
+        this.worker = undefined
+        loadingGif.hide()
         var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
@@ -439,11 +435,15 @@ class Game {
         this.winner = player
         restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
-        restartButton.style('font-size', circleSize * 2 + "px")
+        restartButton.style('font-size', circleSize * 1.5 + "px")
         restartButton.style('background', "transparent  url('./resources/img/woodenButton.png') no-repeat center top")
         restartButton.style("background-size", "cover")
+
         suggestionButton.style("visibility", "hidden")
         autoPlayButton.style("visibility", "hidden")
+        pDarkButton.style("visibility", "hidden")
+        pLightButton.style("visibility", "hidden")
+        difficultyButton.style("visibility", "hidden")
         // restartButton.style('background-color', color(0, 255, 0, 200))
     }
     drawMills() {
@@ -471,7 +471,6 @@ class Game {
             dot.updateEatableAnimation()
         }
         ANGLE += SPEED
-        // ANGLE = ANGLE % PI
     }
 }
 
