@@ -11,6 +11,7 @@ class Player {
         this.startChips = []
         this.eatenChips = []
         this.eatenChipsCount = 0
+        this.turns = 0
         //Stage 3 turns is to encourage staying "alive" when player hits stage 3
         //This is benefical because opponent could make a mistake and therefore player could still win
         this.stage3Turns = 0

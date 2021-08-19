@@ -48,13 +48,6 @@ class Dot {
 
             if (this.hover) this.r *= 1.3
 
-            //Highlighting circle around the chip
-            if (this.highlight) {
-                stroke(this.hlColor)
-                noFill()
-                circle(this.x * this.size(), this.y * this.size(), this.r * 1.1)
-            }
-
             if (eatMode && this.player.canEat(this)) {
                 if (game.eatableAnimations.indexOf(this) === -1) {
                     this.setEatableDot()
@@ -63,6 +56,14 @@ class Dot {
                 this.drawMoveable()
             } else {
                 this.drawDefault()
+            }
+            
+
+            //Highlighting circle around the chip
+            if (this.highlight) {
+                stroke(this.hlColor)
+                noFill()
+                circle(this.x * this.size(), this.y * this.size(), this.r * 1.1)
             }
         } else {
             //Drawing empty dot
@@ -241,9 +242,9 @@ class Dot {
             } else {
                 this.animLocY += dy * EASING;
             }
-
+            //Animation has been finished
             if (this.animTargetX === this.animLocX && this.animLocY === this.animTargetY) {
-                this.player = this.animPlayer
+                // this.player = this.animPlayer
 
                 this.animLocX = undefined
                 this.animLocY = undefined
@@ -255,9 +256,10 @@ class Dot {
 
                 game.movingAnimations.splice(index, 1)
                 //This is just to wait for all animations to finish before letting autoplay play another round
-                if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerLight) {
-                    game.playRound(game.findBestMove())
-                }
+                // if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerLight) {
+                    
+                //     game.playRound(game.findBestMove())
+                // }
             } else {
                 this.drawAnimation()
             }
