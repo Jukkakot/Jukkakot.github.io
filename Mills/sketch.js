@@ -1,6 +1,6 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.15
-var idNumber = 0
+// var idNumber = 0
 var ANGLE = 0.0
 var SPEED = 0.07
 var outBoxSize
@@ -21,10 +21,10 @@ const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
 var DEBUG = false
-var AUTOPLAY = true
-function getIdNumber() {
-	return idNumber++
-}
+var AUTOPLAY = false
+// function getIdNumber() {
+// 	return idNumber++
+// }
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
 	lightDot = loadImage("./resources/img/lightDotSharp.png")
@@ -53,47 +53,54 @@ function keyPressed(e) {
 	if (e.key === "r") {
 		restartPress()
 	} else if (e.key === "b") {
-		game.playRound(game.findBestMove())
+		// game.playRound(game.findBestMove())
+		game.findBestMove("findMove")
 	} else if (e.key === "s") {
 		suggestionPress()
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
-			console.log("stages",game.playerDark.name, getStage(game.playerDark), game.playerLight.name, getStage(game.playerLight))
-			
-			console.log("Light Wood")
-			console.log(scoreBoard(game.dots, game.playerLight, game.playerDark))
-			console.log("Dark Wood")
-			console.log(scoreBoard(game.dots, game.playerDark, game.playerLight))
+			const worker = new Worker("classes/Worker.js")
+			var data = {
+				game: deepClone(game),
+				cmd: "debug",
+				DEBUG: DEBUG,
+			}
+			worker.postMessage(deepClone(data))
 		}
 	} else if (e.key === "a") {
 		autoPlayButtonPress()
 	}
 }
 function suggestionPress() {
-	game.setSuggestion(game.findBestMove())
+	// game.findBestMove("findMove").then(function (value) {
+	// 	game.setSuggestion(value.data.move)
+	// }).catch((error) => {
+	// 	console.error(error);
+	// });
+	game.findBestMove("suggestion")
 }
 function autoPlayButtonPress() {
 	AUTOPLAY = !AUTOPLAY
-	if (AUTOPLAY && game.turn === game.playerLight) {
-		game.playRound(game.findBestMove())
+	//&& game.turn === game.playerLight
+	if (AUTOPLAY) {
+		game.findBestMove("findMove")
 	}
 }
 function restartPress() {
 	start()
-	if (AUTOPLAY && game.turn === game.playerLight) {
-		game.playRound(game.findBestMove())
-	}
 }
 function start() {
+	if (game && game.worker) game.worker.terminate()
 	game = new Game()
 	locked = false
 	windowResized()
 	suggestionButton.style("visibility", "visible")
 	autoPlayButton.style("visibility", "visible")
 	//This is to auto play the first move for light wood player when loading the site
-	if (AUTOPLAY && game.turn === game.playerLight) {
-		game.playRound(game.findBestMove())
+	// && game.turn === game.playerLight
+	if (AUTOPLAY) {
+		game.findBestMove("findMove")
 	}
 }
 function windowResized() {
