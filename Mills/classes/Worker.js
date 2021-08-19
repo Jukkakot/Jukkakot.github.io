@@ -1,13 +1,6 @@
-// const p5 = window.p5
 var workerGame
-// var workeridNumber
 var DEBUG
 
-// onmessage = function (oEvent) {
-//     workerGame = oEvent.data
-//     console.log(oEvent.data)
-//     findBestMove()
-// };
 self.addEventListener("message", function handleMessageFromGame(e) {
     var data = e.data
     switch (data.cmd) {
@@ -15,10 +8,15 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             self.close()
             break;
         case "findMove":
-            handleGetMove(data)
+            workerGame = data.game
+            setTimeout(() => {
+                handleGetMove(data)
+            }, (workerGame.difficulty === 2 ? 1000 : 0));
             break;
         case "suggestion":
-            handleGetMove(data)
+            setTimeout(() => {
+                handleGetMove(data)
+            }, (workerGame.difficulty === 2 ? 1000 : 0));
             break;
         case "debug":
             workerGame = data.game
@@ -30,12 +28,11 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             self.close()
     };
 })
-// importScripts("Mill.js"); 
 function handleGetMove(data) {
     workerGame = data.game
     DEBUG = data.DEBUG
     // workeridNumber = data.idNumber
-    console.log("Starting",data.cmd)
+    // console.log("Starting",data.cmd)
     var data = {
         cmd: data.cmd,
         // idNumber: workeridNumber,
@@ -78,8 +75,12 @@ function findBestMove() {
     let type
     //this loop is to prioritize earlier good move (Like winning or making a mill)
     // for (var depth = 1; depth < 5; depth++) {
-    var depth = workerGame.eatMode || getStage(player) === 3 || getStage(oppPlayer) === 3 ? 2 : 4
-    // var depth = 2
+    var depth
+    if (workerGame.difficulty === 2) {
+        depth = 2
+    } else {
+        depth = workerGame.eatMode || getStage(player) === 3 || getStage(oppPlayer) === 3 ? 2 : 4
+    }
     let result = minimax(cBoard, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
     move = result[0]
     bestScore = result[1]
@@ -130,18 +131,18 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
         //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
         //This has to be checked with unique number given to every mill formed in the workerGame
         //So that two mills that are in same place but formed at different times can be differentiated
-        if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId) ) {
+        if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId)) {
 
             //Win
-            // if (getStage(oppPlayer) === 3) {
-            //     // console.log(player.name, "win")
-            //     return 100000000
-            // }
+            if (getStage(oppPlayer) === 3) {
+                // console.log(player.name, "win")
+                return 100000000
+            }
             // console.log(player.name, "new mill@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             scoreObject.update("newMill")
             value += 2500
-        } 
-       
+        }
+
     }
     if (oppCount === 3) {
         //Getting the non deepCopied player
@@ -154,13 +155,13 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
         //So that two mills that are in same place but formed at different times can be differentiated
         if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId !== workerGamerMill.uniqId)) {
             //Win
-            // if (getStage(player) === 3) {
-            //     // console.log(player.name, "lost")
-            //     return -100000000
-            // }
+            if (getStage(player) === 3) {
+                // console.log(player.name, "lost")
+                return -100000000
+            }
             // console.log(player.name, "new mill@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            scoreObject.update("oppNewMll")
-            value -= 2500
+            scoreObject.update("oppNewMill")
+            value -= 3000
         }
     }
     switch (getStage(player)) {

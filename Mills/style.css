@@ -1,4 +1,4 @@
-html, body {
+html, body{
     margin: 0;
     padding: 0;
     background-color: #646464;
@@ -8,19 +8,19 @@ html, body {
     overscroll-behavior: contain;
     /* background-image: url("./resources/img/background1.png"); */
   }
-  canvas {
+  canvas{
     display: block;
   }
   button {
+    font-family: 'Holtwood One SC', serif;
     cursor:pointer;
-    width: 200px;
-    height: 100px; 
     border: none;
+    background-size: cover;
   }
   button:hover {
     filter: brightness(70%);
   }
-  #restartButton{
+  #restartButton,#difficultyButton{
     background: transparent  url("./resources/img/woodenButton.png") no-repeat center top;
     background-size: cover;
   }
@@ -28,4 +28,11 @@ html, body {
     background: transparent  url("./resources/img/blueButton.png") no-repeat center top;
     background-size: cover;
   }
- 
+  #pDarkButton {
+    background: transparent  url("./resources/img/darkDotSharp.png") no-repeat center top;
+    background-size: cover;
+  }
+  #pLightButton {
+    background: transparent  url("./resources/img/lightDotSharp.png") no-repeat center top;
+    background-size: cover;
+  }
