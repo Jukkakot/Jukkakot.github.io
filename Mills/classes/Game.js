@@ -216,8 +216,8 @@ class Game {
                 this.eatChip(dot)
             }
             return
-        } else if (getStage(this.turn) === 2) {
-            //MOVING CHIPS (Stage 2)
+        } else if (getStage(this.turn) !== 1) {
+            //MOVING CHIPS (Stage 2 & 3)
 
             //unhighlighting everything at the start
             for (var layer of this.dots) {

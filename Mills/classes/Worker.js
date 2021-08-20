@@ -375,18 +375,18 @@ function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
         value += 800
     }
 
-    // //opponent safe open mill
-    // else if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
-    //     emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
-    //         !oppDots.some(dot => dot.id == chip.id))) {
-    //     scoreObject.update("oppOpenMillStage2")
-    //     value -= 3000
-    // }
-    // //opponent open mill
-    // else if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
-    //     scoreObject.update("oppOpenMillStage3")
-    //     value -= 3000
-    // }
+    //opponent safe open mill
+    else if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
+            !oppDots.some(dot => dot.id == chip.id))) {
+        scoreObject.update("oppOpenMillStage2")
+        value -= 3000
+    }
+    //opponent open mill
+    else if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppOpenMillStage3")
+        value -= 3000
+    }
     return value
 }
 function getStage(player) {
