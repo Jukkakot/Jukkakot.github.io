@@ -97,15 +97,16 @@ function findBestMove() {
         console.timeEnd("time finding a move")
         return
     }
+    
     //Play the best move
     if (type == "placing") {
-        console.log(type, "l", move.l, "d", move.d, "score", bestScore)
+        console.log(workerGame.turn.name,type, "l", move.l, "d", move.d, "score", bestScore)
     } else if (type == "moving") {
         var fromDot = move[0]
         var toDot = move[1]
-        console.log(type, "from", [fromDot.l, fromDot.d], "to", [toDot.l, toDot.d], "score", bestScore)
+        console.log(workerGame.turn.name,type, "from", [fromDot.l, fromDot.d], "to", [toDot.l, toDot.d], "score", bestScore)
     } else if (type == "eating") {
-        console.log(type, "l", move.l, "d", move.d, "score", bestScore)
+        console.log(workerGame.turn.name,type, "l", move.l, "d", move.d, "score", bestScore)
     } else {
         console.log(type, move, "typeless move?")
     }

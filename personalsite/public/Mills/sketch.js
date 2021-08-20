@@ -1,5 +1,6 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.10
+var LOADING = false
 // var idNumber = 0
 var ANGLE = 0.0
 var SPEED = 0.07
@@ -148,7 +149,7 @@ function togglePlayerLight() {
 function togglePlayerDark() {
 	game.settings.darkAutoplay = !game.settings.darkAutoplay
 	game.playerDark.autoPlay = game.settings.darkAutoplay
-	
+
 	game.initWorker()
 	if (game.turn === game.playerDark && game.playerDark.autoPlay) {
 		game.findBestMove("findMove")
@@ -168,7 +169,6 @@ function start() {
 			darkAutoplay: game.playerDark.autoPlay,
 		}
 	}
-
 	game = new Game(gameSettings)
 	locked = false
 	windowResized()
@@ -255,7 +255,7 @@ function touchMoved(e) {
 	mouseDragged()
 }
 function mouseDragged() {
-	if (getStage(game.turn) !== 1) return
+	if (getStage(game.turn) === 1) return
 	if (!movableDot) {
 		movableDot = game.click()
 	}
@@ -275,7 +275,7 @@ function touchEnded() {
 }
 
 function mouseReleased() {
-	if (getStage(game.turn) !== 1) return
+	if (getStage(game.turn) === 1) return
 	if (movableDot && locked) {
 		movableDot.moving = false
 		game.prevDot = movableDot
