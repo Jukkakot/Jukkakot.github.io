@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 8
+const MAXCHIPCOUNT = 18
 const EASING = 0.10
 var LOADING = false
 // var idNumber = 0
