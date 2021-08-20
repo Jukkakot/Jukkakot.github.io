@@ -68,23 +68,29 @@ function findBestMove() {
     console.time("time finding a move")
     var player = workerGame.turn
     var oppPlayer = workerGame.turn.name == workerGame.playerDark.name ? workerGame.playerLight : workerGame.playerDark
-    var cBoard = workerGame.dots
+    var board = workerGame.dots
     let move
     let bestScore = -Infinity
     let type
-    //this loop is to prioritize earlier good move (Like winning or making a mill)
-    // for (var depth = 1; depth < 5; depth++) {
     var depth
     if (workerGame.difficulty === 2) {
         depth = 2
     } else {
         depth = workerGame.eatMode || getStage(player) === 3 || getStage(oppPlayer) === 3 ? 2 : 4
     }
-    let result = minimax(cBoard, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+    //this loop is to prioritize earlier good move (Like winning or making a mill)
+    // for (var i = 1; i < depth + 1; i++) {
+    let result = minimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+    // if (result[1] > bestScore) {
     move = result[0]
     bestScore = result[1]
     type = result[2]
-    //     if (bestScore >= 100000000) break
+
+    // }
+    //     if (bestScore >= 100000000) {
+    //         console.log("Found win!")
+    //         break
+    //     }
     // }
     if (!move) {
         console.log("Couldn't find a move")
@@ -137,7 +143,7 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
                 // console.log(player.name, "win")
                 return 100000000
             }
-            // console.log(player.name, "new mill@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            // console.log(player.name, "new mill")
             scoreObject.update("newMill")
             value += 2500
         }
@@ -158,7 +164,7 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
                 // console.log(player.name, "lost")
                 return -100000000
             }
-            // console.log(player.name, "new mill@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            // console.log(player.name, "new mill")
             scoreObject.update("oppNewMill")
             value -= 3000
         }
@@ -402,6 +408,14 @@ function scoreBoard(board, player, oppPlayer) {
     player.chipCount = getPlayerDots(board, player).length
     oppPlayer.chipCount = getPlayerDots(board, oppPlayer).length
 
+    //Checking for win
+    if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
+        console.log(player.name, "cant move")
+        return -100000000
+    } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
+        console.log(oppPlayer.name, "cant move")
+        return 100000000
+    }
     var value = 0
     //Object to store info about where the different points for each board is coming from
     //Helpful for debugging
@@ -488,14 +502,14 @@ function scoreBoard(board, player, oppPlayer) {
     return value
 }
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
-    if (depth < 1) {
-        // return [undefined, scoreBoard(board, player, oppPlayer)]
-        if (isMaximizing) {
-            return [undefined, scoreBoard(board, player, oppPlayer)]
-        }
-        else {
-            return [undefined, scoreBoard(board, oppPlayer, player)]
-        }
+    if (depth <= 0) {
+        return [undefined, scoreBoard(board, player, oppPlayer)]
+        // if (isMaximizing) {
+        //     return [undefined, scoreBoard(board, player, oppPlayer)]
+        // }
+        // else {
+        //     return [undefined, scoreBoard(board, oppPlayer, player)]
+        // }
     }
 
     if (isMaximizing) {
@@ -760,7 +774,7 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             if (eatmode) {
                 cPlayer.mills.forEach(m => m.new = false)
             }
-
+           
             var score = minimax(cBoard, cPlayer, cOppPlayer, eatmode ? depth : depth - 1, alpha, beta, eatmode, eatmode)[1]
             if (score > bestScore) {
                 bestScore = score
