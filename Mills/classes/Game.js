@@ -1,23 +1,37 @@
 class Game {
-    constructor() {
+    constructor(settings) {
+        this.settings = settings
+        //Game board storing all the dots
+        //its a 3 x 8 dot long array, each array is a "layer" of dots on the board
         this.dots = this.initDots()
-        this.prevDot
-        this.prevHover
+
         this.playerDark = new Player(color(100, 60, 20), darkDot, "Dark wood")
+        this.playerDark.autoPlay = this.settings.darkAutoplay
+
         this.playerLight = new Player(color(145, 132, 102), lightDot, "Light wood")
+        this.playerLight.autoPlay = this.settings.lightAutoplay
+
+        //turn is current player that has the turn
         this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
-        this.gameStarted = false
+
         this.eatMode = false
         this.winner
+        //Storage for the suggested dot so its easy to clear afterwards
+        this.suggestion
+
         this.movingAnimations = []
         this.eatableAnimations = []
-        this.initExtraChips()
-        this.suggestion
-        //Total turns this game has had
-        this.totalTurns = 0
-        this.difficulty = 2
+
+        this.difficulty = this.settings.difficulty
+
         this.worker
+
         this.initWorker()
+        this.initExtraChips()
+
+        //Helper variables for moving chips and for the hover effects
+        this.prevDot
+        this.prevHover
     }
     initWorker() {
         if (this.worker) {
@@ -112,7 +126,7 @@ class Game {
             noStroke()
             textSize(circleSize * 0.8)
             // fill(0)
-            if (this.gameStarted) {
+            if (getStage(this.turn) !== 1) {
                 text(this.turn.name + " turn", 0, circleSize * 3)
             } else if (this.eatMode) {
                 text("Mill!", 0, circleSize * 3)
@@ -224,7 +238,7 @@ class Game {
                 this.eatChip(dot)
             }
             return
-        } else if (this.gameStarted) {
+        } else if (getStage(this.turn) === 2) {
             //MOVING CHIPS (Stage 2)
 
             //unhighlighting everything at the start
@@ -313,11 +327,7 @@ class Game {
         var prevDot = this.turn.startChips.pop()
         dot.setTargetDot(prevDot)
 
-        //Checking if all chips has been added
-        this.gameStarted = this.playerDark.chipsToAdd + this.playerLight.chipsToAdd === 0
-
         this.switchTurn()
-
     }
     hover() {
         //Returning if mouse is still on the prevHover dot place
@@ -331,7 +341,7 @@ class Game {
 
         var dot = this.getDot(mX, mY)
         if (dot) {
-            if (this.gameStarted && dot.player === this.turn) {
+            if (getStage(this.turn) !== 1 && dot.player === this.turn) {
                 //Moving chips
                 cursor(MOVE)
             } else {
@@ -379,7 +389,6 @@ class Game {
             return
         }
         if (getStage(this.turn) === 3) this.turn.stage3Turns++
-        this.totalTurns++
         this.turn.turns++
         this.turn = this.turn === this.playerDark ? this.playerLight : this.playerDark
         if (this.checkIfLost(this.turn)) {

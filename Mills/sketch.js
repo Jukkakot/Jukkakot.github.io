@@ -16,6 +16,12 @@ var movableDot
 var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif
 var restartButton, autoPlayButton, suggestionButton, pDarkButton, pLightButton, difficultyButton
 
+var gameSettings = {
+	difficulty: 2,
+	lightAutoplay: true,
+	darkAutoplay: false,
+	// AUTOPLAY: false
+}
 const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
@@ -116,44 +122,54 @@ function suggestionPress() {
 }
 function autoPlayButtonPress() {
 	AUTOPLAY = !AUTOPLAY
-	game.playerDark.autoPlay = AUTOPLAY
-	game.playerLight.autoPlay = AUTOPLAY
-
-
+	game.settings.darkAutoplay = AUTOPLAY
+	game.settings.lightAutoplay = AUTOPLAY
+	game.playerLight.autoPlay = game.settings.lightAutoplay
+	game.playerDark.autoPlay = game.settings.darkAutoplay
+	
+	game.initWorker()
 	//&& game.turn === game.playerLight
 	if (AUTOPLAY) {
 		game.findBestMove("findMove")
-	} else {
-		game.initWorker()
 	}
 }
 function restartPress() {
 	start()
 }
 function togglePlayerLight() {
-	game.playerLight.autoPlay = !game.playerLight.autoPlay
+	game.settings.lightAutoplay = !game.settings.lightAutoplay
+	game.playerLight.autoPlay = game.settings.lightAutoplay
+
+	game.initWorker()
 	if (game.turn === game.playerLight && game.playerLight.autoPlay) {
 		game.findBestMove("findMove")
-	} else {
-		game.initWorker()
-	}
+	} 
 }
 function togglePlayerDark() {
-	game.playerDark.autoPlay = !game.playerDark.autoPlay
+	game.settings.darkAutoplay = !game.settings.darkAutoplay
+	game.playerDark.autoPlay = game.settings.darkAutoplay
+	
+	game.initWorker()
 	if (game.turn === game.playerDark && game.playerDark.autoPlay) {
 		game.findBestMove("findMove")
-	} else {
-		game.initWorker()
-	}
+	} 
 }
 function toggleDifficulty() {
-	game.difficulty = game.difficulty === 2 ? 4 : 2
+	game.settings.difficulty = game.settings.difficulty === 2 ? 4 : 2
+	game.difficulty = game.settings.difficulty
 	// game.initWorker()
 }
 function start() {
-	if (game && game.worker) game.initWorker()
+	if (game && game.worker) {
+		game.initWorker()
+		gameSettings = {
+			difficulty: game.difficulty,
+			lightAutoplay: game.playerLight.autoPlay,
+			darkAutoplay: game.playerDark.autoPlay,
+		}
+	}
 
-	game = new Game()
+	game = new Game(gameSettings)
 	locked = false
 	windowResized()
 	suggestionButton.style("visibility", "visible")
@@ -239,7 +255,7 @@ function touchMoved(e) {
 	mouseDragged()
 }
 function mouseDragged() {
-	if (!game.gameStarted) return
+	if (getStage(game.turn) !== 1) return
 	if (!movableDot) {
 		movableDot = game.click()
 	}
@@ -257,8 +273,9 @@ function mouseDragged() {
 function touchEnded() {
 	mouseReleased()
 }
+
 function mouseReleased() {
-	if (!game.gameStarted) return
+	if (getStage(game.turn) !== 1) return
 	if (movableDot && locked) {
 		movableDot.moving = false
 		game.prevDot = movableDot
@@ -269,7 +286,7 @@ function mouseReleased() {
 }
 function draw() {
 	background(backgroundImg)
-	AUTOPLAY = game.playerDark.autoPlay && game.playerLight.autoPlay
+	AUTOPLAY = game.settings.lightAutoplay && game.settings.darkAutoplay
 	if (frameCount === 1) windowResized()
 	// background(150)
 	translate(width / 2, height / 2)
@@ -296,10 +313,10 @@ function draw() {
 		autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
 	}
-	game.playerDark.autoPlay ? pDarkButton.html("A") : pDarkButton.html("P")
-	game.playerLight.autoPlay ? pLightButton.html("A") : pLightButton.html("P")
-	game.difficulty === 2 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
-
+	game.settings.darkAutoplay ? pDarkButton.html("A") : pDarkButton.html("P")
+	game.settings.lightAutoplay ? pLightButton.html("A") : pLightButton.html("P")
+	game.settings.difficulty === 2 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
+	
 	push()
 	textAlign(CENTER)
 	if (AUTOPLAY && !game.winner) {
