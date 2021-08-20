@@ -10,7 +10,7 @@ function App() {
       <h1>Welcome!</h1>
       <button 
         className="imgButton" 
-        onClick={()=>window.location="/Minesweeper"}>
+        onClick={()=>window.location="/MineSweeper"}>
         <img src={mineImg}  alt="Minesweeper" title="Minesweeper"/>
       </button>
       <button 
