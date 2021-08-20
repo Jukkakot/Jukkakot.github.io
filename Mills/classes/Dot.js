@@ -50,10 +50,10 @@ class Dot {
             strokeWeight(this.r / 10)
 
             if (eatMode && this.player.canEat(this)) {
-                if (game.eatableAnimations.indexOf(this) === -1) {
-                    this.setEatableDot()
-                }
-            } else if (this.canMove()) {
+                var value = map(sin(ANGLE), -1, 1, 0.8, 1.4)
+                this.r = this.r * value
+            } 
+            if (this.canMove()) {
                 this.drawMoveable()
             } else {
                 this.drawDefault()
@@ -151,18 +151,6 @@ class Dot {
         //Checking for empty dot in neighbour dots
         return this.neighbours.some(dot => !dot.player)
     }
-    setEatableDot() {
-        game.eatableAnimations.push(this)
-    }
-    updateEatableAnimation() {
-        var value = map(sin(ANGLE), -1, 1, 0.8, 1.4)
-        this.r = this.r * value
-        if (this.canMove()) {
-            this.drawMoveable()
-        } else {
-            this.drawDefault()
-        }
-    }
     drawSuggested() {
         push()
         if (!this.player) this.r = circleSize * 2
@@ -174,8 +162,7 @@ class Dot {
     }
     drawMoveable() {
         //This is to not make the chip appear at the final position untill the animation has finished
-        var index = game.movingAnimations.indexOf(this)
-        if (index >= 0) {
+        if (game.movingAnimations.includes(this)) {
             this.drawEmpty()
             return
         }
@@ -189,8 +176,7 @@ class Dot {
     }
     drawDefault() {
         //This is to not make the chip appear at the final position untill the animation has finished
-        var index = game.movingAnimations.indexOf(this)
-        if (index >= 0) {
+        if (game.movingAnimations.includes(this)) {
             this.drawEmpty()
             return
         }
@@ -209,7 +195,7 @@ class Dot {
         circle(this.x * this.size(), this.y * this.size(), this.r)
         pop()
     }
-    drawAnimation() {
+    drawMovingAnimation() {
         push()
         imageMode(CENTER);
         image(this.animPlayer.img, this.animLocX, this.animLocY, circleSize * 2, circleSize * 2);
@@ -226,19 +212,13 @@ class Dot {
         this.animTargetY = this.y * this.size()
         // console.log("From", this.animLocX, this.animLocY, "To", this.animTargetX, this.animTargetY)
         prevDot.player = undefined
-        // Making sure to remove the dot from moving animations if its already there
-        //This helps during fast pace autoplay graphical glitches
-        var index = game.movingAnimations.indexOf(this)
-        if (index >= 0) {
-            this.visible = true
-            this.animLocX = undefined
-            this.animLocY = undefined
 
-            this.animTargetX = undefined
-            this.animTargetY = undefined
-            game.movingAnimations.splice(index, 1)
-        }
-        game.movingAnimations.push(this)
+        //This helps during fast pace autoplay graphical glitches
+        //Since the chip might be moved again before the animation has finished
+        if (!game.movingAnimations.includes(this)) {
+            game.movingAnimations.push(this)
+        } 
+
     }
     updateMovingAnimation() {
         if (this.animTargetX !== this.animLocX || this.animTargetY !== this.animLocY) {
@@ -246,12 +226,14 @@ class Dot {
             let dx = this.animTargetX - this.animLocX;
             if (abs(dx) < 5) {
                 this.animLocX = this.animTargetX
+                // this.animLocY = this.animTargetY
             } else {
                 this.animLocX += dx * EASING;
             }
 
             let dy = this.animTargetY - this.animLocY;
             if (abs(dy) < 5) {
+                // this.animLocX = this.animTargetX
                 this.animLocY = this.animTargetY
             } else {
                 this.animLocY += dy * EASING;
@@ -269,13 +251,8 @@ class Dot {
                 var index = game.movingAnimations.indexOf(this)
 
                 game.movingAnimations.splice(index, 1)
-                //This is just to wait for all animations to finish before letting autoplay play another round
-                // if (AUTOPLAY && game.movingAnimations.length === 0 && game.turn === game.playerLight) {
-
-                //     game.playRound(game.findBestMove())
-                // }
             } else {
-                this.drawAnimation()
+                this.drawMovingAnimation()
             }
 
         }

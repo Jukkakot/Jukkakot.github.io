@@ -20,7 +20,6 @@ class Game {
         this.suggestion
 
         this.movingAnimations = []
-        this.eatableAnimations = []
 
         this.difficulty = this.settings.difficulty
 
@@ -40,7 +39,7 @@ class Game {
             loadingGif.hide()
             LOADING = false
         }
-        
+
         this.worker = new Worker("classes/Worker.js")
         this.worker.onmessage = function (e) {
             var data = e.data
@@ -53,13 +52,13 @@ class Game {
                 case "suggestion":
                     LOADING = false
                     loadingGif.hide()
-                    game.setSuggestion(data.move) 
+                    game.setSuggestion(data.move)
                     break;
             };
         }
     }
     findBestMove(cmd) {
-        if(LOADING) return
+        if (LOADING) return
         LOADING = true
         // cursor(WAIT)
         loadingGif.show()
@@ -253,7 +252,6 @@ class Game {
         this.turn.eatenChips[this.turn.eatenChipsCount++].visible = true
 
         this.eatMode = false
-        this.eatableAnimations = []
         dot.player = undefined
         this.turn.mills.forEach(m => m.new = false)
         this.switchTurn()
@@ -349,7 +347,7 @@ class Game {
 
 
         //Checking for new mills before switching turn
-        if (isNewMills(this.dots, this.turn)) {
+        if (hasNewMills(this.dots, this.turn)) {
             this.eatMode = true
             if (this.turn.autoPlay) {
                 // cursor(WAIT)
@@ -451,13 +449,7 @@ class Game {
         }
     }
     updateAnimations() {
-        for (var dot of this.movingAnimations) {
-            dot.updateMovingAnimation()
-        }
-        for (var dot of this.eatableAnimations) {
-            dot.updateEatableAnimation()
-        }
-        ANGLE += SPEED
+        this.movingAnimations.forEach(dot => dot.updateMovingAnimation())
     }
 }
 

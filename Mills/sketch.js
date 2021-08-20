@@ -1,12 +1,22 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.10
-var LOADING = false
-// var idNumber = 0
 var ANGLE = 0.0
 var SPEED = 0.07
-var outBoxSize
-var circleSize
-var distance
+
+const defaultWidth = 800
+const defaultHeight = 1100
+const ASPECTRATIO = defaultHeight / defaultWidth
+
+var LOADING = false
+var DEBUG = false
+var AUTOPLAY = false
+
+var gameSettings = {
+	difficulty: 2,
+	lightAutoplay: true,
+	darkAutoplay: false,
+}
+var outBoxSize, circleSize, distance
 var cnv
 var scaledWidth, scaledHeight
 var game
@@ -17,20 +27,6 @@ var movableDot
 var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif
 var restartButton, autoPlayButton, suggestionButton, pDarkButton, pLightButton, difficultyButton
 
-var gameSettings = {
-	difficulty: 2,
-	lightAutoplay: true,
-	darkAutoplay: false,
-	// AUTOPLAY: false
-}
-const defaultWidth = 800
-const defaultHeight = 1100
-const ASPECTRATIO = defaultHeight / defaultWidth
-var DEBUG = false
-var AUTOPLAY = false
-// function getIdNumber() {
-// 	return idNumber++
-// }
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
 	lightDot = loadImage("./resources/img/lightDotSharp.png")
@@ -45,19 +41,7 @@ function preload() {
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultHeight);
 	textFont('Holtwood One SC')
-	// loadingGif.parent(cnv)
-	// imageMode(CENTER);
-	// cnv.createImg("./resources/img/loading.gif")
-	// loadingGif.center()
-
-	// cnv.child(load0ingGif)
-
-	// image(loadingGif,0,0,0,0)
-	// loadingGif.id("loadingGif")
-	loadingGif.size(90, 30)
-	loadingGif.position(cnv.position().x + cnv.width / 2 - 45, cnv.position().y + cnv.height / 2 - circleSize * 3)
-
-
+	
 	restartButton = createButton("Restart")
 	restartButton.id("restartButton")
 	restartButton.mousePressed(() => restartPress())
@@ -77,7 +61,6 @@ function setup() {
 	pLightButton = createButton("P")
 	pLightButton.id("pLightButton")
 	pLightButton.mousePressed(() => togglePlayerLight())
-
 
 	difficultyButton = createButton("Difficulty")
 	difficultyButton.id("difficultyButton")
@@ -127,7 +110,7 @@ function autoPlayButtonPress() {
 	game.settings.lightAutoplay = AUTOPLAY
 	game.playerLight.autoPlay = game.settings.lightAutoplay
 	game.playerDark.autoPlay = game.settings.darkAutoplay
-	
+
 	game.initWorker()
 	//&& game.turn === game.playerLight
 	if (AUTOPLAY) {
@@ -144,7 +127,7 @@ function togglePlayerLight() {
 	game.initWorker()
 	if (game.turn === game.playerLight && game.playerLight.autoPlay) {
 		game.findBestMove("findMove")
-	} 
+	}
 }
 function togglePlayerDark() {
 	game.settings.darkAutoplay = !game.settings.darkAutoplay
@@ -153,7 +136,7 @@ function togglePlayerDark() {
 	game.initWorker()
 	if (game.turn === game.playerDark && game.playerDark.autoPlay) {
 		game.findBestMove("findMove")
-	} 
+	}
 }
 function toggleDifficulty() {
 	game.settings.difficulty = game.settings.difficulty === 2 ? 4 : 2
@@ -188,10 +171,6 @@ function windowResized() {
 	scaledHeight = min(windowHeight, defaultHeight)
 	cnv.resize(scaledWidth, scaledHeight)
 
-	loadingGif.size(90, 30)
-	loadingGif.position(cnv.position().x + cnv.width / 2 - 45, cnv.position().y + cnv.height / 2 - circleSize * 3)
-
-
 	circleSize = floor(min(width, height / ASPECTRATIO) / 30)
 	outBoxSize = min(width, height / ASPECTRATIO) - circleSize * 2.5
 	distance = min(width, height / ASPECTRATIO) * 0.28
@@ -199,6 +178,9 @@ function windowResized() {
 	var buttonWidth = circleSize * 7
 	var buttonHeight = buttonWidth / 2.5
 
+	loadingGif.size(circleSize * 3, circleSize)
+	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width/2, cnv.position().y + cnv.height / 2 - circleSize * 3)
+	
 	restartButton.position(cnv.position().x, cnv.position().y)
 	restartButton.size(buttonWidth, buttonHeight)
 	restartButton.style('font-size', circleSize * 0.6 + "px")
@@ -286,19 +268,28 @@ function mouseReleased() {
 }
 function draw() {
 	background(backgroundImg)
+
 	AUTOPLAY = game.settings.lightAutoplay && game.settings.darkAutoplay
+
 	if (frameCount === 1) windowResized()
-	// background(150)
+
+	
 	translate(width / 2, height / 2)
+
 	mX = mouseX - width / 2
 	mY = mouseY - height / 2
+
 	if (touches[0]) {
 		mX = touches[0].x - width / 2
 		mY = touches[0].y - height / 2
 	}
+
 	game.draw()
 	game.hover()
 	game.updateAnimations()
+
+	//Angle and Speed are eatable dot animation values
+	ANGLE += SPEED
 
 	if (frameCount % 10 == 0) fps = frameRate()
 
@@ -306,6 +297,7 @@ function draw() {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
 	}
+
 	if (AUTOPLAY) {
 		autoPlayButton.style('background', "transparent  url('./resources/img/redButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
@@ -313,10 +305,11 @@ function draw() {
 		autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
 	}
+
 	game.settings.darkAutoplay ? pDarkButton.html("A") : pDarkButton.html("P")
 	game.settings.lightAutoplay ? pLightButton.html("A") : pLightButton.html("P")
 	game.settings.difficulty === 2 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
-	
+
 	push()
 	textAlign(CENTER)
 	if (AUTOPLAY && !game.winner) {
@@ -327,7 +320,6 @@ function draw() {
 	//Displaying fps
 	textSize(circleSize * 0.8)
 	fill(0)
-
 	text(floor(fps) + " fps", width / 2 - circleSize * 2, -height * 0.48)
 
 	if (DEBUG) {
@@ -339,7 +331,6 @@ function draw() {
 		strokeWeight(circleSize)
 		point(mX, mY)
 	}
-
 	pop()
 }
 
