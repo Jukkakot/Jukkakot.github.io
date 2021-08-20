@@ -214,10 +214,12 @@ function windowResized() {
 
 }
 function touchStarted(e) {
-	if (e.target.id !== "restartButton" && e.target.id !== "suggestionButton" && e.target.id !== "autoPlayButton") {
-		//Disables double clicking issues when placing chips
-		e.preventDefault()
-	}
+	// if (e.target.id !== "restartButton" && 
+	// e.target.id !== "suggestionButton" &&
+	//  e.target.id !== "autoPlayButton" &&) {
+	// 	//Disables double clicking issues when placing chips
+	// 	e.preventDefault()
+	// }
 	mouseClicked()
 }
 function mousePressed() {
