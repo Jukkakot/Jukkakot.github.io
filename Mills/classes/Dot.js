@@ -244,14 +244,14 @@ class Dot {
         if (this.animTargetX !== this.animLocX || this.animTargetY !== this.animLocY) {
 
             let dx = this.animTargetX - this.animLocX;
-            if (abs(dx) < 10) {
+            if (abs(dx) < 5) {
                 this.animLocX = this.animTargetX
             } else {
                 this.animLocX += dx * EASING;
             }
 
             let dy = this.animTargetY - this.animLocY;
-            if (abs(dy) < 10) {
+            if (abs(dy) < 5) {
                 this.animLocY = this.animTargetY
             } else {
                 this.animLocY += dy * EASING;

@@ -51,15 +51,15 @@ function setup() {
 	loadingGif.position(cnv.position().x + cnv.width / 2 - 45, cnv.position().y + cnv.height / 2 - circleSize * 3)
 
 
-	restartButton = createButton("Restart\n(r)")
+	restartButton = createButton("Restart")
 	restartButton.id("restartButton")
 	restartButton.mousePressed(() => restartPress())
 
-	suggestionButton = createButton("Suggestion\n(s)")
+	suggestionButton = createButton("Suggestion")
 	suggestionButton.id("suggestionButton")
 	suggestionButton.mousePressed(() => suggestionPress())
 
-	autoPlayButton = createButton("Autoplay\n(a)")
+	autoPlayButton = createButton("Autoplay")
 	autoPlayButton.id("autoPlayButton")
 	autoPlayButton.mousePressed(() => autoPlayButtonPress())
 
@@ -152,6 +152,7 @@ function toggleDifficulty() {
 }
 function start() {
 	if (game && game.worker) game.initWorker()
+
 	game = new Game()
 	locked = false
 	windowResized()
@@ -162,7 +163,7 @@ function start() {
 	difficultyButton.style("visibility", "visible")
 	//This is to auto play the first move for light wood player when loading the site
 	// && game.turn === game.playerLight
-	if (AUTOPLAY) {
+	if (game.turn.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }

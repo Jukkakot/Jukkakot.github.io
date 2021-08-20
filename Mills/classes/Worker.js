@@ -8,15 +8,10 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             self.close()
             break;
         case "findMove":
-            workerGame = data.game
-            setTimeout(() => {
-                handleGetMove(data)
-            }, (workerGame.difficulty === 2 ? 1000 : 0));
+            handleGetMove(data)
             break;
         case "suggestion":
-            setTimeout(() => {
-                handleGetMove(data)
-            }, (workerGame.difficulty === 2 ? 1000 : 0));
+            handleGetMove(data)
             break;
         case "debug":
             workerGame = data.game
@@ -38,7 +33,11 @@ function handleGetMove(data) {
         // idNumber: workeridNumber,
         move: findBestMove()
     }
-    self.postMessage(data)
+    //Adding 1 second delay to sending the move if easy mode to slow it down a bit
+    setTimeout(() => {
+        self.postMessage(data)
+    }, (workerGame.difficulty === 2 ? 1000 : 0));
+
 }
 // function workerGetId() {
 //     return new Promise((resolve, reject) => {
@@ -500,34 +499,25 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
     }
 
     if (isMaximizing) {
-        if (player.chipCount + player.chipsToAdd < 3) {
+        if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
             // console.log(oppPlayer.name, "win")
             return [undefined, -100000000]
-        } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3) {
+        } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
             // console.log(player.name, "win")
             return [undefined, 100000000]
         }
-
         if (eatmode) {
             return eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else if (getStage(player) === 1) {
             return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else {
-            //Won by opponent not being able to move
-            if (!checkIfCanMove(player, board)) {
-                // console.log(oppPlayer.name, "win")
-                return [undefined, -100000000]
-            } else if (!checkIfCanMove(oppPlayer, board)) {
-                // console.log(player.name, "win")
-                return [undefined, 100000000]
-            }
             return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         }
     } else {
-        if (player.chipCount + player.chipsToAdd < 3) {
+        if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
             // console.log(oppPlayer.name, "win")
             return [undefined, 100000000]
-        } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3) {
+        } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
             // console.log(player.name, "win")
             return [undefined, -100000000]
         }
@@ -537,14 +527,6 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
         } else if (getStage(oppPlayer) === 1) {
             return stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         } else {
-            //Won by opponent not being able to move
-            if (!checkIfCanMove(player, board)) {
-                // console.log(oppPlayer.name, "win")
-                return [undefined, 100000000]
-            } else if (!checkIfCanMove(oppPlayer, board)) {
-                // console.log(player.name, "win")
-                return [undefined, -100000000]
-            }
             return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         }
     }
