@@ -38,24 +38,29 @@ class Game {
             this.worker.terminate()
             this.worker = undefined
             loadingGif.hide()
+            LOADING = false
         }
+        
         this.worker = new Worker("classes/Worker.js")
         this.worker.onmessage = function (e) {
             var data = e.data
             switch (data.cmd) {
                 case "findMove":
+                    LOADING = false
+                    loadingGif.hide()
                     game.playRound(data.move)
-                    if (!game.turn.autoPlay) loadingGif.hide()
-
                     break;
                 case "suggestion":
-                    game.setSuggestion(data.move)
-                    if (!game.turn.autoPlay) loadingGif.hide()
+                    LOADING = false
+                    loadingGif.hide()
+                    game.setSuggestion(data.move) 
                     break;
             };
         }
     }
     findBestMove(cmd) {
+        if(LOADING) return
+        LOADING = true
         // cursor(WAIT)
         loadingGif.show()
         var data = {
@@ -65,33 +70,6 @@ class Game {
         }
         this.worker.postMessage(deepClone(data))
     }
-    // findBestMove(cmd) {
-    //     return new Promise((resolve, reject) => {
-    //         const worker = new Worker("classes/Worker.js")
-
-    //         worker.onmessage = function (e) {
-    //             worker.terminate()
-    //             resolve(e)
-    //         }
-
-    //         worker.onerror = function (err) {
-    //             worker.terminate();
-    //             reject(err);
-    //             console.log(err.message, err.lineno)
-    //         }
-
-    //         // Post the message to the worker
-    //         var data = {
-    //             game: deepClone(this),
-    //             cmd: cmd,
-    //             DEBUG: DEBUG,
-    //             // idNumber: ++idNumber,
-    //         }
-    //         worker.postMessage(deepClone(data))
-    //     }).catch((error) => {
-    //         console.error(error);
-    //     });
-    // }
     draw() {
         push()
         strokeWeight(circleSize / 5)

@@ -66,7 +66,7 @@ class Dot {
             }
         } else {
             //Drawing empty dot
-            if (getStage(game.turn) !== 1 && this.hover && !eatMode) {
+            if (getStage(game.turn) === 1 && this.hover && !eatMode) {
                 //Drawing player chip when placing them at stage 1 of game
                 this.r = circleSize * 2.6
                 push()
