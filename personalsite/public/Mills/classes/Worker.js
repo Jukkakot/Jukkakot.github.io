@@ -816,7 +816,7 @@ function isMill(player, d1, d2, d3) {
     //Aka, all dots are next to eachother
     //d2 neighbours should always include d1/d3 cause its the middle dot?
     if (!d2.neighbours.includes(d1) || !d2.neighbours.includes(d3)) return undefined
-    return new Mill(d1, d2, d3, player.turns)
+    return new Mill(d1, d2, d3)
 }
 function isNewMill(player, mill) {
     return !player.mills.some(pMill => pMill.id == mill.id)
@@ -976,13 +976,13 @@ function deepClone(obj) {
     return clone(obj);
 }
 class Mill {
-    constructor(d1, d2, d3, id) {
+    constructor(d1, d2, d3) {
         this.dots = [d1, d2, d3]
         this.player = d1.player
         this.id = d1.l.toString() + d1.d.toString() +
             d2.l.toString() + d2.d.toString() +
             d3.l.toString() + d3.d.toString()
-        this.uniqNum = id
+        this.uniqNum = this.player.turns
         this.uniqId = this.id + this.uniqNum.toString()
         this.new = true
     }

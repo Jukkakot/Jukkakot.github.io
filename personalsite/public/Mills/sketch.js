@@ -1,4 +1,4 @@
-const MAXCHIPCOUNT = 18
+const MAXCHIPCOUNT = 8
 const EASING = 0.10
 var ANGLE = 0.0
 var SPEED = 0.07
@@ -40,8 +40,9 @@ function preload() {
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultHeight);
+
 	textFont('Holtwood One SC')
-	
+
 	restartButton = createButton("Restart")
 	restartButton.id("restartButton")
 	restartButton.mousePressed(() => restartPress())
@@ -179,8 +180,8 @@ function windowResized() {
 	var buttonHeight = buttonWidth / 2.5
 
 	loadingGif.size(circleSize * 3, circleSize)
-	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width/2, cnv.position().y + cnv.height / 2 - circleSize * 3)
-	
+	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width / 2, cnv.position().y + cnv.height / 2 - circleSize * 3)
+
 	restartButton.position(cnv.position().x, cnv.position().y)
 	restartButton.size(buttonWidth, buttonHeight)
 	restartButton.style('font-size', circleSize * 0.6 + "px")
@@ -267,37 +268,48 @@ function mouseReleased() {
 	locked = false
 }
 function draw() {
-	background(backgroundImg)
-
-	AUTOPLAY = game.settings.lightAutoplay && game.settings.darkAutoplay
-
-	if (frameCount === 1) windowResized()
-
-	
-	translate(width / 2, height / 2)
-
-	mX = mouseX - width / 2
-	mY = mouseY - height / 2
-
-	if (touches[0]) {
-		mX = touches[0].x - width / 2
-		mY = touches[0].y - height / 2
-	}
-
-	game.draw()
+	drawUI() 
 	game.hover()
+	game.draw()
 	game.updateAnimations()
 
-	//Angle and Speed are eatable dot animation values
-	ANGLE += SPEED
+	updateButtons()
+	drawFps()
+	if (DEBUG) drawDebug()
 
-	if (frameCount % 10 == 0) fps = frameRate()
-
+	//Have to draw this after game.draw or else game dots will be drawn on top of moving chip
 	if (locked && movableDot) {
 		movableDot.moving = true
 		movableDot.move(mX, mY)
 	}
-
+}
+function drawFps() {
+	if (frameCount % 10 == 0) fps = frameRate()
+	push()
+	textAlign(CENTER)
+	textSize(circleSize * 0.8)
+	fill(0)
+	text(floor(fps) + " fps", width / 2 - circleSize * 2, -height * 0.48)
+	pop()
+}
+function drawDebug() {
+	push()
+	textAlign(CENTER)
+	textSize(circleSize * 0.8)
+	//Mouse coords
+	fill(0)
+	text(mX + "," + mY, 0, -height * 0.42)
+	// Show mouse / touch location no screen
+	stroke(255, 0, 255)
+	strokeWeight(circleSize)
+	point(mX, mY)
+	pop()
+}
+function updateButtons() {
+	game.settings.darkAutoplay ? pDarkButton.html("A") : pDarkButton.html("P")
+	game.settings.lightAutoplay ? pLightButton.html("A") : pLightButton.html("P")
+	game.settings.difficulty === 2 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
+	AUTOPLAY = game.settings.lightAutoplay && game.settings.darkAutoplay
 	if (AUTOPLAY) {
 		autoPlayButton.style('background', "transparent  url('./resources/img/redButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
@@ -305,32 +317,19 @@ function draw() {
 		autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
 	}
-
-	game.settings.darkAutoplay ? pDarkButton.html("A") : pDarkButton.html("P")
-	game.settings.lightAutoplay ? pLightButton.html("A") : pLightButton.html("P")
-	game.settings.difficulty === 2 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
-
-	push()
-	textAlign(CENTER)
-	if (AUTOPLAY && !game.winner) {
-		fill(0)
-		textSize(circleSize * 1.3)
-		text("AUTOPLAY", 0, -height * 0.38)
-	}
-	//Displaying fps
-	textSize(circleSize * 0.8)
-	fill(0)
-	text(floor(fps) + " fps", width / 2 - circleSize * 2, -height * 0.48)
-
-	if (DEBUG) {
-		//Mouse coords
-		fill(0)
-		text(mX + "," + mY, 0, -height * 0.42)
-		// Show mouse / touch location no screen
-		stroke(255, 0, 255)
-		strokeWeight(circleSize)
-		point(mX, mY)
-	}
-	pop()
 }
+function drawUI () {
+	if (frameCount === 1) windowResized()
+	background(backgroundImg)
 
+	translate(width / 2, height / 2)
+	
+	if (touches[0]) {
+		mX = touches[0].x - width / 2
+		mY = touches[0].y - height / 2
+	} else {
+		mX = mouseX - width / 2
+		mY = mouseY - height / 2
+	}
+	
+}

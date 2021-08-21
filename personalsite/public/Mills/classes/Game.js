@@ -60,7 +60,7 @@ class Game {
     findBestMove(cmd) {
         if (LOADING) return
         LOADING = true
-        // cursor(WAIT)
+        // if(!AUTOPLAY)cursor(WAIT)
         loadingGif.show()
         var data = {
             game: deepClone(this),
@@ -69,7 +69,33 @@ class Game {
         }
         this.worker.postMessage(deepClone(data))
     }
-    draw() {
+    drawWinner() {
+        push()
+        textAlign(CENTER)
+        textSize(circleSize * 2.5)
+        stroke(this.winner.color)
+        fill(color(255, 255, 255))
+        text(this.winner.name + " won!", 0, -circleSize)
+        pop()
+    }
+    drawTurn() {
+        push()
+        textAlign(CENTER)
+        imageMode(CENTER);
+        image(this.turn.img, 0, 0, circleSize * 3, circleSize * 3);
+        textSize(circleSize * 0.8)
+        noStroke()
+        // fill(0)
+        if (getStage(this.turn) !== 1) {
+            text(this.turn.name + " turn", 0, circleSize * 3)
+        } else if (this.eatMode) {
+            text("Mill!", 0, circleSize * 3)
+        } else {
+            text("Place a chip", 0, circleSize * 3)
+        }
+        pop()
+    }
+    drawBoard() {
         push()
         strokeWeight(circleSize / 5)
 
@@ -79,41 +105,45 @@ class Game {
         line(-startX, 0, -end, 0)
         line(0, -startX, 0, -end)
         line(0, startX, 0, end)
-
         for (var layers = 0; layers < 3; layers++) {
             this.drawRect(outBoxSize - distance * layers)
         }
-        this.drawStartChips()
-        this.drawEatenChips()
-        noStroke()
+        pop()
+    }
+    drawAutoplay() {
+        push()
+        textAlign(CENTER)
+        fill(0)
+        textSize(circleSize * 1.3)
+        text("AUTOPLAY", 0, -height * 0.38)
+        pop()
+    }
+    draw() {
+        this.drawBoard()
 
         this.drawMills()
 
-        textAlign(CENTER)
-        if (this.winner) {
-            textSize(circleSize * 2.5)
-            stroke(this.winner.color)
-            fill(color(255, 255, 255))
-            text(this.winner.name + " won!", 0, -circleSize)
-        } else {
+        this.drawStartChips()
+        this.drawEatenChips()
 
-            imageMode(CENTER);
-            image(this.turn.img, 0, 0, circleSize * 3, circleSize * 3);
-            // image(this.turn.img, 0, 0, circleSize * 3, circleSize * 3);
-            noStroke()
-            textSize(circleSize * 0.8)
-            // fill(0)
-            if (getStage(this.turn) !== 1) {
-                text(this.turn.name + " turn", 0, circleSize * 3)
-            } else if (this.eatMode) {
-                text("Mill!", 0, circleSize * 3)
-            } else {
-                text("Place a chip", 0, circleSize * 3)
-            }
-
+        if (AUTOPLAY && !this.winner) {
+            this.drawAutoplay()
         }
-        pop()
+
+        if (this.winner) {
+            this.drawWinner()
+        } else {
+            this.drawTurn()
+        }
+
+        if (LOADING && !AUTOPLAY) {
+            cursor(WAIT)
+        } else {
+            cursor(ARROW)
+        }
+
     }
+
     drawRect(w) {
         push()
         rectMode(CENTER)
@@ -210,12 +240,15 @@ class Game {
         }
 
         if (this.eatMode) {
-            if (this.turn.canEat(dot)) {
-                //EATING CHIPS
+            //EATING CHIPS
+            if (this.turn.canEat(dot))
                 this.eatChip(dot)
-            }
+
             return
-        } else if (getStage(this.turn) !== 1) {
+        } else if (getStage(this.turn) === 1) {
+            //Placing chips (Stage 1)
+            this.placeChip(dot)
+        } else {
             //MOVING CHIPS (Stage 2 & 3)
 
             //unhighlighting everything at the start
@@ -225,8 +258,8 @@ class Game {
                 }
             }
 
-            //Check if dot is player or previous dot clicked is player (For moving purposes)
-            if (dot && dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
+            //Check if dot player is current turn or if previous dot clicked is (For moving purposes)
+            if (dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
                 //Check if moving was succesful
                 if (dot.click(this.prevDot)) {
                     this.prevDot = undefined
@@ -239,9 +272,6 @@ class Game {
                 return dot
             }
             this.prevDot = undefined
-        } else if (!dot.player) {
-            //Placing chips (Stage 1)
-            this.placeChip(dot)
         }
     }
     eatChip(dot) {
@@ -271,26 +301,16 @@ class Game {
         var type = move[1]
         var move = move[0]
         this.clearSuggestion()
-        switch (type) {
-            case ("placing"):
-                this.suggestion = [move]
-                dot = this.dots[move.l][move.d]
+        if (type == "moving") {
+            this.suggestion = move
+            move.forEach(dot => {
+                dot = this.dots[dot.l][dot.d]
                 dot.suggested = true
-                break;
-            case ("moving"):
-                this.suggestion = move
-                for (var dot of move) {
-                    dot = this.dots[dot.l][dot.d]
-                    dot.suggested = true
-                }
-                break;
-            case ("eating"):
-                this.suggestion = [move]
-                dot = this.dots[move.l][move.d]
-                dot.suggested = true
-                break;
-            default:
-                console.log(move, type, "Shouldnt happen?")
+            })
+        } else {
+            this.suggestion = [move]
+            dot = this.dots[move.l][move.d]
+            dot.suggested = true
         }
     }
     placeChip(dot) {
@@ -306,25 +326,19 @@ class Game {
         this.switchTurn()
     }
     hover() {
-        //Returning if mouse is still on the prevHover dot place
-        //(Just for performance improvement)
-        if (this.prevHover) {
-            var size = this.prevHover.size()
-            if (pointInCircle(mX, mY, this.prevHover.x * size, this.prevHover.y * size, this.prevHover.r)) {
-                return
-            }
-        }
-
         var dot = this.getDot(mX, mY)
         if (dot) {
+
             if (getStage(this.turn) !== 1 && dot.player === this.turn) {
                 //Moving chips
                 cursor(MOVE)
-            } else {
+            } else if (getStage(this.turn) === 1 && dot.player === undefined) {
                 //Placing chips
                 cursor(HAND)
-                // cursor("./resources/img/cursor.png")
+            } else {
+                cursor(ARROW)
             }
+
             if (this.prevHover && this.prevHover !== dot) {
                 this.prevHover.hover = false
                 this.prevHover = undefined
@@ -332,11 +346,9 @@ class Game {
             dot.hover = true
             this.prevHover = dot
         } else if (this.prevHover && this.prevHover !== dot) {
-            cursor(ARROW)
             this.prevHover.hover = false
             this.prevHover = undefined
         }
-
     }
 
     checkIfLost(player) {
@@ -345,17 +357,13 @@ class Game {
     switchTurn() {
         this.clearSuggestion()
 
-
         //Checking for new mills before switching turn
         if (hasNewMills(this.dots, this.turn)) {
             this.eatMode = true
             if (this.turn.autoPlay) {
-                // cursor(WAIT)
                 game.findBestMove("findMove")
-                // cursor(ARROW)
             }
             //Mills are made not new in eatChip method as soon as player has eaten a chip
-            // cursor(ARROW)
             return
         }
 
@@ -375,7 +383,6 @@ class Game {
         if (this.turn.autoPlay) {
             game.findBestMove("findMove")
         }
-        // cursor(ARROW)
     }
     playRound(move) {
         // console.log("move",move)
@@ -409,15 +416,19 @@ class Game {
         this.switchTurn()
     }
     setWinner(player) {
+        this.winner = player
+
         this.worker.terminate()
         this.worker = undefined
+
         loadingGif.hide()
+        LOADING = false
+
         var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
         oppPlayer.mills = getUpdatedMills(this.dots, oppPlayer)
 
-        this.winner = player
         restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
         restartButton.style('font-size', circleSize * 1.5 + "px")
@@ -429,7 +440,7 @@ class Game {
         pDarkButton.style("visibility", "hidden")
         pLightButton.style("visibility", "hidden")
         difficultyButton.style("visibility", "hidden")
-        // restartButton.style('background-color', color(0, 255, 0, 200))
+
     }
     drawMills() {
         this.playerLight.drawMills()
@@ -450,6 +461,8 @@ class Game {
     }
     updateAnimations() {
         this.movingAnimations.forEach(dot => dot.updateMovingAnimation())
+        //Angle and Speed are eatable dot animation values
+        ANGLE += SPEED
     }
 }
 
