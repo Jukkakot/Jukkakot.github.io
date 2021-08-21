@@ -1,34 +1,52 @@
 class Dot {
     constructor(x, y, l, d, extraChip) {
+        //x and y are indexes used to calculate exacty position of the dot
         this.x = x
         this.y = y
+
+        //Layer of the board
         this.l = l
+
+        //Index on the layer
         this.d = d
+
+        //Radius
+        this.r = this.player ? circleSize * 2 : circleSize
+
         this.id = this.l.toString() + this.d.toString()
-        this.suggested = false
+
+        //Dots player
+        this.player
+
+        //Array storing this dots neighbour dots
+        this.neighbours = []
+
+        //Animation current x and y
         this.animLocX
         this.animLocY
+
+        //Animation target x and y
         this.animTargetX
         this.animTargetY
-        //Animation player is needed if game is going really fast so that it dosent matter if dots
-        //Player is changed in the middle of animation again
+
+        //Animation player is needed if game is going really fast so that it dosent matter if
+        //Dots player is changed in the middle of animation again
         this.animPlayer
-        this.player
-        this.r = this.player ? circleSize * 2 : circleSize
-        this.highlight = false
-        this.hlColor = color(0, 255, 0)
-        this.hover = false
-        this.neighbours = []
-        this.moving = false
+
         this.extraChip = extraChip
         this.visible = true
+        this.moving = false
+        this.hover = false
+        this.suggested = false
+        this.highlight = false
+        this.hlColor = color(0, 255, 0)
     }
     //Returns dots where this dot can move to
     getNeighbours() {
-        if (this.player.chipCount > 3) {
+        if (getStage(this.player) !== 3) {
             return this.neighbours
         } else {
-            return game.getEmptyDots(game.dots)
+            return getEmptyDots(game.dots)
         }
     }
     size() {
@@ -40,8 +58,6 @@ class Dot {
         //visibility is used for eaten chips
         if (!this.visible) return
 
-        // this.player = game.playerLight
-        // var size = (outBoxSize - distance * game.getLayer(this)) / 2
         push()
         if (this.player && !this.moving) {
             //Drawing player chip
@@ -52,7 +68,7 @@ class Dot {
             if (eatMode && this.player.canEat(this)) {
                 var value = map(sin(ANGLE), -1, 1, 0.8, 1.4)
                 this.r = this.r * value
-            } 
+            }
             if (this.canMove()) {
                 this.drawMoveable()
             } else {
@@ -90,8 +106,11 @@ class Dot {
             fill(0, 0, 255)
             textAlign(CENTER)
             textSize(circleSize * 0.75)
-            text("L" + l + "," + "D" + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
+            text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
             text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
+            fill(255,0,0)
+            text(l*8+d, this.x * this.size(), this.y * this.size() + circleSize /3)
+            
         }
 
         pop()
@@ -117,30 +136,18 @@ class Dot {
                 this.setTargetDot(prevDot)
                 return true
             }
-
         } else if (this.player) {
             //Clicking a dot with player chip in it
             this.highlight = !this.highlight
             this.hlColor = color(0, 0, 255)
 
-            if (this.player.chipCount > 3) {
-                //Highlighting neighbours
-                for (var n of this.neighbours) {
-                    if (!n.player) {
-                        n.highlight = !n.highlight
-                        n.hlColor = color(0, 255, 0)
-                    }
+            //Highlighting dots where player can move
+            for (var n of this.getNeighbours()) {
+                if (!n.player) {
+                    n.highlight = !n.highlight
+                    n.hlColor = color(0, 255, 0)
                 }
-            } else {
-                //Highlighting all empty dots
-                var emptyDots = getEmptyDots(game.dots)
-                emptyDots.forEach(dot => {
-                    dot.highlight = true
-                    dot.hlColor = color(0, 255, 0)
-                })
-
             }
-
         }
         return false
     }
@@ -217,44 +224,31 @@ class Dot {
         //Since the chip might be moved again before the animation has finished
         if (!game.movingAnimations.includes(this)) {
             game.movingAnimations.push(this)
-        } 
+        }
 
     }
     updateMovingAnimation() {
-        if (this.animTargetX !== this.animLocX || this.animTargetY !== this.animLocY) {
+        let dx = this.animTargetX - this.animLocX;
+        this.animLocX = abs(dx) > 5 ? this.animLocX + dx * EASING : this.animTargetX
 
-            let dx = this.animTargetX - this.animLocX;
-            if (abs(dx) < 5) {
-                this.animLocX = this.animTargetX
-                // this.animLocY = this.animTargetY
-            } else {
-                this.animLocX += dx * EASING;
-            }
+        let dy = this.animTargetY - this.animLocY;
+        this.animLocY = abs(dy) > 5 ? this.animLocY + dy * EASING : this.animTargetY
 
-            let dy = this.animTargetY - this.animLocY;
-            if (abs(dy) < 5) {
-                // this.animLocX = this.animTargetX
-                this.animLocY = this.animTargetY
-            } else {
-                this.animLocY += dy * EASING;
-            }
-            //Animation has been finished
-            if (this.animTargetX === this.animLocX && this.animLocY === this.animTargetY) {
-                // this.player = this.animPlayer
-                this.visible = true
-                this.animLocX = undefined
-                this.animLocY = undefined
+        //Animation has been finished
+        if (this.animTargetX === this.animLocX && this.animLocY === this.animTargetY) {
+            // this.player = this.animPlayer
+            this.visible = true
+            this.animLocX = undefined
+            this.animLocY = undefined
 
-                this.animTargetX = undefined
-                this.animTargetY = undefined
+            this.animTargetX = undefined
+            this.animTargetY = undefined
 
-                var index = game.movingAnimations.indexOf(this)
+            var index = game.movingAnimations.indexOf(this)
 
-                game.movingAnimations.splice(index, 1)
-            } else {
-                this.drawMovingAnimation()
-            }
-
+            game.movingAnimations.splice(index, 1)
+        } else {
+            this.drawMovingAnimation()
         }
     }
 }

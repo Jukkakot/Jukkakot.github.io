@@ -2,20 +2,33 @@ class Player {
     constructor(color, img, name) {
         this.name = name
         this.color = color
+        this.img = img
+        this.autoPlay = false
+        //Players short name, obivously have to make sure players name cant start with the same letter :D
+        this.char = this.name[0]
         this.chipCount = 0
         this.chipsToAdd = MAXCHIPCOUNT / 2
-        this.img = img
-        this.mills = []
-        this.millDots = []
-        this.movableDots = []
+
+        //Extra chips at the bottom and top of the board
         this.startChips = []
         this.eatenChips = []
+
+        //EatenChips is initialized full (9 chips)
+        //we just turn them visible as player eats chips
         this.eatenChipsCount = 0
+
+        this.mills = []
+        this.millDots = []
+
+        this.movableDots = []
+
+        //Turns is to keep track of how many turns this player has done
+        //This is used to identify mills made at different turns in the same place
         this.turns = 0
+
         //Stage 3 turns is to encourage staying "alive" when player hits stage 3
         //This is benefical because opponent could make a mistake and therefore player could still win
         this.stage3Turns = 0
-        this.autoPlay = false
     }
     drawMills() {
         this.mills.forEach(mill => mill.draw())
@@ -27,7 +40,10 @@ class Player {
         var oppPlayer = game.turn === game.playerDark ? game.playerLight : game.playerDark
         //Dot has to be opponent player AND
         //Either all dots in are mill or this dot is not in a mill
-        return (dot.player && dot.player.name == oppPlayer.name && (dot.player.allDotsInMill() || !dot.player.dotIsInMill(dot)))
+        //Comparing player names because of deepcloning players sometimes
+        //so they wouldnt match otherwise in that case
+        return (dot.player && dot.player.name == oppPlayer.name &&
+            (dot.player.allDotsInMill() || !dot.player.dotIsInMill(dot)))
 
     }
     allDotsInMill() {
