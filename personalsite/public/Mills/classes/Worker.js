@@ -1,6 +1,8 @@
 var workerGame
 var DEBUG
-
+var nodeCount
+var checkedBoards = {}
+var skipCount
 self.addEventListener("message", function handleMessageFromGame(e) {
     var data = e.data
     switch (data.cmd) {
@@ -31,10 +33,16 @@ function handleGetMove(data) {
         cmd: data.cmd,
         move: findBestMove()
     }
+    //Add 1 sec delay if easy mode/eatmode/flying
+    //Because thats when we use depth 2 and it would go too fast otherwise
+    var delay = workerGame.difficulty === 2 ||
+        workerGame.eatMode ||
+        getStage(workerGame.playerLight) === 3 ||
+        getStage(workerGame.playerDark) === 3
     //Adding 1 second delay to sending the move if easy mode to slow it down a bit
     setTimeout(() => {
         self.postMessage(data)
-    }, (workerGame.difficulty === 2 ? 1000 : 0));
+    }, (delay ? 1000 : 0));
 
 }
 
@@ -44,32 +52,27 @@ function findBestMove() {
         return
     }
     console.time("time finding a move")
+    nodeCount = 0
+    checkedBoards = {}
+    skipCount = 0
     var player = workerGame.turn
     var oppPlayer = workerGame.turn.name == workerGame.playerDark.name ? workerGame.playerLight : workerGame.playerDark
     var board = workerGame.dots
-    let move
-    let bestScore = -Infinity
-    let type
+
+    // var depth = workerGame.difficulty
     var depth
     if (workerGame.difficulty === 2) {
         depth = 2
     } else {
         depth = workerGame.eatMode || getStage(player) === 3 || getStage(oppPlayer) === 3 ? 2 : 4
     }
-    //this loop is to prioritize earlier good move (Like winning or making a mill)
-    // for (var i = 1; i < depth + 1; i++) {
-    let result = minimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
-    // if (result[1] > bestScore) {
-    move = result[0]
-    bestScore = result[1]
-    type = result[2]
 
-    // }
-    //     if (bestScore >= 100000000) {
-    //         console.log("Found win!")
-    //         break
-    //     }
-    // }
+    let result = minimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+
+    let move = result[0]
+    let score = result[1]
+    let type = result[2]
+
     if (!move) {
         console.log("Couldn't find a move")
         console.timeEnd("time finding a move")
@@ -78,16 +81,18 @@ function findBestMove() {
 
     //Play the best move
     if (type == "placing") {
-        console.log("depth", depth, workerGame.turn.name, type, "l", move.l, "d", move.d, "score", bestScore)
+        console.log(workerGame.turn.name, type, "l", move.l, "d", move.d, "score", score, "depth", depth)
     } else if (type == "moving") {
         var fromDot = move[0]
         var toDot = move[1]
-        console.log("depth", depth, workerGame.turn.name, type, "from", [fromDot.l, fromDot.d], "to", [toDot.l, toDot.d], "score", bestScore)
+        console.log(workerGame.turn.name, type, "from", [fromDot.l, fromDot.d], "to", [toDot.l, toDot.d], "score", score, "depth", depth)
     } else if (type == "eating") {
-        console.log("depth", depth, workerGame.turn.name, type, "l", move.l, "d", move.d, "score", bestScore)
+        console.log(workerGame.turn.name, type, "l", move.l, "d", move.d, "score", score, "depth", depth)
     } else {
         console.log(type, move, "typeless move?")
     }
+    console.log("node count", nodeCount, "uniq boards",
+        Object.keys(checkedBoards).length, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
     console.timeEnd("time finding a move")
     return [move, type]
 }
@@ -130,7 +135,7 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
         //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
         //This has to be checked with unique number given to every mill formed in the workerGame
         //So that two mills that are in same place but formed at different times can be differentiated
-        if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId !== workerGamerMill.uniqId)) {
+        if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId)) {
             scoreObject.update("oppNewMill")
             value -= 3000
             //Win
@@ -235,7 +240,7 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
             !playerDots.some(pDot => pDot.id == dot.id) &&
             player.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
         scoreObject.update("doubleMill")
-        value += 5000
+        value += 3000
     }
     //Blocking opp double mill
     if (oppCount === 2 && pieceCount === 1 &&
@@ -243,20 +248,19 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
             !oppDots.some(pDot => pDot.id == dot.id) &&
             oppPlayer.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
         scoreObject.update("blockingOppDoubleMill")
-        value += 5500
+        value += 3500
     }
     //"safe" Open mill as in opponent player cant block it on next move 
     if (pieceCount === 2 && emptyCount === 1 && !emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
         emptyDot.neighbours.some(chip => chip.player && chip.player.name == player.name &&
             !playerDots.some(dot => dot.id == chip.id))) {
         scoreObject.update("safeOpenMill")
-        //good to be less than 1000 because double safe open mill happens, and it would be same value as new mill
         value += 800
     }
     //mill
     if (pieceCount === 3) {
         scoreObject.update("mill")
-        value += 500
+        value += 400
     }
     //Opponent mill is blocked from opening
     if (oppStage === 2 && oppCount === 3 &&
@@ -382,10 +386,10 @@ function scoreBoard(board, player, oppPlayer) {
 
     //Checking for win
     if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
-        console.log(player.name, "cant move")
+        // console.log(player.name, "cant move")
         return -100000000
     } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
-        console.log(oppPlayer.name, "cant move")
+        // console.log(oppPlayer.name, "cant move")
         return 100000000
     }
     var value = 0
@@ -472,23 +476,152 @@ function scoreBoard(board, player, oppPlayer) {
 
     return value
 }
+function getS3Moves(board, player, oppPlayer) {
+    var moves = []
+    var fromDots = getPlayerDots(board, player)
+    for (var layer of board) {
+        for (var d = 0; d < 8; d++) {
+            var window
+            if (d % 2 === 0) {
+                //d = 0,2,4,6
+                //Checking window on layers (even indexes)
+                window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
+
+            } else if (layer[d].l === 0) {
+                //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
+                //d = 1,3,5,7
+                //Checking window between layers (odd indexes)
+                window = [board[0][d], board[1][d], board[2][d]]
+            }
+            var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
+            var oppCount = window.filter(chip => chip.player && chip.player.name == oppPlayer.name).length
+            var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
+            var playerPieces = window.filter(chip => chip.player && chip.player.name == player.name)
+            var emptyDots = window.filter(chip => !chip.player)
+            var emptyCount = window.filter(chip => !chip.player).length
+
+            // Making mill
+            if (pieceCount === 2 && emptyCount === 1) {
+                var fromDot = fromDots.find(dot => !playerPieces.includes(dot))
+                if (!moves.includes([fromDot, emptyDots[0]]))
+                    moves.push([fromDot, emptyDots[0]])
+            }
+            // Blocking opp mill
+            if (oppCount === 2 && emptyCount === 1) {
+                fromDots.forEach(dot => {
+                    if (!moves.includes([dot, emptyDots[0]]))
+                        moves.push([dot, emptyDots[0]])
+                })
+            }
+        }
+    }
+    var toDots = getEmptyDots(board)
+    for (var fromDot of fromDots) {
+        toDots.forEach(toDot => {
+            if (!moves.includes([fromDot, toDot]))
+                moves.push([fromDot, toDot])
+        })
+    }
+    return moves
+}
+function getS2Moves(board, player, oppPlayer) {
+    var moves = []
+    for (var layer of board) {
+        for (var d = 0; d < 8; d++) {
+            var window
+            if (d % 2 === 0) {
+                //d = 0,2,4,6
+                //Checking window on layers (even indexes)
+                window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
+
+            } else if (layer[d].l === 0) {
+                //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
+                //d = 1,3,5,7
+                //Checking window between layers (odd indexes)
+                window = [board[0][d], board[1][d], board[2][d]]
+            }
+            var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
+            var oppCount = window.filter(chip => chip.player && chip.player.name == oppPlayer.name).length
+            var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
+            var playerPieces = window.filter(chip => chip.player && chip.player.name == player.name)
+            var emptyDots = window.filter(chip => !chip.player)
+            var emptyCount = window.filter(chip => !chip.player).length
+
+            // Making mill
+            if (pieceCount === 2 && emptyCount === 1) {
+                var fromDot = emptyDots[0].neighbours.find(dot => dot.player && dot.player.name == player.name)
+                if (fromDot) {
+                    if (!moves.includes([fromDot, emptyDots[0]]))
+                        moves.push([fromDot, emptyDots[0]])
+                }
+            }
+            // Opening mill
+            if (pieceCount === 3) {
+                for (var dot of playerPieces) {
+                    dot.neighbours.forEach(nDot => {
+                        if (!nDot.player && !moves.includes([dot, nDot]))
+                            moves.push([dot, nDot])
+                    })
+                }
+            }
+            //blocking opp mill stage 2
+            if (getStage(oppPlayer) === 2 && oppCount === 2 && emptyCount === 1 &&
+                emptyDots[0].neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
+                    !oppDots.some(chip => chip.id == dot.id) &&
+                    emptyDots[0].neighbours.some(dot => dot.player && dot.player.name == player.name))) {
+                var fromDot = emptyDots[0].neighbours.find(dot => dot.player && dot.player.name == player.name)
+                if (fromDot) {
+                    if (!moves.includes([fromDot, emptyDots[0]]))
+                        moves.push([fromDot, emptyDots[0]])
+                }
+            }
+        }
+    }
+    //Adding the rest of the possible moves
+    for (var dot of getMoveableDots(board, player)) {
+        dot.neighbours.filter(nDot => !nDot.player).forEach(emptyDot => {
+            if (!moves.includes([dot, emptyDot]))
+                moves.push([dot, emptyDot])
+        })
+    }
+    return moves
+}
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
-    if (depth <= 0) {
-        return [undefined, scoreBoard(board, player, oppPlayer)]
-        // if (isMaximizing) {
-        //     return [undefined, scoreBoard(board, player, oppPlayer)]
-        // }
-        // else {
-        //     return [undefined, scoreBoard(board, oppPlayer, player)]
-        // }
+    nodeCount++
+    var boardStr
+    if (depth <= 0 && !eatmode) {
+        var value
+        if (isMaximizing) {
+            boardStr = addInfo(stringify(board), player, oppPlayer)
+        } else {
+            boardStr = addInfo(stringify(board), oppPlayer, player)
+        }
+        var checkedValue = checkedBoards[boardStr]
+        if (checkedValue) {
+            skipCount++
+            return [undefined, checkedValue]
+        }
+        // value = scoreBoard(board, player, oppPlayer)
+        // return [undefined, scoreBoard(board, player, oppPlayer)]
+        if (isMaximizing) {
+            value = scoreBoard(board, player, oppPlayer)
+        }
+        else {
+            value = scoreBoard(board, oppPlayer, player)
+        }
+        checkedBoards[boardStr] = value
+        return [undefined, value]
     }
 
     if (isMaximizing) {
+
         if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
             // console.log(oppPlayer.name, "win")
+            checkedBoards[boardStr] = -100000000
             return [undefined, -100000000]
         } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
             // console.log(player.name, "win")
+            checkedBoards[boardStr] = 100000000
             return [undefined, 100000000]
         }
         if (eatmode) {
@@ -499,11 +632,14 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
             return stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing)
         }
     } else {
+
         if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
             // console.log(oppPlayer.name, "win")
+            checkedBoards[boardStr] = 100000000
             return [undefined, 100000000]
         } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
             // console.log(player.name, "win")
+            checkedBoards[boardStr] = -100000000
             return [undefined, -100000000]
         }
 
@@ -588,123 +724,92 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
     }
 }
 function stage23MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
-    var allEmptydots = getEmptyDots(board)
+
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
+        var moves = getStage(player) === 2 ? getS2Moves(board, player, oppPlayer) : getS3Moves(board, player, oppPlayer)
+        for (var move of moves) {
+            var fromDot = move[0]
+            var toDot = move[1]
 
+            var cBoard = deepClone(board)
+            var cPlayer = deepClone(player)
+            var cOppPlayer = deepClone(oppPlayer)
 
-        for (var fromDot of getMoveableDots(board, player)) {
-            //If player can fly, we check fromDot against every empty dot on the board
-            var neighbours = []
-            if (getStage(player) === 3) {
-                var playerDots = getPlayerDots(board, player)
-                playerDots.push(...getPlayerDots(board, oppPlayer))
-                var emptydots = []
-                playerDots.forEach(dot => emptydots.push(...dot.neighbours.filter(dn => !dn.player)))
-                emptydots.forEach(dot => {
-                    if (!neighbours.includes(dot)) neighbours.push(dot)
-                })
-                //Finally adding all the rest of the empty dots in board
-                neighbours.push(...allEmptydots.filter(dot => !neighbours.includes(dot)))
-            } else {
-                neighbours = fromDot.neighbours
+            //Making the move
+            movePlayerTo(cBoard, cPlayer, fromDot, toDot)
+
+            //Won by opponent not being able to move
+            if (!checkIfCanMove(cOppPlayer, cBoard)) {
+                // console.log(player.name, "win")
+                return [[fromDot, toDot], 100000000, "moving"]
             }
-            for (var toDot of neighbours) {
-                //toDot has to be empty dot
-                if (toDot.player) continue
-
-                var cBoard = deepClone(board)
-                var cPlayer = deepClone(player)
-                var cOppPlayer = deepClone(oppPlayer)
-
-                //Making the move
-                movePlayerTo(cBoard, cPlayer, fromDot, toDot)
-
-                //Won by opponent not being able to move
-                if (!checkIfCanMove(cOppPlayer, cBoard)) {
-                    // console.log(player.name, "win")
-                    return [[fromDot, toDot], 100000000, "moving"]
-                }
-                if (getStage(cPlayer) === 3) {
-                    cPlayer.stage3Turns++
-                }
-                // var score
-                eatmode = hasNewMills(cBoard, cPlayer)
-                if (eatmode) {
-                    cPlayer.mills.forEach(m => m.new = false)
-                }
-
-                var score = minimax(cBoard, cPlayer, cOppPlayer, eatmode ? depth : depth - 1, alpha, beta, eatmode, eatmode)[1]
-
-                if (score > bestScore) {
-                    bestScore = score
-                    bestMove = [fromDot, toDot]
-                }
-                alpha = Math.max(bestScore, alpha)
-                if (alpha >= beta)
-                    return [bestMove, bestScore, "moving"]
+            if (getStage(cPlayer) === 3) {
+                cPlayer.stage3Turns++
             }
+            // var score
+            eatmode = hasNewMills(cBoard, cPlayer)
+            if (eatmode) {
+                cPlayer.mills.forEach(m => m.new = false)
+            }
+
+            var score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, eatmode, eatmode)[1]
+
+            if (score > bestScore) {
+                bestScore = score
+                bestMove = [fromDot, toDot]
+            }
+            alpha = Math.max(bestScore, alpha)
+            if (alpha >= beta)
+                break
         }
+
         return [bestMove, bestScore, "moving"]
     } else {
         let bestScore = Infinity;
         let bestMove
+        var moves = getStage(oppPlayer) === 2 ? getS2Moves(board, oppPlayer, player) : getS3Moves(board, oppPlayer, player)
+        for (var move of moves) {
+            var fromDot = move[0]
+            var toDot = move[1]
 
-        for (var fromDot of getMoveableDots(board, oppPlayer)) {
-            //If player can fly, we check fromDot against every empty dot on the board
-            var neighbours = []
-            if (getStage(oppPlayer) === 3) {
-                var playerDots = getPlayerDots(board, oppPlayer)
-                playerDots.push(...getPlayerDots(board, player))
-                var emptydots = []
-                playerDots.forEach(dot => emptydots.push(...dot.neighbours.filter(dn => !dn.player)))
-                emptydots.forEach(dot => {
-                    if (!neighbours.includes(dot)) neighbours.push(dot)
-                })
-                //Finally adding all the rest of the empty dots in board
-                neighbours.push(...allEmptydots.filter(dot => !neighbours.includes(dot)))
-            } else {
-                neighbours = fromDot.neighbours
+            var cBoard = deepClone(board)
+            var cPlayer = deepClone(player)
+            var cOppPlayer = deepClone(oppPlayer)
+
+            //Making the move
+            movePlayerTo(cBoard, cOppPlayer, fromDot, toDot)
+
+            if (!checkIfCanMove(cPlayer, cBoard)) {
+                // console.log(cOppPlayer.name, "win")
+                return [[fromDot, toDot], 100000000, "moving"]
             }
 
-            for (var toDot of neighbours) {
-                //toDot has to be empty dot
-                if (toDot.player) continue
-
-                var cBoard = deepClone(board)
-                var cPlayer = deepClone(player)
-                // var cPlayer = player
-                var cOppPlayer = deepClone(oppPlayer)
-                //Making the move
-                movePlayerTo(cBoard, cOppPlayer, fromDot, toDot)
-                if (!checkIfCanMove(cPlayer, cBoard)) {
-                    // console.log(cOppPlayer.name, "win")
-                    return [[fromDot, toDot], 100000000, "moving"]
-                }
-                if (getStage(cOppPlayer) === 3) {
-                    cOppPlayer.stage3Turns++
-                }
-                eatmode = hasNewMills(cBoard, cOppPlayer)
-                if (eatmode) {
-                    cOppPlayer.mills.forEach(m => m.new = false)
-                }
-
-                var score = minimax(cBoard, cPlayer, cOppPlayer, eatmode ? depth : depth - 1, alpha, beta, eatmode, !eatmode)[1]
-
-                if (score < bestScore) {
-                    bestScore = score
-                    bestMove = [fromDot, toDot]
-                }
-
-                beta = Math.min(bestScore, beta)
-                if (alpha >= beta)
-                    return [bestMove, bestScore, "moving"]
+            if (getStage(cOppPlayer) === 3) {
+                cOppPlayer.stage3Turns++
             }
+
+            eatmode = hasNewMills(cBoard, cOppPlayer)
+            if (eatmode) {
+                cOppPlayer.mills.forEach(m => m.new = false)
+            }
+
+            var score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, eatmode, !eatmode)[1]
+
+            if (score < bestScore) {
+                bestScore = score
+                bestMove = [fromDot, toDot]
+            }
+
+            beta = Math.min(bestScore, beta)
+            if (alpha >= beta)
+                break
         }
         return [bestMove, bestScore, "moving"]
     }
 }
+
 
 function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
     var allEmptydots = getEmptyDots(board)
@@ -743,7 +848,7 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
                 cPlayer.mills.forEach(m => m.new = false)
             }
 
-            var score = minimax(cBoard, cPlayer, cOppPlayer, eatmode ? depth : depth - 1, alpha, beta, eatmode, eatmode)[1]
+            var score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, eatmode, eatmode)[1]
             if (score > bestScore) {
                 bestScore = score
                 bestMove = dot
@@ -788,7 +893,7 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
 
             }
 
-            var score = minimax(cBoard, cPlayer, cOppPlayer, eatmode ? depth : depth - 1, alpha, beta, eatmode, !eatmode)[1]
+            var score = minimax(cBoard, cPlayer, cOppPlayer, depth - 1, alpha, beta, eatmode, !eatmode)[1]
             if (score < bestScore) {
                 bestScore = score
                 bestMove = dot
@@ -974,6 +1079,21 @@ function deepClone(obj) {
         return item; // not object, not array, therefore primitive
     }
     return clone(obj);
+}
+function stringify(board) {
+    var str = ""
+    for (var layer of board) {
+        for (var dot of layer) {
+            if (!dot.player) str += '0'
+            else if (dot.player.name == workerGame.playerDark.name) str += 'D'
+            else if (dot.player.name == workerGame.playerLight.name) str += 'L'
+        }
+    }
+    return str
+}
+function addInfo(boardStr, player, oppPlayer) {
+    return getStage(player).toString() + player.char +
+        getStage(oppPlayer).toString() + oppPlayer.char + boardStr
 }
 class Mill {
     constructor(d1, d2, d3) {

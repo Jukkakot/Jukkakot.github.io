@@ -202,7 +202,7 @@ function windowResized() {
 	pDarkButton.size(buttonHeight, buttonHeight)
 	pDarkButton.style('font-size', circleSize * 1.5 + "px")
 
-	difficultyButton.position(cnv.position().x, cnv.position().y + cnv.height - difficultyButton.height)
+	difficultyButton.position(cnv.position().x + circleSize/3, cnv.position().y + cnv.height - difficultyButton.height - circleSize/2)
 	difficultyButton.size(buttonWidth, buttonHeight)
 	difficultyButton.style('font-size', circleSize * 0.6 + "px")
 
@@ -214,12 +214,16 @@ function windowResized() {
 
 }
 function touchStarted(e) {
-	// if (e.target.id !== "restartButton" && 
-	// e.target.id !== "suggestionButton" &&
-	//  e.target.id !== "autoPlayButton" &&) {
-	// 	//Disables double clicking issues when placing chips
-	// 	e.preventDefault()
-	// }
+	if (e.target.id !== "restartButton" &&
+		e.target.id !== "suggestionButton" &&
+		e.target.id !== "autoPlayButton" &&
+		e.target.id !== "pDarkButton" &&
+		e.target.id !== "pLightButton" &&
+		e.target.id !== "difficultyButton") {
+		//Disables double clicking issues when placing chips
+		//And other unwanted actions on mobile like selecting text on buttons
+		e.preventDefault()
+	}
 	mouseClicked()
 }
 function mousePressed() {
@@ -268,7 +272,7 @@ function mouseReleased() {
 	locked = false
 }
 function draw() {
-	drawUI() 
+	drawUI()
 	game.hover()
 	game.draw()
 	game.updateAnimations()
@@ -318,12 +322,12 @@ function updateButtons() {
 		autoPlayButton.style("background-size", "cover")
 	}
 }
-function drawUI () {
+function drawUI() {
 	if (frameCount === 1) windowResized()
 	background(backgroundImg)
 
 	translate(width / 2, height / 2)
-	
+
 	if (touches[0]) {
 		mX = touches[0].x - width / 2
 		mY = touches[0].y - height / 2
@@ -331,5 +335,5 @@ function drawUI () {
 		mX = mouseX - width / 2
 		mY = mouseY - height / 2
 	}
-	
+
 }

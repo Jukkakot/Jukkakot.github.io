@@ -106,8 +106,11 @@ class Dot {
             fill(0, 0, 255)
             textAlign(CENTER)
             textSize(circleSize * 0.75)
-            text("L" + l + "," + "D" + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
+            text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
             text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
+            fill(255,0,0)
+            text(l*8+d, this.x * this.size(), this.y * this.size() + circleSize /3)
+            
         }
 
         pop()

@@ -4,7 +4,8 @@ class Player {
         this.color = color
         this.img = img
         this.autoPlay = false
-
+        //Players short name, obivously have to make sure players name cant start with the same letter :D
+        this.char = this.name[0]
         this.chipCount = 0
         this.chipsToAdd = MAXCHIPCOUNT / 2
 

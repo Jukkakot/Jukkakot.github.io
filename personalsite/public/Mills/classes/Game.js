@@ -32,6 +32,21 @@ class Game {
         this.prevDot
         this.prevHover
     }
+    stringify(board) {
+        if (!board) {
+            var board = this.dots
+        }
+        var str = ""
+        for (var layer of board) {
+            for (var dot of layer) {
+                if (!dot.player) str += '0'
+                else if (dot.player === game.playerDark) str += 'D'
+                else if (dot.player === game.playerLight) str += 'L'
+            }
+        }
+        return str
+    }
+
     initWorker() {
         if (this.worker) {
             this.worker.terminate()
@@ -309,7 +324,7 @@ class Game {
             })
         } else {
             this.suggestion = [move]
-            dot = this.dots[move.l][move.d]
+            var dot = this.dots[move.l][move.d]
             dot.suggested = true
         }
     }
