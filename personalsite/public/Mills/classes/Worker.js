@@ -114,9 +114,11 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
         //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
         //This has to be checked with unique number given to every mill formed in the workerGame
         //So that two mills that are in same place but formed at different times can be differentiated
-        if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId)) {
+        if ((clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId)) ) {
+            // if(workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId) console.log("toka@@@")
+            // if(clonePlayerMill && !isSameWindow(window)) console.log("eka@@@@")
             scoreObject.update("newMill")
-            value += 2500
+            value += 3500
             //Win
             if (getStage(oppPlayer) === 3) {
                 // console.log(player.name, "win")
@@ -124,7 +126,6 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
             }
             // console.log(player.name, "new mill")
         }
-
     }
     if (oppCount === 3) {
         //Getting the non deepCopied player
@@ -135,7 +136,7 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
         //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
         //This has to be checked with unique number given to every mill formed in the workerGame
         //So that two mills that are in same place but formed at different times can be differentiated
-        if (clonePlayerMill && !isSameWindow(window) || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId)) {
+        if ((clonePlayerMill && !isSameWindow(window))  || (workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId)) {
             scoreObject.update("oppNewMill")
             value -= 3000
             //Win
@@ -179,7 +180,7 @@ function stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
     //almost mill
     if (oppStage == 1 && pieceCount === 2 && emptyCount === 1) {
         scoreObject.update("almostMill")
-        value += 200
+        value += 250
     }
     //mill
     if (pieceCount === 3) {
@@ -232,15 +233,16 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
     }
     var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
     var oppStage = getStage(oppPlayer)
-
     //Syhky miilu is finnish and means double mill
     //which happens when you have 2 mills next to eachother and can get a mill every turn
-    if (pieceCount === 2 && emptyCount === 1 &&
+    //also only limiting this to 1 because multiple double mills was encouraging not making a mill
+    //which would break one of the double mills also.
+    if (pieceCount === 2 && emptyCount === 1 && scoreObject["doubleMill"] !== 1 &&
         emptyDot.neighbours.some(dot => dot.player && dot.player.name == player.name &&
             !playerDots.some(pDot => pDot.id == dot.id) &&
             player.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
         scoreObject.update("doubleMill")
-        value += 3000
+        value += 2000
     }
     //Blocking opp double mill
     if (oppCount === 2 && pieceCount === 1 &&
@@ -248,7 +250,7 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
             !oppDots.some(pDot => pDot.id == dot.id) &&
             oppPlayer.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
         scoreObject.update("blockingOppDoubleMill")
-        value += 3500
+        value += 2500
     }
     //"safe" Open mill as in opponent player cant block it on next move 
     if (pieceCount === 2 && emptyCount === 1 && !emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
@@ -260,25 +262,25 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
     //mill
     if (pieceCount === 3) {
         scoreObject.update("mill")
-        value += 400
+        value += 300
     }
     //Opponent mill is blocked from opening
     if (oppStage === 2 && oppCount === 3 &&
         oppDots.every(dot => dot.neighbours.every(chip => chip.player))) {
         scoreObject.update("blockOppMillStuck")
-        value += 300
+        value += 400
     }
     //blocking opp mill stage 3
     if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
         scoreObject.update("blockOppMillStage3")
-        value += 300
+        value += 400
     }
     //blocking opp mill stage 2
     if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         playerDots[0].neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
             !oppDots.some(chip => chip.id == dot.id))) {
         scoreObject.update("blockOppMillStage2")
-        value += 300
+        value += 400
     }
     //chip is in the middle of nowhere
     //(this is to try and encourage moving chips towards other chips)
@@ -328,7 +330,7 @@ function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
         playerDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
             !oppDots.some(dot => dot.id == chip.id))) {
         scoreObject.update("blockOppMillStage2")
-        value += 3000
+        value += 4000
     }
     //Blocking opp double mill
     if (oppCount === 2 && pieceCount === 1 &&
@@ -425,11 +427,12 @@ function scoreBoard(board, player, oppPlayer) {
             return -100000000
         }
 
-    } else if (getStage(player) === 3) {
-        //Giving 10000 points for each turn during stage 3 to encourage delaying losing a workerGame
-        scoreObject.s3Turns = player.stage3Turns
-        value += player.stage3Turns * 10000
     }
+    // else if (getStage(player) === 3) {
+    //     //Giving 10000 points for each turn during stage 3 to encourage delaying losing a workerGame
+    //     scoreObject.s3Turns = player.stage3Turns
+    //     value += player.stage3Turns * 10000
+    // }
 
     if (getStage(oppPlayer) === 2) {
         var oppMoveableDots = getMoveableDots(board, oppPlayer).length
@@ -589,18 +592,20 @@ function getS2Moves(board, player, oppPlayer) {
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
     nodeCount++
     var boardStr
-    if (depth <= 0 && !eatmode) {
+    if (depth <= 0) {
         var value
         if (isMaximizing) {
             boardStr = addInfo(stringify(board), player, oppPlayer)
         } else {
             boardStr = addInfo(stringify(board), oppPlayer, player)
         }
+        // boardStr = addInfo(stringify(board), player, oppPlayer)
         var checkedValue = checkedBoards[boardStr]
         if (checkedValue) {
             skipCount++
             return [undefined, checkedValue]
         }
+        
         // value = scoreBoard(board, player, oppPlayer)
         // return [undefined, scoreBoard(board, player, oppPlayer)]
         if (isMaximizing) {
@@ -654,6 +659,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximi
 }
 function movePlayerTo(board, player, fromDot, toDot) {
     board[toDot.l][toDot.d].player = player
+    board[toDot.l][toDot.d].player.turns++
     board[fromDot.l][fromDot.d].player = undefined
 }
 function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isMaximizing) {
@@ -673,7 +679,7 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             //Making the move
             // cOppPlayer.chipCount--
             cBoard[dot.l][dot.d].player = undefined
-
+            cPlayer.turns++
             //Checking mills again incase ate from a mill
             cOppPlayer.mills = getUpdatedMills(cBoard, cOppPlayer)
 
@@ -705,7 +711,7 @@ function eatingMinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             //Making the move
             // cPlayer.chipCount--
             cBoard[dot.l][dot.d].player = undefined
-
+            cOppPlayer.turns++
             //Checking mills again incase ate from a mill
             cPlayer.mills = getUpdatedMills(cBoard, cPlayer)
 
@@ -842,7 +848,7 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             cBoard[dot.l][dot.d].player = cPlayer
             cPlayer.chipsToAdd--
             cPlayer.chipCount++
-
+            cPlayer.turns++
             eatmode = hasNewMills(cBoard, cPlayer)
             if (eatmode) {
                 cPlayer.mills.forEach(m => m.new = false)
@@ -886,6 +892,7 @@ function stage1MinMax(board, player, oppPlayer, depth, alpha, beta, eatmode, isM
             cBoard[dot.l][dot.d].player = cOppPlayer
             cOppPlayer.chipsToAdd--
             cOppPlayer.chipCount++
+            cOppPlayer.turns++
 
             eatmode = hasNewMills(cBoard, cOppPlayer)
             if (eatmode) {
@@ -1103,6 +1110,7 @@ class Mill {
             d2.l.toString() + d2.d.toString() +
             d3.l.toString() + d3.d.toString()
         this.uniqNum = this.player.turns
+        
         this.uniqId = this.id + this.uniqNum.toString()
         this.new = true
     }

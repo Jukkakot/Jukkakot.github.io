@@ -6,7 +6,7 @@ var SPEED = 0.07
 const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
-
+const isMobileDevice = /Mobi/i.test(window.navigator.userAgent)
 var LOADING = false
 var DEBUG = false
 var AUTOPLAY = false
@@ -273,7 +273,9 @@ function mouseReleased() {
 }
 function draw() {
 	drawUI()
-	game.hover()
+	//Disabling hover effect for mobile
+	if(!isMobileDevice)
+		game.hover()
 	game.draw()
 	game.updateAnimations()
 
