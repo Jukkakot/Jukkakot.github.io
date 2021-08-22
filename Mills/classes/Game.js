@@ -329,6 +329,7 @@ class Game {
         }
     }
     placeChip(dot) {
+        if(dot.player) return
         dot = this.dots[dot.l][dot.d]
         dot.player = this.turn
         // setPlayerTo(this.dots, this.turn, dot)
