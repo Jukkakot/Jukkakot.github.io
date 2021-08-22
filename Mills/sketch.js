@@ -126,7 +126,7 @@ function togglePlayerLight() {
 	game.playerLight.autoPlay = game.settings.lightAutoplay
 
 	game.initWorker()
-	if (game.turn === game.playerLight && game.playerLight.autoPlay) {
+	if (game.turn.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }
@@ -135,7 +135,7 @@ function togglePlayerDark() {
 	game.playerDark.autoPlay = game.settings.darkAutoplay
 
 	game.initWorker()
-	if (game.turn === game.playerDark && game.playerDark.autoPlay) {
+	if (game.turn.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }

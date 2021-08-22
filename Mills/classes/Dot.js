@@ -108,9 +108,9 @@ class Dot {
             textSize(circleSize * 0.75)
             text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
             text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
-            fill(255,0,0)
-            text(l*8+d, this.x * this.size(), this.y * this.size() + circleSize /3)
-            
+            fill(255, 0, 0)
+            text(l * 8 + d, this.x * this.size(), this.y * this.size() + circleSize / 3)
+
         }
 
         pop()
@@ -174,9 +174,9 @@ class Dot {
             return
         }
         push()
-        strokeWeight(this.r / 15)
+        strokeWeight(this.r / 10)
         stroke(color(0, 200, 40))
-        circle(this.x * this.size(), this.y * this.size(), this.r * 1.1)
+        circle(this.x * this.size(), this.y * this.size(), this.r * 1.05)
         imageMode(CENTER);
         image(this.player.img, this.x * this.size(), this.y * this.size(), this.r, this.r);
         pop()
