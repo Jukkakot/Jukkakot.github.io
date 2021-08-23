@@ -168,6 +168,7 @@ function start() {
 	}
 }
 function windowResized() {
+
 	scaledWidth = min(windowWidth, defaultWidth)
 	scaledHeight = min(windowHeight, defaultHeight)
 	cnv.resize(scaledWidth, scaledHeight)
@@ -181,10 +182,12 @@ function windowResized() {
 
 	loadingGif.size(circleSize * 3, circleSize)
 	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width / 2, cnv.position().y + cnv.height / 2 - circleSize * 3)
+	if (!game.winner) {
+		restartButton.position(cnv.position().x, cnv.position().y)
+		restartButton.size(buttonWidth, buttonHeight)
+		restartButton.style('font-size', circleSize * 0.6 + "px")
+	}
 
-	restartButton.position(cnv.position().x, cnv.position().y)
-	restartButton.size(buttonWidth, buttonHeight)
-	restartButton.style('font-size', circleSize * 0.6 + "px")
 
 	suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
 	suggestionButton.size(buttonWidth, buttonHeight)
@@ -202,7 +205,7 @@ function windowResized() {
 	pDarkButton.size(buttonHeight, buttonHeight)
 	pDarkButton.style('font-size', circleSize * 1.5 + "px")
 
-	difficultyButton.position(cnv.position().x + circleSize/3, cnv.position().y + cnv.height - difficultyButton.height - circleSize/2)
+	difficultyButton.position(cnv.position().x + circleSize / 3, cnv.position().y + cnv.height - difficultyButton.height - circleSize / 2)
 	difficultyButton.size(buttonWidth, buttonHeight)
 	difficultyButton.style('font-size', circleSize * 0.6 + "px")
 
@@ -274,7 +277,7 @@ function mouseReleased() {
 function draw() {
 	drawUI()
 	//Disabling hover effect for mobile
-	if(!isMobileDevice)
+	if (!isMobileDevice)
 		game.hover()
 	game.draw()
 	game.updateAnimations()
