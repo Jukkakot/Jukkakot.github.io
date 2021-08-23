@@ -1,4 +1,4 @@
-
+var checkedBoards, skipCount, nodeCount
 class Game {
     constructor() {
         //making floor seperatly from other walls so can detech collisions with it
@@ -17,6 +17,17 @@ class Game {
         this.turn = this.playerRed
         this.canClick = true
         Events.on(engine, 'collisionStart', this.collision);
+    }
+    stringify(grid) {
+        if (!grid) grid = this.grid
+        var str = ""
+        for (var col of grid) {
+            str += " "
+            for (var chip of col) {
+                str += chip[0]
+            }
+        }
+        return str
     }
     collision(event) {
         var pairs = event.pairs;
@@ -240,22 +251,28 @@ class Game {
     }
 
     findBestMove() {
+        console.time("finding move")
+        checkedBoards = {}
+        skipCount = 0
+        nodeCount = 0
         // var copyGrid = JSON.parse(JSON.stringify(this.grid));
         let move = floor(random(7))
         let bestScore = -Infinity
-        for (var depth = 1; depth < 7; depth++) {
-            let result = minimax(this.grid, depth, -Infinity, Infinity, true)
-            move = result[0]
-            bestScore = result[1]
-            console.log("depth", depth, "best score", bestScore, "move", move)
-            if (bestScore >= 100000000) break
-        }
-        
+        // for (var depth = 1; depth < 13; depth++) {
+        let result = minimax(this.grid, 6, -Infinity, Infinity, true)
+        move = result[0]
+        bestScore = result[1]
+        //     if (bestScore >= 100000000) break
+        // }
+        console.log("move", move, "score", bestScore, "node count", nodeCount, "uniq boards",
+            Object.keys(checkedBoards).length, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
+
+        console.timeEnd("finding move")
         if (bestScore <= -100000000) {
             //Finding random column to play if ai knows its going to lose
             //otherwise it kind of gives up and just plays the first non full column (Which is boring)
-            while(true) {
-                if(this.playRound(floor(random(this.grid.length)))) {
+            while (true) {
+                if (this.playRound(floor(random(this.grid.length)))) {
                     break
                 }
             }
@@ -356,33 +373,31 @@ function scoreWindow(board, player) {
 
 
 function minimax(board, depth, alpha, beta, isMaximizing) {
-    // let scores = {
-    //     "yellow": 10000000000,
-    //     "red": -10000000000,
-    //     "tie": 0
-    // };
+    nodeCount++
+    var strBoard = game.stringify(board)
+    var checkedValue = checkedBoards[strBoard]
+    if (checkedValue) {
+        skipCount++
+        return [undefined, checkedValue]
+    }
     let yellowCheck = game.checkWin(game.playerYellow, board, false)
     let redCheck = game.checkWin(game.playerRed, board, false)
     if (yellowCheck !== undefined || redCheck !== undefined) {
         if (yellowCheck) {
+            checkedBoards[strBoard] = 100000000
             return [undefined, 100000000]
         } else if (redCheck) {
+            checkedBoards[strBoard] = -100000000
             return [undefined, -100000000]
         } else if (yellowCheck === "tie" || redCheck === "tie") {
+            checkedBoards[strBoard] = 0
             return [undefined, 0]
         }
     } else if (depth === 0) {
-        // var player = isMaximizing ? game.playerYellow : game.playerRed
-        // return [undefined, scoreWindow(board, player)]
-        return [undefined, scoreWindow(board, game.playerYellow)]
+        var value = scoreWindow(board, game.playerYellow)
+        checkedBoards[strBoard] = value
+        return [undefined, value]
     }
-    // let result = game.checkWin(game.playerRed, board, false)
-    // if (result === undefined) {
-    //     result = game.checkWin(game.playerYellow, board, false)
-    // } else {
-    //     return [undefined, scores[result]]
-    // }
-
 
     if (isMaximizing) {
         let bestScore = -Infinity

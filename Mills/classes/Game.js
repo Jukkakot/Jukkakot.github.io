@@ -329,7 +329,7 @@ class Game {
         }
     }
     placeChip(dot) {
-        if(dot.player) return
+        if (dot.player) return
         dot = this.dots[dot.l][dot.d]
         dot.player = this.turn
         // setPlayerTo(this.dots, this.turn, dot)
@@ -376,9 +376,9 @@ class Game {
         //Checking for new mills before switching turn
         if (hasNewMills(this.dots, this.turn)) {
             this.eatMode = true
-            if (this.turn.autoPlay) {
-                game.findBestMove("findMove")
-            }
+            if (this.turn.autoPlay)
+                this.findBestMove("findMove")
+
             //Mills are made not new in eatChip method as soon as player has eaten a chip
             return
         }
