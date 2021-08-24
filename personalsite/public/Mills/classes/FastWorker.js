@@ -1,4 +1,4 @@
-function getNeighboursIndexes(board, i) {
+function getNeighboursIndexes(i) {
     var layer = getLayer(i) * 8
     var neighbours = []
     //All
@@ -26,7 +26,7 @@ function getLayer(i) {
 }
 function getNeighbours(board, i) {
     var neighbours = ""
-    getNeighboursIndexes(board, i).forEach(i => {
+    getNeighboursIndexes(i).forEach(i => {
         neighbours += board[i]
     });
     return neighbours

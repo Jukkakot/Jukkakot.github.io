@@ -21,8 +21,8 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             DEBUG = data.DEBUG
             // workeridNumber = data.idNumber
             console.log("stages", workerGame.playerDark.name, getStage(workerGame.playerDark), workerGame.playerLight.name, getStage(workerGame.playerLight))
-            console.log("Light Wood", scoreBoard(workerGame.dots, workerGame.playerLight, workerGame.playerDark))
-            console.log("Dark Wood", scoreBoard(workerGame.dots, workerGame.playerDark, workerGame.playerLight))
+            console.log("Light Wood", evaluateBoard(workerGame.dots, workerGame.playerLight, workerGame.playerDark))
+            console.log("Dark Wood", evaluateBoard(workerGame.dots, workerGame.playerDark, workerGame.playerLight))
             self.close()
     };
 })
@@ -99,7 +99,7 @@ function findBestMove() {
     return [move, type]
 }
 
-function scoreWindow(board, window, player, oppPlayer, scoreObject) {
+function evaluateWindow(board, window, player, oppPlayer, scoreObject) {
     var value = 0
     var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
     var emptyCount = window.filter(chip => !chip.player).length
@@ -123,12 +123,11 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
             value += 3500
             //Win
             if (getStage(oppPlayer) === 3) {
-                // console.log(player.name, "win")
                 return 100000000
             }
-            // console.log(player.name, "new mill")
         }
     }
+    //opp new mill
     if (oppCount === 3) {
         //Getting the non deepCopied player
         var workerGamePlayer = oppPlayer.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
@@ -143,10 +142,8 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
             value -= 4000
             //Win
             if (getStage(player) === 3) {
-                // console.log(player.name, "lost")
                 return -100000000
             }
-            // console.log(player.name, "new mill")
         }
     }
 
@@ -158,7 +155,7 @@ function scoreWindow(board, window, player, oppPlayer, scoreObject) {
         case (3):
             return stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) + value
         default:
-            console.log("Player has won or lost?")
+            console.log("Player has won or lost?",player)
     }
 }
 function stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) {
@@ -253,7 +250,7 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
             !oppDots.some(pDot => pDot.id == dot.id) &&
             oppPlayer.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
         scoreObject.update("blockingOppDoubleMill")
-        value += 2500
+        value += 3500
     }
     //"safe" Open mill as in opponent player cant block it on next move 
     if (pieceCount === 2 && emptyCount === 1 && !emptyDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name) &&
@@ -311,7 +308,7 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
             !oppDots.some(pDot => pDot.id == dot.id) &&
             oppPlayer.mills.some(mill => mill.dots.some(chip => chip.id == dot.id)))) {
         scoreObject.update("oppDoubleMill")
-        value -= 2000
+        value -= 2500
     }
     return value
 }
@@ -333,7 +330,7 @@ function stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
         playerDot.neighbours.some(chip => chip.player && chip.player.name == oppPlayer.name &&
             !oppDots.some(dot => dot.id == chip.id))) {
         scoreObject.update("blockOppMillStage2")
-        value += 4000
+        value += 3000
     }
     //Blocking opp double mill
     if (oppCount === 2 && pieceCount === 1 &&
@@ -385,23 +382,9 @@ function getStage(player) {
         return 0
     }
 }
-function scoreBoard(board, player, oppPlayer) {
+function evaluateBoard(board, player, oppPlayer) {
     if (DEBUG) console.time("scoreBoard")
-
-    //Updating players chipCounts incase they are wrong because of bugs :)
-    //This is to get player stages right when evaluating each window
-    player.chipCount = getPlayerDots(board, player).length
-    oppPlayer.chipCount = getPlayerDots(board, oppPlayer).length
-
-    //Checking for win
-    if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
-        // console.log(player.name, "cant move")
-        return -100000000
-    } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
-        // console.log(oppPlayer.name, "cant move")
-        return 100000000
-    }
-    var value = 0
+    var boardValue = 0
     //Object to store info about where the different points for each board is coming from
     //Helpful for debugging
     var scoreObject = {
@@ -409,44 +392,25 @@ function scoreBoard(board, player, oppPlayer) {
             this[property] ? this[property]++ : this[property] = 1
         }
     }
-    if ((player.chipCount + player.chipsToAdd) < 3) {
-        // console.log(oppPlayer.name, "win")
-        return -100000000
-    } else if ((oppPlayer.chipCount + oppPlayer.chipsToAdd) < 3) {
-        // console.log(player.name, "win")
-        return 100000000
-    }
+
     if (getStage(player) === 1) {
         //Giving points for each neighbour dot of players dots
         for (var dot of getPlayerDots(board, player)) {
-            scoreObject.neighbours = dot.neighbours.length
-            value += dot.neighbours.length
+            boardValue += dot.neighbours.length
         }
+        scoreObject.neighbours = boardValue
     } else if (getStage(player) === 2) {
         //Adding 25 points for each moveable dot
         var moveableDots = getMoveableDots(board, player).length
-        value += moveableDots * 25
+        boardValue += moveableDots * 25
         scoreObject.moveablepDots = moveableDots
-
-        //player loses if cant move
-        if (moveableDots === 0) {
-            // console.log(oppPlayer.name, "win")
-            return -100000000
-        }
-
     }
     if (getStage(oppPlayer) === 2) {
         var oppMoveableDots = getMoveableDots(board, oppPlayer).length
         var oppUnmoveableDots = oppPlayer.chipCount - oppMoveableDots
 
-        value += oppUnmoveableDots * 25
+        boardValue += oppUnmoveableDots * 25
         scoreObject.oppUnmoveableDots = oppUnmoveableDots
-
-        if (oppMoveableDots === 0) {
-            // console.log(player.name, "win")
-            return 100000000
-        }
-
     }
     // else if (getStage(player) === 3) {
     //     //Giving 10000 points for each turn during stage 3 to encourage delaying losing a workerGame
@@ -466,25 +430,32 @@ function scoreBoard(board, player, oppPlayer) {
                 //d = 0,2,4,6
                 //Checking window on layers (even indexes)
                 window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
-                value += scoreWindow(board, window, player, oppPlayer, scoreObject)
             } else if (layer[d].l === 0) {
                 //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
                 //d = 1,3,5,7
                 //Checking window between layers (odd indexes)
                 window = [board[0][d], board[1][d], board[2][d]]
-                value += scoreWindow(board, window, player, oppPlayer, scoreObject)
+            } else {
+                continue
             }
+            var windowValue = evaluateWindow(board, window, player, oppPlayer, scoreObject)
+                if (windowValue >= 100000000 || windowValue <= -100000000) {
+                    return windowValue
+                } else {
+                    boardValue += windowValue
+                }
         }
     }
     var boardStr = addInfo(stringify(board), player, oppPlayer)
     if (!scoreObject["mill"] || !scoreObject["oppMill"])
-        checkedBoards[boardStr] = value
+        checkedBoards[boardStr] = boardValue
+
     if (DEBUG) {
         console.timeEnd("scoreBoard")
         //This is helpful when looking at where the score comes from for a board
         console.log("scoreObject", scoreObject)
     }
-    return value
+    return boardValue
 }
 function getEatableDots(board, player) {
     var dotsInMill = getPlayerMillDots(board, player)
@@ -651,7 +622,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
             skipCount++
             return [undefined, checkedValue]
         }
-        var value = isMaximizing ? scoreBoard(board, player, oppPlayer) : scoreBoard(board, oppPlayer, player)
+        var value = isMaximizing ? evaluateBoard(board, player, oppPlayer) : evaluateBoard(board, oppPlayer, player)
         return [undefined, value]
     }
 
@@ -815,7 +786,7 @@ function playRound(args) {
             result.eatMode = hasNewMills(board, player)
             break;
         case "eating":
-            if(getStage(oppPlayer) === 3) {
+            if (getStage(oppPlayer) === 3) {
                 result.return = [move, 100000000, type]
                 return result
             } else {
@@ -825,7 +796,7 @@ function playRound(args) {
         default:
             console.log("Invalid move", args)
     }
-    
+
     if (result.eatMode) {
         //Making players mills not new since player is going to "use them" next
         player.mills.forEach(m => m.new = false)
@@ -834,6 +805,7 @@ function playRound(args) {
         if (getStage(oppPlayer) === 3)
             result.return = [move, 100000000, type]
 
+        //TODO: EAT NOW BEFORE SCORING THE BOARD
     }
     if (!checkIfCanMove(oppPlayer, board)) {
         //Player wins because opponent can't move
