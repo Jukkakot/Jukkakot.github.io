@@ -1,7 +1,7 @@
 var workerGame
 var DEBUG
 var nodeCount
-var checkedBoards = {}
+var checkedBoards = new Map()
 var skipCount
 var depthCount
 self.addEventListener("message", function handleMessageFromGame(e) {
@@ -54,7 +54,7 @@ function findBestMove() {
     }
     console.time("time finding a move")
     nodeCount = 0
-    checkedBoards = {}
+    checkedBoards.clear()
     skipCount = 0
     depthCount = []
     var player = workerGame.turn
@@ -94,7 +94,7 @@ function findBestMove() {
         console.log(type, move, "typeless move?")
     }
     console.log("node count", nodeCount, "uniq boards",
-        Object.keys(checkedBoards).length, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
+        checkedBoards.size, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
     console.timeEnd("time finding a move")
     return [move, type]
 }
@@ -122,9 +122,10 @@ function evaluateWindow(board, window, player, oppPlayer, scoreObject) {
             scoreObject.update("newMill")
             value += 3500
             //Win
-            if (getStage(oppPlayer) === 3) {
-                return 100000000
-            }
+            // if (getStage(oppPlayer) === 3) {
+            //     console.log(oppPlayer.name, "stage on 3 joten voitto")
+            //     return 100000000
+            // }
         }
     }
     //opp new mill
@@ -141,9 +142,10 @@ function evaluateWindow(board, window, player, oppPlayer, scoreObject) {
             scoreObject.update("oppNewMill")
             value -= 4000
             //Win
-            if (getStage(player) === 3) {
-                return -100000000
-            }
+            // if (getStage(player) === 3) {
+            //     console.log(player.name, "stage is 3 so lose")
+            //     return -100000000
+            // }
         }
     }
 
@@ -155,7 +157,7 @@ function evaluateWindow(board, window, player, oppPlayer, scoreObject) {
         case (3):
             return stage3Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) + value
         default:
-            console.log("Player has won or lost?",player)
+            console.log("Player has won or lost?", player)
     }
 }
 function stage1Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer, board, scoreObject) {
@@ -439,16 +441,16 @@ function evaluateBoard(board, player, oppPlayer) {
                 continue
             }
             var windowValue = evaluateWindow(board, window, player, oppPlayer, scoreObject)
-                if (windowValue >= 100000000 || windowValue <= -100000000) {
-                    return windowValue
-                } else {
-                    boardValue += windowValue
-                }
+            if (windowValue >= 100000000 || windowValue <= -100000000) {
+                return windowValue
+            } else {
+                boardValue += windowValue
+            }
         }
     }
     var boardStr = addInfo(stringify(board), player, oppPlayer)
     if (!scoreObject["mill"] || !scoreObject["oppMill"])
-        checkedBoards[boardStr] = boardValue
+        checkedBoards.set(boardStr, boardValue)
 
     if (DEBUG) {
         console.timeEnd("scoreBoard")
@@ -612,12 +614,13 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
     }
     //Returning potential winning or losing value
     if (winLoseValue)
-        return [undefined, winLoseValue]
+        //Depth +1 just to make sure we never divide by zero
+        return [undefined, winLoseValue / (depth + 1)]
 
     //End node check
     if (depth <= 0) {
         //Checking if current board value has been calced already and if so, we return that value
-        var checkedValue = checkedBoards[boardStr]
+        var checkedValue = checkedBoards.get(boardStr)
         if (checkedValue) {
             skipCount++
             return [undefined, checkedValue]
@@ -640,7 +643,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
             if (getStage(player) !== 2)
                 console.log("Problem", movesObject)
 
-            return [undefined, -100000000]
+            return [undefined, -100000000 / (depth + 1)]
         }
         for (var move of moves) {
             //Cloning board and players 
@@ -652,7 +655,8 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
                 type: type,
                 board: cBoard,
                 player: cPlayer,
-                oppPlayer: cOppPlayer
+                oppPlayer: cOppPlayer,
+                depth: depth
             }
 
             var result = playRound(args)
@@ -665,7 +669,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
 
             var score = minimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, eatMode)[1]
 
-            if (score > bestScore) {
+            if (score > bestScore || (score === bestScore && Math.random() < 0.5)) {
                 bestScore = score
                 bestMove = move
             }
@@ -687,7 +691,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
             if (getStage(oppPlayer) !== 2)
                 console.log("Couldn't find moves, possible problem?", movesObject)
 
-            return [undefined, -100000000]
+            return [undefined, -100000000 / (depth + 1)]
         }
         for (var move of moves) {
             //Cloning board and players 
@@ -700,6 +704,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
                 board: cBoard,
                 player: cOppPlayer,
                 oppPlayer: cPlayer,
+                depth: depth
             }
 
             var result = playRound(args)
@@ -712,7 +717,7 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
 
             var score = minimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, !eatMode)[1]
 
-            if (score < bestScore) {
+            if (score < bestScore || (score === bestScore && Math.random() < 0.5)) {
                 bestScore = score
                 bestMove = move
             }
@@ -727,10 +732,12 @@ function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximi
 function checkWin(board, player, oppPlayer) {
     var boardStr = addInfo(stringify(board), player, oppPlayer)
     if (player.chipCount + player.chipsToAdd < 3 || !checkIfCanMove(player, board)) {
-        checkedBoards[boardStr] = -100000000
+        checkedBoards.set(boardStr, -100000000)
+        console.log(player.name, oppPlayer.name, "losing")
         return -100000000
     } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !checkIfCanMove(oppPlayer, board)) {
-        checkedBoards[boardStr] = 100000000
+        checkedBoards.set(boardStr, 100000000)
+        console.log(player.name, oppPlayer.name, "winning")
         return 100000000
     }
 }
@@ -772,6 +779,7 @@ function playRound(args) {
     var oppPlayer = args.oppPlayer
     var player = args.player
     var board = args.board
+    var depth = args.depth
     player.turns++
     if (getStage(player) === 3) {
         player.stage3Turns++
@@ -787,7 +795,7 @@ function playRound(args) {
             break;
         case "eating":
             if (getStage(oppPlayer) === 3) {
-                result.return = [move, 100000000, type]
+                result.return = [move, 100000000 / (depth + 1), type]
                 return result
             } else {
                 eatChip(args)
@@ -802,14 +810,16 @@ function playRound(args) {
         player.mills.forEach(m => m.new = false)
 
         //Player wins because opponent is on flying stage
-        if (getStage(oppPlayer) === 3)
-            result.return = [move, 100000000, type]
+        // if (getStage(oppPlayer) === 3) {
+        //     console.log("ihme tilanne toka")
+        //     result.return = [move, 100000000, type]
+        // }
 
         //TODO: EAT NOW BEFORE SCORING THE BOARD
     }
     if (!checkIfCanMove(oppPlayer, board)) {
         //Player wins because opponent can't move
-        result.return = [move, 100000000, type]
+        result.return = [move, 100000000 / (depth + 1), type]
     }
 
     return result
@@ -1017,9 +1027,15 @@ function addInfo(boardStr, player, oppPlayer) {
     return getStage(player).toString() + player.char +
         getStage(oppPlayer).toString() + oppPlayer.char + boardStr
 }
+function toFastDot(dot) {
+    var layer = dot.l * 8
+    return dot.d + layer
+}
 class Mill {
     constructor(d1, d2, d3) {
         this.dots = [d1, d2, d3]
+        this.fastDots = [toFastDot(d1), toFastDot(d2), toFastDot(d3)]
+        this.fastId = this.fastDots.reduce((a, b) => a.toString() + b.toString())
         this.player = d1.player
         this.id = d1.l.toString() + d1.d.toString() +
             d2.l.toString() + d2.d.toString() +

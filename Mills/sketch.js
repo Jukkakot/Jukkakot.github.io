@@ -16,6 +16,7 @@ var gameSettings = {
 	lightAutoplay: true,
 	darkAutoplay: false,
 }
+const EMPTYDOT = '0'
 var outBoxSize, circleSize, distance
 var cnv
 var scaledWidth, scaledHeight

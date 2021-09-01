@@ -39,9 +39,7 @@ class Game {
         var str = ""
         for (var layer of board) {
             for (var dot of layer) {
-                if (!dot.player) str += '0'
-                else if (dot.player === game.playerDark) str += 'D'
-                else if (dot.player === game.playerLight) str += 'L'
+                str += !dot.player ? EMPTYDOT : dot.player.char
             }
         }
         return str
