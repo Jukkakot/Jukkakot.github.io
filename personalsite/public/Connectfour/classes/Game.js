@@ -268,17 +268,19 @@ class Game {
             Object.keys(checkedBoards).length, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
 
         console.timeEnd("finding move")
-        if (bestScore <= -100000000) {
+        if (bestScore < 0) {
+            console.log("was negative")
             //Finding random column to play if ai knows its going to lose
             //otherwise it kind of gives up and just plays the first non full column (Which is boring)
-            while (true) {
-                if (this.playRound(floor(random(this.grid.length)))) {
-                    break
-                }
-            }
+            // while (true) {
+            //     if (this.playRound(floor(random(this.grid.length)))) {
+            //         break
+            //     }
+            // }
         } else {
-            this.playRound(move)
+            // this.playRound(move)
         }
+        this.playRound(move)
     }
 }
 function evaluateWindow(window, player) {
@@ -385,10 +387,10 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
     if (yellowCheck !== undefined || redCheck !== undefined) {
         if (yellowCheck) {
             checkedBoards[strBoard] = 100000000
-            return [undefined, 100000000]
+            return [undefined, 100000000 * (depth + 1)]
         } else if (redCheck) {
             checkedBoards[strBoard] = -100000000
-            return [undefined, -100000000]
+            return [undefined, -100000000 / (depth + 1)]
         } else if (yellowCheck === "tie" || redCheck === "tie") {
             checkedBoards[strBoard] = 0
             return [undefined, 0]
@@ -398,7 +400,6 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
         checkedBoards[strBoard] = value
         return [undefined, value]
     }
-
     if (isMaximizing) {
         let bestScore = -Infinity
         let bCol = floor(random(7))
