@@ -284,12 +284,6 @@ function stage2Score(pieceCount, emptyCount, oppCount, window, player, oppPlayer
         scoreObject.update("blockOppMillStage2")
         value += 400
     }
-    //chip is in the middle of nowhere
-    //(this is to try and encourage moving chips towards other chips)
-    if (pieceCount == 1 && !playerDots[0].neighbours.some(d => d.player)) {
-        scoreObject.update("chipOnItsOwn")
-        value -= 50
-    }
     //opponent safe open mill stage2
     if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
         emptyDot.neighbours.some(dot => dot.player && dot.player.name == oppPlayer.name &&
@@ -515,13 +509,13 @@ function getS3Moves(board, player, oppPlayer) {
             // Making mill
             if (pieceCount === 2 && emptyCount === 1) {
                 var fromDot = fromDots.find(dot => !playerPieces.includes(dot))
-                if (!moves.includes([fromDot, emptyDots[0]]))
+                if (!isArrayInArray(moves, [fromDot, emptyDots[0]]))
                     moves.push([fromDot, emptyDots[0]])
             }
             // Blocking opp mill
             if (oppCount === 2 && emptyCount === 1) {
                 fromDots.forEach(dot => {
-                    if (!moves.includes([dot, emptyDots[0]]))
+                    if (!isArrayInArray(moves, [dot, emptyDots[0]]))
                         moves.push([dot, emptyDots[0]])
                 })
             }
@@ -530,7 +524,7 @@ function getS3Moves(board, player, oppPlayer) {
     var toDots = getEmptyDots(board)
     for (var fromDot of fromDots) {
         toDots.forEach(toDot => {
-            if (!moves.includes([fromDot, toDot]))
+            if (!isArrayInArray(moves, [fromDot, toDot]))
                 moves.push([fromDot, toDot])
         })
     }
@@ -563,7 +557,7 @@ function getS2Moves(board, player, oppPlayer) {
             if (pieceCount === 2 && emptyCount === 1) {
                 var fromDot = emptyDots[0].neighbours.find(dot => dot.player && dot.player.name == player.name)
                 if (fromDot) {
-                    if (!moves.includes([fromDot, emptyDots[0]]))
+                    if (!isArrayInArray(moves, [fromDot, emptyDots[0]]))
                         moves.push([fromDot, emptyDots[0]])
                 }
             }
@@ -571,7 +565,7 @@ function getS2Moves(board, player, oppPlayer) {
             if (pieceCount === 3) {
                 for (var dot of playerPieces) {
                     dot.neighbours.forEach(nDot => {
-                        if (!nDot.player && !moves.includes([dot, nDot]))
+                        if (!nDot.player && !isArrayInArray(moves, [dot, nDot]))
                             moves.push([dot, nDot])
                     })
                 }
@@ -583,7 +577,7 @@ function getS2Moves(board, player, oppPlayer) {
                     emptyDots[0].neighbours.some(dot => dot.player && dot.player.name == player.name))) {
                 var fromDot = emptyDots[0].neighbours.find(dot => dot.player && dot.player.name == player.name)
                 if (fromDot) {
-                    if (!moves.includes([fromDot, emptyDots[0]]))
+                    if (!isArrayInArray(moves, [fromDot, emptyDots[0]]))
                         moves.push([fromDot, emptyDots[0]])
                 }
             }
@@ -592,7 +586,7 @@ function getS2Moves(board, player, oppPlayer) {
     //Adding the rest of the possible moves
     for (var dot of getMoveableDots(board, player)) {
         dot.neighbours.filter(nDot => !nDot.player).forEach(emptyDot => {
-            if (!moves.includes([dot, emptyDot]))
+            if (!isArrayInArray(moves, [dot, emptyDot]))
                 moves.push([dot, emptyDot])
         })
     }
@@ -897,14 +891,10 @@ function getPlayerDots(board, player) {
 function getPlayerMillDots(board, player) {
     player.mills = getUpdatedMills(board, player)
     var dots = []
-    for (var mill of player.mills) {
-        for (var mDot of mill.dots) {
-            if (!dots.some(dot => dot.id == mDot.id)) {
-                dots.push(mDot)
-            }
-        }
-    }
-    return dots
+    player.mills.forEach(mill => dots.push(...mill.dots))
+
+    //Removing duplicate dots
+    return [... new Set(dots)]
 }
 function hasNewMills(board, player) {
     player.mills = getUpdatedMills(board, player)
@@ -1031,6 +1021,14 @@ function toFastDot(dot) {
     var layer = dot.l * 8
     return dot.d + layer
 }
+function isArrayInArray(arr, item) {
+    var item_as_string = JSON.stringify([item[0].id, item[1].id]);
+
+    var contains = arr.some(function (ele) {
+        return  JSON.stringify([ele[0].id, ele[1].id]) == item_as_string;
+    });
+    return contains;
+}
 class Mill {
     constructor(d1, d2, d3) {
         this.dots = [d1, d2, d3]
@@ -1043,7 +1041,16 @@ class Mill {
         this.uniqNum = this.player.turns
 
         this.uniqId = this.id + this.uniqNum.toString()
+        this.fastUniqId = this.fastId + this.uniqNum.toString()
         this.new = true
+    }
+    toFastMill() {
+        return {
+            fastDots: this.fastDots,
+            fastId: this.fastId,
+            uniqNum: this.uniqNum,
+            new: this.new,
+        }
     }
     draw() {
         push()

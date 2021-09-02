@@ -53,7 +53,7 @@ class Game {
             LOADING = false
         }
 
-        this.worker = new Worker("classes/Worker.js")
+        this.worker = new Worker("classes/FastWorker.js")
         this.worker.onmessage = function (e) {
             var data = e.data
             switch (data.cmd) {
@@ -77,6 +77,7 @@ class Game {
         loadingGif.show()
         var data = {
             game: deepClone(this),
+            board: this.stringify(),
             cmd: cmd,
             DEBUG: DEBUG,
         }
