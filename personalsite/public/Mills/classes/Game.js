@@ -39,9 +39,7 @@ class Game {
         var str = ""
         for (var layer of board) {
             for (var dot of layer) {
-                if (!dot.player) str += '0'
-                else if (dot.player === game.playerDark) str += 'D'
-                else if (dot.player === game.playerLight) str += 'L'
+                str += !dot.player ? EMPTYDOT : dot.player.char
             }
         }
         return str
@@ -55,7 +53,7 @@ class Game {
             LOADING = false
         }
 
-        this.worker = new Worker("classes/Worker.js")
+        this.worker = new Worker("classes/FastWorker.js")
         this.worker.onmessage = function (e) {
             var data = e.data
             switch (data.cmd) {
@@ -79,6 +77,7 @@ class Game {
         loadingGif.show()
         var data = {
             game: deepClone(this),
+            board: this.stringify(),
             cmd: cmd,
             DEBUG: DEBUG,
         }

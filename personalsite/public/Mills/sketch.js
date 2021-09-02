@@ -12,10 +12,11 @@ var DEBUG = false
 var AUTOPLAY = false
 
 var gameSettings = {
-	difficulty: 2,
+	difficulty: 4,
 	lightAutoplay: true,
 	darkAutoplay: false,
 }
+
 var outBoxSize, circleSize, distance
 var cnv
 var scaledWidth, scaledHeight
@@ -80,9 +81,10 @@ function keyPressed(e) {
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
-			const worker = new Worker("classes/Worker.js")
+			const worker = new Worker("classes/FastWorker.js")
 			var data = {
 				game: deepClone(game),
+				board: game.stringify(),
 				cmd: "debug",
 				DEBUG: DEBUG,
 			}
@@ -140,7 +142,7 @@ function togglePlayerDark() {
 	}
 }
 function toggleDifficulty() {
-	game.settings.difficulty = game.settings.difficulty === 2 ? 4 : 2
+	game.settings.difficulty = game.settings.difficulty === 4 ? 6 : 4
 	game.difficulty = game.settings.difficulty
 	// game.initWorker()
 }
@@ -317,7 +319,7 @@ function drawDebug() {
 function updateButtons() {
 	game.settings.darkAutoplay ? pDarkButton.html("A") : pDarkButton.html("P")
 	game.settings.lightAutoplay ? pLightButton.html("A") : pLightButton.html("P")
-	game.settings.difficulty === 2 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
+	game.settings.difficulty === 4 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
 	AUTOPLAY = game.settings.lightAutoplay && game.settings.darkAutoplay
 	if (AUTOPLAY) {
 		autoPlayButton.style('background', "transparent  url('./resources/img/redButton.png') no-repeat center top")

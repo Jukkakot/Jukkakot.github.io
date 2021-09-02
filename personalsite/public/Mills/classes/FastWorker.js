@@ -1,4 +1,79 @@
+var workerGame
+var DEBUG
+var nodeCount
+var checkedBoards = new Map()
+var skipCount
+var depthCount
+const EMPTYDOT = '0'
+
+var millWindows = [
+    [0, 1, 2], [2, 3, 4], [4, 5, 6], [6, 7, 0],
+    [8, 9, 10], [10, 11, 12], [12, 13, 14], [14, 15, 8],
+    [16, 17, 18], [18, 19, 20], [20, 21, 22], [22, 23, 16],
+    [1, 9, 17], [3, 11, 19], [5, 13, 21], [7, 15, 23]
+]
+self.addEventListener("message", function handleMessageFromGame(e) {
+    var data = e.data
+    switch (data.cmd) {
+        case "close":
+            self.close()
+            break;
+        case "findMove":
+            handleGetMove(data)
+            break;
+        case "suggestion":
+            handleGetMove(data)
+            break;
+        case "debug":
+            workerGame = data.game
+            workerGame.playerDark.mills = toFastMills(workerGame.playerDark)
+            workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
+            workerGame.fastDots = data.board
+            DEBUG = data.DEBUG
+            // workeridNumber = data.idNumber
+            console.log("stages", workerGame.playerDark.name, getStage(workerGame.playerDark), workerGame.playerLight.name, getStage(workerGame.playerLight))
+            console.log("Light Wood", fastEvaluateBoard(workerGame.fastDots, workerGame.playerLight, workerGame.playerDark))
+            console.log("Dark Wood", fastEvaluateBoard(workerGame.fastDots, workerGame.playerDark, workerGame.playerLight))
+            console.log("board", workerGame.fastDots)
+            self.close()
+    };
+})
+
+function handleGetMove(data) {
+    workerGame = data.game
+    workerGame.playerDark.mills = toFastMills(workerGame.playerDark)
+    workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
+    DEBUG = data.DEBUG
+    // console.log("Starting",data.cmd)
+    var data = {
+        cmd: data.cmd,
+        move: fastFindBestMove()
+    }
+    //Add 1 sec delay if easy mode/eatMode/flying
+    //Because thats when we use depth 2 and it would go too fast otherwise
+    var delay = workerGame.difficulty === 4 
+    //Adding 1 second delay to sending the move if easy mode to slow it down a bit
+    // self.postMessage(data)
+    setTimeout(() => {
+        self.postMessage(data)
+    }, (delay ? 1000 : 200));
+
+}
+function toFastMills(player) {
+    var mills = player.mills.map(m => {
+        return {
+            fastDots: m.fastDots,
+            fastId: m.fastId,
+            uniqNum: m.uniqNum,
+            fastUniqId: m.fastUniqId,
+            new: m.new
+        }
+    })
+
+    return mills
+}
 function getNeighboursIndexes(i) {
+    if (i < 0 || i > 23) console.log("invalid index", i)
     var layer = getLayer(i) * 8
     var neighbours = []
     //All
@@ -22,7 +97,7 @@ function getNeighboursIndexes(i) {
     return neighbours
 }
 function getLayer(i) {
-    return floor(i / 8)
+    return Math.floor(i / 8)
 }
 function getNeighbours(board, i) {
     var neighbours = ""
@@ -31,22 +106,874 @@ function getNeighbours(board, i) {
     });
     return neighbours
 }
-
-function getMills(board, player) {
-    var mills = []
-    var pMill = player === game.playerDark ? "DDD" : "LLL"
-    for (var i = 0; i < board.length; i += 2) {
-        var str = board[i] + board[i + 1] + board[i + 2]
-        if (str == pMill) {
-            mills.push([i, i + 1, i + 2])
-        }
+function getFastMill(dots, player) {
+    var fastId = dots.reduce((a, b) => a.toString() + b.toString())
+    return {
+        fastDots: dots,
+        fastId: fastId,
+        new: true,
+        uniqNum: player.turns,
+        fastUniqId: fastId + player.turns.toString()
     }
-
-    for (var i = 1; i < 8; i += 2) {
-        var str = board[i] + board[i + 8] + board[i + 2*8]
-        if (str == pMill) {
-            mills.push([i, i + 8, i + 2*8])
-        }
-    }
-    return mills
 }
+function fastGetUpdatedMills(board, player) {
+    var oldMills = toFastMills(player)
+    var allMills = []
+    var pMill = player.char + player.char + player.char
+
+    for (var window of millWindows) {
+        if (windowToStr(board, window) == pMill) {
+            var newMill = getFastMill([window[0], window[1], window[2]], player)
+
+            var oldMill = oldMills.find(m => m.fastId == newMill.fastId)
+
+            if (oldMill && !allMills.some(m => m.fastId == newMill.fastId)) {
+                allMills.push(oldMill)
+            } else if (!allMills.some(m => m.fastId == newMill.fastId)) {
+                allMills.push(newMill)
+            }
+        }
+    }
+    return allMills
+}
+
+function fastGetMoveableDots(board, player) {
+    var movableDots = []
+    for (var d = 0; d < board.length; d++) {
+        var dot = board[d]
+        //Check if player has 3 chips left or dots neighbours has empty dot
+        if (dot == player.char && (getStage(player) === 3 || getNeighbours(board, d).includes(EMPTYDOT))) {
+            movableDots.push(d)
+        }
+    }
+    player.movableDots = movableDots
+    return movableDots
+}
+function fastCheckIfCanMove(board, player) {
+    if (getStage(player) !== 2) return true
+    var movableDots = fastGetMoveableDots(board, player)
+    return movableDots.length > 0
+}
+function fastCheckWin(board, player, oppPlayer) {
+    // var boardStr = addInfo(board, player, oppPlayer)
+    if (player.chipCount + player.chipsToAdd < 3 || !fastCheckIfCanMove(board, player)) {
+        // checkedBoards.set(boardStr, -100000000)
+        console.log(player.name, oppPlayer.name, "losing")
+        return -100000000
+    } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !fastCheckIfCanMove(board, oppPlayer)) {
+        // checkedBoards.set(boardStr, 100000000)
+        console.log(player.name, oppPlayer.name, "winning")
+        return 100000000
+    }
+}
+function fastGetPlayerDots(board, player) {
+    var dots = []
+    for (var d = 0; d < board.length; d++) {
+        if (board[d] == player.char) {
+            dots.push(d)
+        }
+    }
+    return dots
+}
+function fastGetMoves(board, player, oppPlayer, eatMode) {
+    var stage = eatMode ? 4 : getStage(player)
+    switch (stage) {
+        case 1:
+            return {
+                moves: fastGetS1Moves(board, player, oppPlayer),
+                type: "placing",
+            }
+        case 2:
+            return {
+                moves: fastGetS2Moves(board, player, oppPlayer),
+                type: "moving",
+            }
+        case 3:
+            return {
+                moves: fastGetS3Moves(board, player, oppPlayer),
+                type: "moving",
+            }
+        case 4:
+            return {
+                moves: fastGetEatableDots(board, oppPlayer),
+                type: "eating",
+            }
+        default:
+            console.log("Problem?", stage)
+            break;
+    }
+}
+function fastGetEmptyDots(board) {
+    var dots = []
+    for (var d = 0; d < board.length; d++) {
+        if (board[d] == EMPTYDOT) dots.push(d)
+    }
+    return dots
+}
+function fastGetS1Moves(board) {
+    //Sorting the dots by their neighbour count
+    return fastGetEmptyDots(board).sort((a, b) => getNeighboursIndexes(b).length - getNeighboursIndexes(a).length)
+}
+function fastGetS2Moves(board, player) {
+    var moves = []
+
+    for (var fromDot of fastGetMoveableDots(board, player)) {
+        for (var toDot of getNeighboursIndexes(fromDot)) {
+            if (board[toDot] == EMPTYDOT) {
+                // if (!moves.includes([dot, emptyDot]))
+                moves.push([fromDot, toDot])
+            }
+        }
+    }
+    return moves
+}
+function fastGetS3Moves(board, player) {
+    var moves = []
+    var fromDots = fastGetPlayerDots(board, player)
+    var toDots = fastGetEmptyDots(board)
+
+    for (var fromDot of fromDots) {
+        for (var toDot of toDots) {
+            // if (!moves.includes([fromDot, toDot]))
+            moves.push([fromDot, toDot])
+        }
+    }
+    return moves
+}
+function fastGetPlayerMillDots(board, player) {
+    player.mills = fastGetUpdatedMills(board, player)
+    var dots = []
+    player.mills.forEach(mill => dots.push(...mill.fastDots))
+
+    //Removing duplicate dots
+    return [... new Set(dots)]
+}
+function fastGetEatableDots(board, player) {
+    var dotsInMill = fastGetPlayerMillDots(board, player)
+    var allDots = fastGetPlayerDots(board, player)
+
+    //if there is same amount if dots in mills as total player dots, then all of them are eatable
+    if (dotsInMill.length === allDots.length)
+        return allDots
+
+    var eatableDots = []
+    //Otherwise have to look for the dots that are not in mills
+    eatableDots.push(...allDots.filter(dot => !dotsInMill.includes(dot)))
+    return eatableDots
+}
+function fastIsArrayInArray(arr, item) {
+    var item_as_string = JSON.stringify(item);
+
+    var contains = arr.some(function (ele) {
+        return JSON.stringify(ele) === item_as_string;
+    });
+    return contains;
+}
+function fastMovePlayerTo(args, player) {
+    var board = args.board
+    var fromDot = args.move[0]
+    var toDot = args.move[1]
+
+    board = setCharAt(board, toDot, player.char)
+    board = setCharAt(board, fromDot, EMPTYDOT)
+    return board
+}
+function fastPlaceChip(args, player) {
+    var board = args.board
+    var dot = args.move
+
+    board = setCharAt(board, dot, player.char)
+    player.chipsToAdd--
+    player.chipCount++
+    return board
+}
+function fastEatChip(args, oppPlayer) {
+    var board = args.board
+    var dot = args.move
+
+    oppPlayer.chipCount--
+    board = setCharAt(board, dot, EMPTYDOT)
+
+    //Checking mills again incase ate from a mill
+    oppPlayer.mills = fastGetUpdatedMills(board, oppPlayer)
+    return board
+}
+function fastHasNewMills(board, player) {
+    player.mills = fastGetUpdatedMills(board, player)
+    return player.mills.some(m => m.new)
+}
+function fastPlayRound(args, player, oppPlayer) {
+    var result = {
+        eatMode: false,
+        board: args.board,
+        return: undefined
+    }
+    var move = args.move
+    var type = args.type
+    // var oppPlayer = args.oppPlayer
+    // var player = args.player
+    var board = args.board
+    var depth = args.depth
+    player.turns++
+    if (getStage(player) === 3) {
+        player.stage3Turns++
+    }
+    switch (args.type) {
+        case "moving":
+            result.board = fastMovePlayerTo(args, player)
+            result.eatMode = fastHasNewMills(result.board, player)
+            break;
+        case "placing":
+            result.board = fastPlaceChip(args, player)
+            result.eatMode = fastHasNewMills(result.board, player)
+            break;
+        case "eating":
+            if (getStage(oppPlayer) === 3) {
+                result.return = [move, 100000000, type]
+                return result
+            } else {
+                result.board = fastEatChip(args, oppPlayer)
+            }
+            break;
+        default:
+            console.log("Invalid move", args)
+    }
+
+    if (result.eatMode) {
+        //Making players mills not new since player is going to "use them" next
+        player.mills.forEach(m => m.new = false)
+
+        //Player wins because opponent is on flying stage
+        // if (getStage(oppPlayer) === 3) {
+        //     console.log("ihme tilanne toka")
+        //     result.return = [move, 100000000, type]
+        // }
+
+        //TODO: EAT NOW BEFORE SCORING THE BOARD
+    }
+    if (!fastCheckIfCanMove(result.board, oppPlayer)) {
+        //Player wins because opponent can't move
+        result.return = [move, 100000000, type]
+    }
+
+    return result
+}
+function setCharAt(str, index, chr) {
+    if (index > str.length - 1) return str;
+    return str.substring(0, index) + chr + str.substring(index + 1);
+}
+function fastEvaluateBoard(board, player, oppPlayer) {
+    if (DEBUG) console.time("fastScoreBoard")
+    var boardValue = 0
+    //Object to store info about where the different points for each board is coming from
+    //Helpful for debugging
+    var scoreObject = {
+        update: function (property) {
+            this[property] ? this[property]++ : this[property] = 1
+        }
+    }
+
+    if (getStage(player) === 1) {
+        //Giving points for each neighbour dot of players dots
+        for (var dot of fastGetPlayerDots(board, player)) {
+            boardValue += getNeighboursIndexes(dot).length
+        }
+        scoreObject.neighbours = boardValue
+    } else if (getStage(player) === 2) {
+        //Adding 25 points for each moveable dot
+        var moveableDots = fastGetMoveableDots(board, player).length
+        boardValue += moveableDots * 25
+        scoreObject.moveablepDots = moveableDots
+    }
+    if (getStage(oppPlayer) === 2) {
+        var oppMoveableDots = fastGetMoveableDots(board, oppPlayer).length
+        var oppUnmoveableDots = oppPlayer.chipCount - oppMoveableDots
+
+        boardValue += oppUnmoveableDots * 25
+        scoreObject.oppUnmoveableDots = oppUnmoveableDots
+    }
+    // else if (getStage(player) === 3) {
+    //     //Giving 10000 points for each turn during stage 3 to encourage delaying losing a workerGame
+    //     scoreObject.s3Turns = player.stage3Turns
+    //     value += player.stage3Turns * 10000
+    // }
+    // if (getStage(oppPlayer) === 3) {
+
+    //     scoreObject.oppS3Turns = oppPlayer.stage3Turns
+    //     value -= oppPlayer.stage3Turns * 10000
+    // }
+
+    for (var window of millWindows) {
+        var windowValue = fastEvaluateWindow(board, window, player, oppPlayer, scoreObject)
+        boardValue += windowValue
+    }
+
+    var boardStr = addInfo(board, player, oppPlayer)
+    if (!scoreObject["mill"] || !scoreObject["oppMill"])
+        checkedBoards.set(boardStr, boardValue)
+
+    if (DEBUG) {
+        console.timeEnd("fastScoreBoard")
+        //This is helpful when looking at where the score comes from for a board
+        console.log("fast scoreObject", scoreObject)
+    }
+    return boardValue
+}
+function windowToStr(board, window) {
+    return window.reduce((a, b) => a + board[b], "")
+}
+function fastGetWindowFastId(window) {
+    return window.reduce((a, b) => a.toString() + b.toString())
+}
+function indexToDot(index) {
+    return {
+        l: getLayer(index),
+        d: index - getLayer(index) * 8
+    }
+}
+function fastIsSameWindow(window, board) {
+    return window.every(wDot => {
+        var dot = indexToDot(wDot)
+        workerGame.dots[dot.l][dot.d].player &&
+            workerGame.dots[dot.l][dot.d].player.char == board[wDot]
+    })
+}
+function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
+    var value = 0
+    var windowStr = windowToStr(board, window)
+    var playerMill = player.char + player.char + player.char
+    var oppMill = oppPlayer.char + oppPlayer.char + oppPlayer.char
+    //New mill
+    if (windowStr == playerMill) {
+
+        //Getting the non deepCopied player
+        var workerGamePlayer = player.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
+        var clonePlayerMill = player.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        var workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        if (!clonePlayerMill) console.log(clonePlayerMill, "shouldnt happen", player.mills)
+        //First checking if this mill is in the workerGame.dots board, if it isnt, then its a new mill
+        //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
+        //This has to be checked with unique number given to every mill formed in the workerGame
+        //So that two mills that are in same place but formed at different times can be differentiated
+        if ((clonePlayerMill && !fastIsSameWindow(window, board) || (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId))) {
+            // if(workerGamerMill && clonePlayerMill.uniqId != workerGamerMill.uniqId) console.log("toka@@@")
+            // if(clonePlayerMill && !isSameWindow(window)) console.log("eka@@@@")
+            scoreObject.update("newMill")
+            value += 3500
+            //Win
+            // if (getStage(oppPlayer) === 3) {
+            //     console.log(oppPlayer.name, "stage on 3 joten voitto")
+            //     return 100000000
+            // }
+        }
+    }
+    //opp new mill
+    if (windowStr == oppMill) {
+
+        //Getting the non deepCopied player
+        var workerGamePlayer = oppPlayer.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
+        var clonePlayerMill = oppPlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        var workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        if (!clonePlayerMill) console.log(clonePlayerMill, "shouldnt happen", oppPlayer.mills)
+        //First checking if this mill is in the workerGame.dots board, if it isnt, then its a new mill
+        //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
+        //This has to be checked with unique number given to every mill formed in the workerGame
+        //So that two mills that are in same place but formed at different times can be differentiated
+        if ((clonePlayerMill && !fastIsSameWindow(window, board)) || (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId)) {
+            scoreObject.update("oppNewMill")
+            value -= 4000
+            //Win
+            // if (getStage(player) === 3) {
+            //     console.log(player.name, "stage is 3 so lose")
+            //     return -100000000
+            // }
+        }
+    }
+
+    switch (getStage(player)) {
+        case (1):
+            return fastStage1Score(board, window, player, oppPlayer, scoreObject) + value
+        case (2):
+            return fastStage2Score(board, window, player, oppPlayer, scoreObject) + value
+        case (3):
+            return fastStage3Score(board, window, player, oppPlayer, scoreObject) + value
+        default:
+            console.log("Player has won or lost?", player)
+    }
+}
+function getBoardDotsFromWindow(board, window, char) {
+    var dots = []
+    for (var i of window) {
+        if (board[i] == char)
+            dots.push(i)
+    }
+    return dots
+}
+function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
+    var value = 0
+    var oppStage = getStage(oppPlayer)
+    var windowStr = windowToStr(board, window)
+    var pieceCount = windowStr.split(player.char).length - 1
+    var oppCount = windowStr.split(oppPlayer.char).length - 1
+    var emptyCount = windowStr.split(EMPTYDOT).length - 1
+
+    var playerDots = getBoardDotsFromWindow(board, window, player.char)
+    var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+    var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+
+    //blocking opp mill stage 1
+    if (oppStage === 1 && oppCount === 2 && pieceCount === 1) {
+        scoreObject.update("blockOppMill")
+        value += 300
+    }
+    //blocking opp mill stage 2
+    if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
+        getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == player.char &&
+            !oppDots.some(chip => chip == dot))) {
+        scoreObject.update("blockOppMillStage2")
+        value += 300
+    }
+    //almost mill
+    if (oppStage == 1 && pieceCount === 2 && emptyCount === 1) {
+        scoreObject.update("almostMill")
+        value += 250
+    }
+    //mill
+    if (pieceCount === 3) {
+        scoreObject.update("mill")
+        value += 100
+    }
+    //making safe open mill with last chip
+    //opponent being stage 2 means that player is placing its last chip
+    if (oppStage === 2 && pieceCount === 2 && emptyCount === 1 && !getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char) &&
+        getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == player.char &&
+            !playerDots.some(dot => dot == chip))) {
+        //"safe" Open mill as in opponent player cant block it on next move 
+        scoreObject.update("safeOpenMill")
+        value += 200
+    }
+
+    //opp mill
+    if (oppCount === 3) {
+        scoreObject.update("oppMill")
+        value -= 100
+    }
+    //opp almost mill stage 1
+    if (oppStage === 1 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppAlmostMillStage1")
+        value -= 200
+    }
+    //opp blocking mill stage 1
+    if (oppStage === 1 && pieceCount === 2 && oppCount === 1) {
+        scoreObject.update("oppBlockingMillStage1")
+        value -= 200
+    }
+
+    //opponent safe open mill stage2
+    if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(chip => chip == dot))) {
+        scoreObject.update("oppSafeOpenMillStage2")
+        value -= 300
+    }
+    return value
+}
+function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
+    var value = 0
+    var oppStage = getStage(oppPlayer)
+    var windowStr = windowToStr(board, window)
+    var pieceCount = windowStr.split(player.char).length - 1
+    var oppCount = windowStr.split(oppPlayer.char).length - 1
+    var emptyCount = windowStr.split(EMPTYDOT).length - 1
+
+    var playerDots = getBoardDotsFromWindow(board, window, player.char)
+    var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+    var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+    //Syhky miilu is finnish and means double mill
+    //which happens when you have 2 mills next to eachother and can get a mill every turn
+    //also only limiting this to 1 because multiple double mills was encouraging not making a mill
+    //which would break one of the double mills also.
+    if (pieceCount === 2 && emptyCount === 1 && !scoreObject["doubleMill"] &&
+        getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == player.char &&
+            !playerDots.some(pDot => pDot == dot) &&
+            player.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
+        scoreObject.update("doubleMill")
+        value += 2000
+    }
+    //Blocking opp double mill
+    if (oppCount === 2 && pieceCount === 1 &&
+        getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(pDot => pDot == dot) &&
+            oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
+        scoreObject.update("blockingOppDoubleMill")
+        value += 3500
+    }
+    //"safe" Open mill as in opponent player cant block it on next move 
+    if (pieceCount === 2 && emptyCount === 1 && !getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == oppPlayer.char) &&
+        getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == player.char &&
+            !playerDots.some(dot => dot == chip))) {
+        scoreObject.update("safeOpenMill")
+        value += 900
+    }
+    //mill
+    if (pieceCount === 3) {
+        scoreObject.update("mill")
+        value += 700
+    }
+    //Opponent mill is blocked from opening
+    if (oppStage === 2 && oppCount === 3 &&
+        oppDots.every(dot => getNeighboursIndexes(dot).every(chip => board[chip] != EMPTYDOT))) {
+        scoreObject.update("blockOppMillStuck")
+        value += 400
+    }
+    //blocking opp mill stage 3
+    if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
+        scoreObject.update("blockOppMillStage3")
+        value += 400
+    }
+    //blocking opp mill stage 2
+    if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
+        getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(chip => chip == dot))) {
+        scoreObject.update("blockOppMillStage2")
+        value += 400
+    }
+    //opponent safe open mill stage2
+    if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(chip => chip == dot))) {
+        scoreObject.update("oppSafeOpenMillStage2")
+        value -= 300
+    }
+    //opponent open mill stage 3
+    if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppOpenMillStage3")
+        value -= 300
+    }
+    //Syhky miilu is finnish and means double mill
+    //which happens when you have 2 mills next to eachother and can get a mill every turn
+    //Opp double mill
+    if (oppCount === 2 && emptyCount === 1 && !scoreObject["oppDoubleMill"] &&
+        getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(pDot => pDot == dot) &&
+            oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
+        scoreObject.update("oppDoubleMill")
+        value -= 2500
+    }
+
+    return value
+}
+function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
+    var value = 0
+    var oppStage = getStage(oppPlayer)
+    var windowStr = windowToStr(board, window)
+    var pieceCount = windowStr.split(player.char).length - 1
+    var oppCount = windowStr.split(oppPlayer.char).length - 1
+    var emptyCount = windowStr.split(EMPTYDOT).length - 1
+
+    var playerDots = getBoardDotsFromWindow(board, window, player.char)
+    var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+    var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+
+    //blocking opp mill when opp is on stage 2
+    //this is important because player will lose on next move otherwise
+    if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
+        getNeighboursIndexes(playerDots[0]).some(chip => board[chip] == oppPlayer.char &&
+            !oppDots.some(dot => dot == chip))) {
+        scoreObject.update("blockOppMillStage2")
+        value += 3000
+    }
+    //Blocking opp double mill
+    if (oppCount === 2 && pieceCount === 1 &&
+        getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(pDot => pDot == dot) &&
+            oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
+        scoreObject.update("blockingOppDoubleMill")
+        value += 10000
+    }
+    //blocking opp mill when opp is on stage 3
+    //this is also important because player will lose on next move otherwise
+    if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
+        scoreObject.update("blockOppMillStage3")
+        value += 2000
+    }
+    //almost mill
+    if (pieceCount === 2 && emptyCount === 1) {
+        scoreObject.update("almostMill")
+        value += 800
+    }
+    //mill
+    if (pieceCount === 3) {
+        scoreObject.update("mill")
+        value += 500
+    }
+    //opponent safe open mill
+    if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+        getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == oppPlayer.char &&
+            !oppDots.some(dot => dot == chip))) {
+        scoreObject.update("oppOpenMillStage2")
+        value -= 2000
+    }
+    //opponent open mill
+    if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
+        scoreObject.update("oppOpenMillStage3")
+        value -= 2000
+    }
+    return value
+}
+function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
+    //Calcing depth count
+    if (!depthCount.includes(depth)) depthCount.push(depth)
+    nodeCount++
+
+    var boardStr
+    var winLoseValue
+    if (isMaximizing) {
+        boardStr = addInfo(board, player, oppPlayer)
+        winLoseValue = fastCheckWin(board, player, oppPlayer)
+    } else {
+        boardStr = addInfo(board, oppPlayer, player)
+        winLoseValue = fastCheckWin(board, oppPlayer, player)
+    }
+    //Returning potential winning or losing value
+    if (winLoseValue) {
+        return [undefined, winLoseValue]
+    }
+    //End node check
+    if (depth <= 0) {
+        //Checking if current board value has been calced already and if so, we return that value
+        var checkedValue = checkedBoards.get(boardStr)
+        if (checkedValue) {
+            skipCount++
+            return [undefined, checkedValue]
+        }
+        var value = isMaximizing ? fastEvaluateBoard(board, player, oppPlayer) : fastEvaluateBoard(board, oppPlayer, player)
+        return [undefined, value]
+    }
+
+    //Building up "the tree" further
+    if (isMaximizing) {
+        let bestScore = -Infinity
+        let bestMove
+        var movesObject = fastGetMoves(board, player, oppPlayer, eatMode)
+        var moves = movesObject.moves
+        var type = movesObject.type
+
+        if (moves.length === 0) {
+            //Player lost because no possible moves to do
+            //this should only be the case on stage 2 when player has no more movable dots
+            if (getStage(player) !== 2)
+                console.log("Problem", movesObject)
+
+            return [undefined, -100000000]
+        }
+        for (var move of moves) {
+            //Cloning board and players 
+            var cBoard = board
+            var cPlayer = JSON.parse(JSON.stringify(player))
+            var cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
+            var args = {
+                move: move,
+                type: type,
+                board: cBoard,
+                depth: depth
+            }
+
+            var result = fastPlayRound(args, cPlayer, cOppPlayer)
+            cBoard = result.board
+            eatMode = result.eatMode
+            var winLose = result.return
+            if (winLose)
+                return winLose
+
+            var score = fastMinimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, eatMode)[1]
+
+            if (score > bestScore || (score === bestScore && Math.random() < 0.5)) {
+                bestScore = score
+                bestMove = move
+            }
+            alpha = Math.max(bestScore, alpha)
+            if (alpha >= beta)
+                break
+        }
+        return [bestMove, bestScore, type]
+    } else {
+        let bestScore = Infinity;
+        let bestMove
+        var movesObject = fastGetMoves(board, oppPlayer, player, eatMode)
+        var moves = movesObject.moves
+        var type = movesObject.type
+
+        if (moves.length === 0) {
+            //Player lost because no possible moves to do
+            //this should only be the case on stage 2 when player has no more movable dots
+            if (getStage(oppPlayer) !== 2)
+                console.log("Couldn't find moves, possible problem?", movesObject)
+
+            return [undefined, -100000000]
+        }
+        for (var move of moves) {
+            //Cloning board and players 
+            var cBoard = board
+            var cPlayer = JSON.parse(JSON.stringify(player))
+            var cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
+            var args = {
+                move: move,
+                type: type,
+                board: cBoard,
+                depth: depth
+            }
+
+            var result = fastPlayRound(args, cOppPlayer, cPlayer)
+            cBoard = result.board
+            eatMode = result.eatMode
+
+            var winLose = result.return
+            if (winLose)
+                return winLose
+
+            var score = fastMinimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, !eatMode)[1]
+
+            if (score < bestScore || (score === bestScore && Math.random() < 0.5)) {
+                bestScore = score
+                bestMove = move
+            }
+
+            beta = Math.min(bestScore, beta)
+            if (alpha >= beta)
+                break
+        }
+        return [bestMove, bestScore, type]
+    }
+}
+function fastFindBestMove() {
+    if (workerGame.winner) {
+        console.log(this.winner.name, "won the workerGame")
+        return
+    }
+    console.time("time finding a move")
+    //Resetting counters 
+    nodeCount = 0
+    checkedBoards.clear()
+    skipCount = 0
+    depthCount = []
+
+    var player = {
+        name: workerGame.turn.name,
+        char: workerGame.turn.char,
+        chipCount: workerGame.turn.chipCount,
+        chipsToAdd: workerGame.turn.chipsToAdd,
+        mills: workerGame.turn.mills,
+        turns: workerGame.turn.turns,
+        stage3Turns: workerGame.turn.stage3Turns,
+    }
+    var oppPlay = workerGame.turn.name == workerGame.playerDark.name ? workerGame.playerLight : workerGame.playerDark
+    var oppPlayer = {
+        name: oppPlay.name,
+        char: oppPlay.char,
+        chipCount: oppPlay.chipCount,
+        chipsToAdd: oppPlay.chipsToAdd,
+        mills: oppPlay.mills,
+        turns: oppPlay.turns,
+        stage3Turns: oppPlay.stage3Turns,
+    }
+    var board = stringify(workerGame.dots)
+
+    // var depth = workerGame.difficulty
+    var depth =  workerGame.difficulty === 4 ? 4 : 6
+
+    let result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+
+    let move = result[0]
+    let score = result[1]
+    let type = result[2]
+
+    if (move == undefined) {
+        console.log("Couldn't find a move", result)
+        console.timeEnd("time finding a move")
+        return
+    }
+
+    //Play the best move
+    if (type == "placing") {
+        console.log(workerGame.turn.name, type, "to", move, "score", score, "depth", depthCount.length - 1)
+        move = indexToDot(move)
+    } else if (type == "moving") {
+        console.log(workerGame.turn.name, type, "from/to", move, "score", score, "depth", depthCount.length - 1)
+        move = [indexToDot(move[0]), indexToDot(move[1])]
+    } else if (type == "eating") {
+
+        console.log(workerGame.turn.name, type, "to", move, "score", score, "depth", depthCount.length - 1)
+        move = indexToDot(move)
+    } else {
+        console.log(type, move, "typeless move?")
+    }
+    console.log("node count", nodeCount, "uniq boards",
+        checkedBoards.size, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
+    console.timeEnd("time finding a move")
+    return [move, type]
+}
+function addInfo(boardStr, player, oppPlayer) {
+    return getStage(player).toString() + player.char +
+        getStage(oppPlayer).toString() + oppPlayer.char + boardStr
+}
+function getStage(player) {
+    if (player.chipsToAdd > 0) {
+        return 1
+    } else if (player.chipCount + player.chipsToAdd === 3) {
+        return 3
+    } else if (player.chipsToAdd === 0) {
+        return 2
+    } else {
+        console.log("returning 0 stage", player)
+        return 0
+    }
+}
+function stringify(board) {
+    var str = ""
+    for (var layer of board) {
+        for (var dot of layer) {
+            if (!dot.player) str += '0'
+            else if (dot.player.name == workerGame.playerDark.name) str += 'D'
+            else if (dot.player.name == workerGame.playerLight.name) str += 'L'
+        }
+    }
+    return str
+}
+// function deepClone(obj) {
+//     var visitedNodes = [];
+//     var clonedCopy = [];
+//     function clone(item) {
+//         if (typeof item === "object" && !Array.isArray(item)) {
+//             if (visitedNodes.indexOf(item) === -1) {
+//                 visitedNodes.push(item);
+//                 var cloneObject = {};
+//                 clonedCopy.push(cloneObject);
+//                 for (var i in item) {
+//                     if (item.hasOwnProperty(i)) {
+//                         cloneObject[i] = clone(item[i]);
+//                     }
+//                 }
+//                 return cloneObject;
+//             } else {
+//                 return clonedCopy[visitedNodes.indexOf(item)];
+//             }
+//         }
+//         else if (typeof item === "object" && Array.isArray(item)) {
+//             if (visitedNodes.indexOf(item) === -1) {
+//                 var cloneArray = [];
+//                 visitedNodes.push(item);
+//                 clonedCopy.push(cloneArray);
+//                 for (var j = 0; j < item.length; j++) {
+//                     cloneArray.push(clone(item[j]));
+//                 }
+//                 return cloneArray;
+//             } else {
+//                 return clonedCopy[visitedNodes.indexOf(item)];
+//             }
+//         }
+
+//         return item; // not object, not array, therefore primitive
+//     }
+//     return clone(obj);
+// }

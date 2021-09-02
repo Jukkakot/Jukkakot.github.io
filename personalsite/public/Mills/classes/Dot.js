@@ -109,7 +109,7 @@ class Dot {
             text(l + "," + d, this.x * this.size(), this.y * this.size() - circleSize * 0.7)
             text(this.x + "," + this.y, this.x * this.size(), this.y * this.size() + circleSize * 1.2)
             fill(255, 0, 0)
-            text(l * 8 + d, this.x * this.size(), this.y * this.size() + circleSize / 3)
+            text(toFastDot(this), this.x * this.size(), this.y * this.size() + circleSize / 3)
 
         }
 
