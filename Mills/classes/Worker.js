@@ -482,54 +482,6 @@ function getS1Moves(board, player, oppPlayer) {
     emptyDotsInOrder.push(...allEmptydots.filter(dot => !emptyDotsInOrder.includes(dot)))
     return emptyDotsInOrder
 }
-function getS3Moves(board, player, oppPlayer) {
-    var moves = []
-    var fromDots = getPlayerDots(board, player)
-    for (var layer of board) {
-        for (var d = 0; d < 8; d++) {
-            var window
-            if (d % 2 === 0) {
-                //d = 0,2,4,6
-                //Checking window on layers (even indexes)
-                window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
-
-            } else if (layer[d].l === 0) {
-                //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
-                //d = 1,3,5,7
-                //Checking window between layers (odd indexes)
-                window = [board[0][d], board[1][d], board[2][d]]
-            }
-            var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
-            var oppCount = window.filter(chip => chip.player && chip.player.name == oppPlayer.name).length
-            var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
-            var playerPieces = window.filter(chip => chip.player && chip.player.name == player.name)
-            var emptyDots = window.filter(chip => !chip.player)
-            var emptyCount = window.filter(chip => !chip.player).length
-
-            // Making mill
-            if (pieceCount === 2 && emptyCount === 1) {
-                var fromDot = fromDots.find(dot => !playerPieces.includes(dot))
-                if (!isArrayInArray(moves, [fromDot, emptyDots[0]]))
-                    moves.push([fromDot, emptyDots[0]])
-            }
-            // Blocking opp mill
-            if (oppCount === 2 && emptyCount === 1) {
-                fromDots.forEach(dot => {
-                    if (!isArrayInArray(moves, [dot, emptyDots[0]]))
-                        moves.push([dot, emptyDots[0]])
-                })
-            }
-        }
-    }
-    var toDots = getEmptyDots(board)
-    for (var fromDot of fromDots) {
-        toDots.forEach(toDot => {
-            if (!isArrayInArray(moves, [fromDot, toDot]))
-                moves.push([fromDot, toDot])
-        })
-    }
-    return moves
-}
 function getS2Moves(board, player, oppPlayer) {
     var moves = []
     for (var layer of board) {
@@ -592,6 +544,55 @@ function getS2Moves(board, player, oppPlayer) {
     }
     return moves
 }
+function getS3Moves(board, player, oppPlayer) {
+    var moves = []
+    var fromDots = getPlayerDots(board, player)
+    for (var layer of board) {
+        for (var d = 0; d < 8; d++) {
+            var window
+            if (d % 2 === 0) {
+                //d = 0,2,4,6
+                //Checking window on layers (even indexes)
+                window = [layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8]]
+
+            } else if (layer[d].l === 0) {
+                //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
+                //d = 1,3,5,7
+                //Checking window between layers (odd indexes)
+                window = [board[0][d], board[1][d], board[2][d]]
+            }
+            var pieceCount = window.filter(chip => chip.player && chip.player.name == player.name).length
+            var oppCount = window.filter(chip => chip.player && chip.player.name == oppPlayer.name).length
+            var oppDots = window.filter(chip => chip.player && chip.player.name == oppPlayer.name)
+            var playerPieces = window.filter(chip => chip.player && chip.player.name == player.name)
+            var emptyDots = window.filter(chip => !chip.player)
+            var emptyCount = window.filter(chip => !chip.player).length
+
+            // Making mill
+            if (pieceCount === 2 && emptyCount === 1) {
+                var fromDot = fromDots.find(dot => !playerPieces.includes(dot))
+                if (!isArrayInArray(moves, [fromDot, emptyDots[0]]))
+                    moves.push([fromDot, emptyDots[0]])
+            }
+            // Blocking opp mill
+            if (oppCount === 2 && emptyCount === 1) {
+                fromDots.forEach(dot => {
+                    if (!isArrayInArray(moves, [dot, emptyDots[0]]))
+                        moves.push([dot, emptyDots[0]])
+                })
+            }
+        }
+    }
+    var toDots = getEmptyDots(board)
+    for (var fromDot of fromDots) {
+        toDots.forEach(toDot => {
+            if (!isArrayInArray(moves, [fromDot, toDot]))
+                moves.push([fromDot, toDot])
+        })
+    }
+    return moves
+}
+
 function minimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
     //Calcing depth count
     if (!depthCount.includes(depth)) depthCount.push(depth)
