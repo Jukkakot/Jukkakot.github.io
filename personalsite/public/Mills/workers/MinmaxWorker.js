@@ -4,9 +4,12 @@ var nodeCount
 var checkedBoards = new Map()
 var skipCount
 var depthCount
+var pruneCount = 0
+let endTime
 const EMPTYDOT = '0'
+const MAXDEPTH = 10
 
-var millWindows = [
+const millWindows = [
     [0, 1, 2], [2, 3, 4], [4, 5, 6], [6, 7, 0],
     [8, 9, 10], [10, 11, 12], [12, 13, 14], [14, 15, 8],
     [16, 17, 18], [18, 19, 20], [20, 21, 22], [22, 23, 16],
@@ -31,10 +34,9 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             workerGame.fastDots = data.board
             DEBUG = data.DEBUG
             // workeridNumber = data.idNumber
-            console.log("stages", workerGame.playerDark.name, getStage(workerGame.playerDark), workerGame.playerLight.name, getStage(workerGame.playerLight))
-            fastEvaluateBoard(workerGame.fastDots, workerGame.playerLight, workerGame.playerDark)
-            fastEvaluateBoard(workerGame.fastDots, workerGame.playerDark, workerGame.playerLight)
-            console.log("board", workerGame.fastDots)
+            console.log("stages", workerGame.playerDark.char, getStage(workerGame.playerDark), workerGame.playerLight.char, getStage(workerGame.playerLight))
+            fastEvaluateBoard(workerGame.fastDots, workerGame.playerLight, workerGame.playerDark, -1)
+            fastEvaluateBoard(workerGame.fastDots, workerGame.playerDark, workerGame.playerLight, -1)
             self.close()
     };
 })
@@ -45,20 +47,23 @@ function handleGetMove(data) {
     workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
     workerGame.fastDots = stringify(workerGame.dots)
     DEBUG = data.DEBUG
-    // console.log("Starting",data.cmd)
+    let options = data.options
     var data = {
         cmd: data.cmd,
-        move: fastFindBestMove()
+        move: fastFindBestMove(options)
     }
-    //Add 1 sec delay if easy mode/eatMode/flying
-    //Because thats when we use depth 2 and it would go too fast otherwise
-    var delay = workerGame.difficulty === 4
-    //Adding 1 second delay to sending the move if easy mode to slow it down a bit
-    // self.postMessage(data)
-    setTimeout(() => {
+    if (options.iterative) {
         self.postMessage(data)
-    }, (delay ? 1000 : 200));
-
+    } else {
+        //Add 1000 ms delay if easy mode
+        //Because thats when we use depth 4 and it would go too fast for user
+        //Otherwise 200 ms delay
+        var delay = options.difficulty === 4
+        setTimeout(() => {
+            self.postMessage(data)
+            // }, (delay ? 1000 : 200));
+        }, 200);
+    }
 }
 function toFastMills(player) {
     var mills = player.mills.map(m => {
@@ -156,13 +161,13 @@ function fastCheckIfCanMove(board, player) {
     return movableDots.length > 0
 }
 function fastCheckWin(board, player, oppPlayer, depth) {
-    // var boardStr = addInfo(board, player, oppPlayer)
+    var boardStr = addInfo(board, player, oppPlayer, depth)
     if (player.chipCount + player.chipsToAdd < 3 || !fastCheckIfCanMove(board, player)) {
-        // checkedBoards.set(boardStr, -100000000)
+        checkedBoards.set(boardStr, -100000000 * depth)
         // console.log(player.name, oppPlayer.name, "losing")
-        return -100000000
+        return -100000000 * depth
     } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !fastCheckIfCanMove(board, oppPlayer)) {
-        // checkedBoards.set(boardStr, 100000000)
+        checkedBoards.set(boardStr, 100000000 * depth)
         // console.log(player.name, oppPlayer.name, "winning")
         return 100000000 * depth
     }
@@ -212,8 +217,50 @@ function fastGetEmptyDots(board) {
     return dots
 }
 function fastGetS1Moves(board, player, oppPlayer) {
+    var moves = []
+    //Adding "better" moves to start of moves to be checked first
+    for (var window of millWindows) {
+        var oppStage = getStage(oppPlayer)
+        var windowStr = windowToStr(board, window)
+        var pieceCount = windowStr.split(player.char).length - 1
+        var oppCount = windowStr.split(oppPlayer.char).length - 1
+        var emptyCount = windowStr.split(EMPTYDOT).length - 1
+
+        var playerDots = getBoardDotsFromWindow(board, window, player.char)
+        var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+        var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+        // Making mill stage 1
+        if (oppStage === 1 && pieceCount === 2 && emptyCount === 1) {
+            if (!moves.includes(emptyDots[0]))
+                moves.push(emptyDots[0])
+        }
+        //Making almost mills stage 1
+        if (oppStage === 1 && pieceCount === 1 && emptyCount === 2) {
+            if (!moves.includes(emptyDots[0]))
+                moves.push(emptyDots[0])
+            if (!moves.includes(emptyDots[1]))
+                moves.push(emptyDots[1])
+        }
+        //blocking opp mill stage 1
+        if (oppStage === 1 && oppCount === 2 && emptyCount === 1) {
+            if (!moves.includes(emptyDots[0]))
+                moves.push(emptyDots[0])
+        }
+        //blocking opp safe mill stage 2
+        if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
+            getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
+                !oppDots.some(chip => chip == dot))) {
+
+            if (!moves.includes(emptyDots[0]))
+                moves.push(emptyDots[0])
+        }
+    }
+    //Adding the rest of the dots into moves
+    var emptyDots = fastGetEmptyDots(board).filter(dot => !moves.includes(dot))
     //Sorting the dots by their neighbour count
-    return fastGetEmptyDots(board).sort((a, b) => getNeighboursIndexes(b).length - getNeighboursIndexes(a).length)
+    emptyDots = emptyDots.sort((a, b) => getNeighboursIndexes(b).length - getNeighboursIndexes(a).length)
+    moves.push(...emptyDots)
+    return moves
 }
 function fastGetS2Moves(board, player, oppPlayer) {
     var moves = []
@@ -363,7 +410,7 @@ function fastHasNewMills(board, player) {
     player.mills = fastGetUpdatedMills(board, player)
     return player.mills.some(m => m.new)
 }
-function fastPlayRound(args, player, oppPlayer) {
+function fastPlayRound(args, player, oppPlayer, isMaximizing) {
     var result = {
         eatMode: false,
         board: args.board,
@@ -389,12 +436,14 @@ function fastPlayRound(args, player, oppPlayer) {
             result.eatMode = fastHasNewMills(result.board, player)
             break;
         case "eating":
+            //Player wins because opponent was on flying stage when eating
             if (getStage(oppPlayer) === 3) {
                 result.board = fastEatChip(args, oppPlayer)
-                result.return = [move, 100000000 * depth, type]
+                result.return = isMaximizing ? [move, 100000000 * depth, type] : [move, -100000000 * depth, type]
                 return result
             }
             result.board = fastEatChip(args, oppPlayer)
+            player.mills.forEach(m => m.new = false)
             break;
         default:
             console.log("Invalid move", args)
@@ -403,27 +452,19 @@ function fastPlayRound(args, player, oppPlayer) {
     if (result.eatMode) {
         //Making players mills not new since player is going to "use them" next
         player.mills.forEach(m => m.new = false)
-
-        //Player wins because opponent is on flying stage
-        // if (getStage(oppPlayer) === 3) {
-        //     console.log("ihme tilanne toka")
-        //     result.return = [move, 100000000, type]
-        // }
-
         //TODO: EAT NOW BEFORE SCORING THE BOARD
     }
     if (!fastCheckIfCanMove(result.board, oppPlayer)) {
         //Player wins because opponent can't move
-        result.return = [move, 100000000 * depth, type]
+        result.return = isMaximizing ? [move, 100000000 * depth, type] : [move, -100000000 * depth, type]
     }
-
     return result
 }
 function setCharAt(str, index, chr) {
     if (index > str.length - 1) return str;
     return str.substring(0, index) + chr + str.substring(index + 1);
 }
-function fastEvaluateBoard(board, player, oppPlayer) {
+function fastEvaluateBoard(board, player, oppPlayer, depth) {
     if (DEBUG) console.time("fastScoreBoard")
     var boardValue = 0
     //Object to store info about where the different points for each board is coming from
@@ -469,7 +510,8 @@ function fastEvaluateBoard(board, player, oppPlayer) {
         boardValue += windowValue
     }
 
-    var boardStr = addInfo(board, player, oppPlayer)
+    var boardStr = addInfo(board, player, oppPlayer, depth)
+    //For now, we dont add any boards with mills in them to checkedBoards map
     if (!scoreObject["mill"] || !scoreObject["oppMill"])
         checkedBoards.set(boardStr, boardValue)
 
@@ -599,7 +641,7 @@ function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
     }
     //blocking opp mill stage 2
     if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
-        getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == player.char &&
+        getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
             !oppDots.some(chip => chip == dot))) {
         scoreObject.update("blockOppMillStage2")
         value += 300
@@ -680,7 +722,8 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
         value += 3500
     }
     //"safe" Open mill as in opponent player cant block it on next move 
-    if (pieceCount === 2 && emptyCount === 1 && !getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == oppPlayer.char) &&
+    if (pieceCount === 2 && emptyCount === 1 &&
+        !getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == oppPlayer.char) &&
         getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == player.char &&
             !playerDots.some(dot => dot == chip))) {
         scoreObject.update("safeOpenMill")
@@ -796,30 +839,29 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     //Calcing depth count
     if (!depthCount.includes(depth)) depthCount.push(depth)
     nodeCount++
-
-    var boardStr
-    var winLoseValue
-    if (isMaximizing) {
-        boardStr = addInfo(board, player, oppPlayer)
-        winLoseValue = fastCheckWin(board, player, oppPlayer, depth)
-    } else {
-        boardStr = addInfo(board, oppPlayer, player)
-        winLoseValue = fastCheckWin(board, oppPlayer, player, depth)
+    // var boardStr = isMaximizing ? addInfo(board, player, oppPlayer) : addInfo(board, oppPlayer, player)
+    var boardStr = addInfo(board, player, oppPlayer, depth)
+    var calcedValue = checkedBoards.get(boardStr)
+    //Returning already calculated value for the board
+    if (calcedValue != undefined) {
+        skipCount++
+        return [undefined, calcedValue]
     }
+    var winLoseValue = fastCheckWin(board, player, oppPlayer, depth)
     //Returning potential winning or losing value
-    if (winLoseValue) {
+    if (winLoseValue != undefined) {
         return [undefined, winLoseValue]
     }
     //End node check
-    if (depth <= 0) {
-        //Checking if current board value has been calced already and if so, we return that value
-        var checkedValue = checkedBoards.get(boardStr)
-        if (checkedValue) {
+    if (depth <= 0 || endTime != undefined && new Date().getTime() >= endTime) {
+        var calcedValue = checkedBoards.get(boardStr)
+        //Returning already calculated value for the board
+        if (calcedValue != undefined) {
             skipCount++
-            return [undefined, checkedValue]
+            return [undefined, calcedValue]
         }
-        var value = isMaximizing ? fastEvaluateBoard(board, player, oppPlayer) : fastEvaluateBoard(board, oppPlayer, player)
-        return [undefined, value]
+        // var value = isMaximizing ? fastEvaluateBoard(board, player, oppPlayer) : fastEvaluateBoard(board, oppPlayer, player)
+        return [undefined, fastEvaluateBoard(board, player, oppPlayer, depth)]
     }
 
     //Building up "the tree" further
@@ -836,7 +878,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             if (getStage(player) !== 2)
                 console.log("Problem", movesObject)
 
-            return [undefined, -100000000]
+            return [undefined, -100000000 * depth]
         }
         for (var move of moves) {
             //Cloning players 
@@ -850,7 +892,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
                 depth: depth
             }
 
-            var result = fastPlayRound(args, cPlayer, cOppPlayer)
+            var result = fastPlayRound(args, cPlayer, cOppPlayer, isMaximizing)
             cBoard = result.board
             eatMode = result.eatMode
             var winLose = result.return
@@ -864,8 +906,11 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
                 bestMove = move
             }
             alpha = Math.max(bestScore, alpha)
-            if (alpha >= beta)
+            if (alpha >= beta) {
+                pruneCount++
                 break
+            }
+
         }
         return [bestMove, bestScore, type]
     } else {
@@ -881,7 +926,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             if (getStage(oppPlayer) !== 2)
                 console.log("Couldn't find moves, possible problem?", movesObject)
 
-            return [undefined, -100000000]
+            return [undefined, 100000000 * depth]
         }
         for (var move of moves) {
             //Cloning board and players 
@@ -895,7 +940,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
                 depth: depth
             }
 
-            var result = fastPlayRound(args, cOppPlayer, cPlayer)
+            var result = fastPlayRound(args, cOppPlayer, cPlayer, isMaximizing)
             cBoard = result.board
             eatMode = result.eatMode
 
@@ -911,13 +956,15 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             }
 
             beta = Math.min(bestScore, beta)
-            if (alpha >= beta)
+            if (alpha >= beta) {
+                pruneCount++
                 break
+            }
         }
         return [bestMove, bestScore, type]
     }
 }
-function fastFindBestMove() {
+function fastFindBestMove(options) {
     if (workerGame.winner) {
         console.log(this.winner.name, "won the workerGame")
         return
@@ -928,6 +975,8 @@ function fastFindBestMove() {
     checkedBoards.clear()
     skipCount = 0
     depthCount = []
+    pruneCount = 0
+    endTime = undefined
 
     var player = {
         name: workerGame.turn.name,
@@ -950,14 +999,44 @@ function fastFindBestMove() {
     }
     var board = stringify(workerGame.dots)
 
-    // var depth = workerGame.difficulty
-    var depth = workerGame.difficulty === 4 ? 4 : 6
+    let move
+    let type
+    let score
 
-    let result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+    if (options.iterative) {
+        // let bestScore = -Infinity
+        //TESTING
+        // var time = 1000
+        endTime = new Date().getTime() + options.time
+        for (var depth = 1; depth <= MAXDEPTH; depth++) {
+            //Resetting counters to not make them cumulative 
+            pruneCount = 0
+            nodeCount = 0
+            skipCount = 0
+            let result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+            if (new Date().getTime() >= endTime) {
+                console.log("Ran out of time at depth", depthCount.pop())
+                break
+            }
+            //Setting new move only if time has not ran out yet
+            score = result[1]
+            move = result[0]
+            type = result[2]
 
-    let move = result[0]
-    let score = result[1]
-    let type = result[2]
+            // console.log("depth", depth, "node count", nodeCount, "score", score, "boards", checkedBoards.size, "pruned", pruneCount, "skipped", skipCount)
+            if (score >= 100000000) {
+                console.log("found win!")
+                break
+            }
+        }
+    } else {
+        var depth = options.difficulty
+        let result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+        move = result[0]
+        score = result[1]
+        type = result[2]
+    }
+
 
     if (move == undefined) {
         console.log("Couldn't find a move", result)
@@ -980,13 +1059,14 @@ function fastFindBestMove() {
         console.log(type, move, "typeless move?")
     }
     console.log("node count", nodeCount, "uniq boards",
-        checkedBoards.size, "skipped", skipCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
+        checkedBoards.size, "skipped", skipCount, "pruned", pruneCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
     console.timeEnd("time finding a move")
     return [move, type]
 }
-function addInfo(boardStr, player, oppPlayer) {
-    return getStage(player).toString() + player.char +
-        getStage(oppPlayer).toString() + oppPlayer.char + boardStr
+function addInfo(board, player, oppPlayer, depth) {
+    var str = depth.toString() + getStage(player) + player.char + getStage(oppPlayer) + oppPlayer.char + board
+    return str
+
 }
 function getStage(player) {
     if (player.chipsToAdd > 0) {

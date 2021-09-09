@@ -6,11 +6,10 @@ class Game {
         this.dots = this.initDots()
 
         this.playerDark = new Player(color(100, 60, 20), darkDot, "Dark wood")
-        this.playerDark.autoPlay = this.settings.darkAutoplay
+        this.playerDark.updateOptions(this.settings.darkOption)
 
         this.playerLight = new Player(color(145, 132, 102), lightDot, "Light wood")
-        this.playerLight.autoPlay = this.settings.lightAutoplay
-
+        this.playerLight.updateOptions(this.settings.lightOption)
         //turn is current player that has the turn
         this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
 
@@ -21,7 +20,7 @@ class Game {
 
         this.movingAnimations = []
 
-        this.difficulty = this.settings.difficulty
+        // this.difficulty = this.settings.difficulty
 
         this.worker
 
@@ -53,7 +52,7 @@ class Game {
             LOADING = false
         }
 
-        this.worker = new Worker("classes/FastWorker.js")
+        this.worker = new Worker("workers/MinmaxWorker.js")
         this.worker.onmessage = function (e) {
             var data = e.data
             switch (data.cmd) {
@@ -79,7 +78,13 @@ class Game {
             game: deepClone(this),
             board: this.stringify(),
             cmd: cmd,
+            options: game.turn.options,
             DEBUG: DEBUG,
+        }
+        //If player manually playing but wants a suggestion, options are defaulted to minmax 4
+        if (!data.options.autoPlay && cmd == "suggestion") {
+            data.options = OPTIONS[1]
+            console.log("Settings options to", data.options.text)
         }
         this.worker.postMessage(deepClone(data))
     }
@@ -240,7 +245,7 @@ class Game {
         this.playerDark.startChips.forEach(chip => chip.draw())
     }
     click() {
-        if (this.turn.autoPlay || this.winner) return
+        if (this.turn.options.autoPlay || this.winner) return
         var dot = this.getDot(mX, mY)
         if (!dot) {
             //unhighlight everything
@@ -375,7 +380,7 @@ class Game {
         //Checking for new mills before switching turn
         if (hasNewMills(this.dots, this.turn)) {
             this.eatMode = true
-            if (this.turn.autoPlay)
+            if (this.turn.options.autoPlay)
                 this.findBestMove("findMove")
 
             //Mills are made not new in eatChip method as soon as player has eaten a chip
@@ -395,7 +400,7 @@ class Game {
             this.setWinner(oppPlayer)
             return
         }
-        if (this.turn.autoPlay) {
+        if (this.turn.options.autoPlay) {
             game.findBestMove("findMove")
         }
     }
@@ -454,7 +459,7 @@ class Game {
         autoPlayButton.style("visibility", "hidden")
         pDarkButton.style("visibility", "hidden")
         pLightButton.style("visibility", "hidden")
-        difficultyButton.style("visibility", "hidden")
+        // difficultyButton.style("visibility", "hidden")
 
     }
     drawMills() {
