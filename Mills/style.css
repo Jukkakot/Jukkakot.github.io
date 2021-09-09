@@ -29,10 +29,10 @@ html, body{
     background-size: cover;
   }
   #pDarkButton {
-    background: transparent  url("./resources/img/darkDotSharp.png") no-repeat center top;
+    background: transparent  url("./resources/img/darkButton.png") no-repeat center top;
     background-size: cover;
   }
   #pLightButton {
-    background: transparent  url("./resources/img/lightDotSharp.png") no-repeat center top;
+    background: transparent  url("./resources/img/lightButton.png") no-repeat center top;
     background-size: cover;
   }

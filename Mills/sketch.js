@@ -10,11 +10,45 @@ const isMobileDevice = /Mobi/i.test(window.navigator.userAgent)
 var LOADING = false
 var DEBUG = false
 var AUTOPLAY = false
-
+const OPTIONS = [
+	{
+		text: "Manual",
+		autoPlay: false
+	},
+	{
+		text: "Minmax 4",
+		iterative: false,
+		difficulty: 4,
+		autoPlay: true
+	},
+	{
+		text: "Minmax 6",
+		iterative: false,
+		difficulty: 6,
+		autoPlay: true
+	},
+	{
+		text: "Iterative 1s",
+		iterative: true,
+		time: 1000,
+		autoPlay: true
+	},
+	{
+		text: "Iterative 2s",
+		iterative: true,
+		time: 2000,
+		autoPlay: true
+	},
+	{
+		text: "Iterative 3s",
+		iterative: true,
+		time: 3000,
+		autoPlay: true
+	}
+]
 var gameSettings = {
-	difficulty: 4,
-	lightAutoplay: true,
-	darkAutoplay: false,
+	lightOption: 3,
+	darkOption: 0,
 }
 
 var outBoxSize, circleSize, distance
@@ -25,8 +59,8 @@ var mX, mY
 var fps
 var locked
 var movableDot
-var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif
-var restartButton, autoPlayButton, suggestionButton, pDarkButton, pLightButton, difficultyButton
+var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
+var restartButton, suggestionButton, pDarkButton, pLightButton,autoPlayButton
 
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
@@ -34,6 +68,7 @@ function preload() {
 	backgroundImg = loadImage("./resources/img/background2.jpg")
 	bAndwDotImg = loadImage("./resources/img/blackAndWhiteDot.png")
 	loadingGif = createImg("./resources/img/loading.gif")
+	darkButton = loadImage("./resources/img/darkButton.png")
 	// spinnerGif = createImg("./resources/img/spinner.gif")
 	loadingGif.hide()
 	// buttonImg = loadImage("./resources/img/woodenButton.png")
@@ -64,9 +99,9 @@ function setup() {
 	pLightButton.id("pLightButton")
 	pLightButton.mousePressed(() => togglePlayerLight())
 
-	difficultyButton = createButton("Difficulty")
-	difficultyButton.id("difficultyButton")
-	difficultyButton.mousePressed(() => toggleDifficulty())
+	// difficultyButton = createButton("Difficulty")
+	// difficultyButton.id("difficultyButton")
+	// difficultyButton.mousePressed(() => toggleDifficulty())
 	start()
 	windowResized()
 }
@@ -81,7 +116,7 @@ function keyPressed(e) {
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
-			const worker = new Worker("classes/FastWorker.js")
+			const worker = new Worker("workers/MinmaxWorker.js")
 			var data = {
 				game: deepClone(game),
 				board: game.stringify(),
@@ -90,13 +125,10 @@ function keyPressed(e) {
 			}
 			worker.postMessage(deepClone(data))
 		}
-	} else if (e.key === "a") {
-		autoPlayButtonPress()
 	} else if (e.key === "1") {
 		togglePlayerLight()
 	} else if (e.key === "2") {
 		togglePlayerDark()
-
 	}
 }
 function suggestionPress() {
@@ -109,68 +141,62 @@ function suggestionPress() {
 }
 function autoPlayButtonPress() {
 	AUTOPLAY = !AUTOPLAY
-	game.settings.darkAutoplay = AUTOPLAY
-	game.settings.lightAutoplay = AUTOPLAY
-	game.playerLight.autoPlay = game.settings.lightAutoplay
-	game.playerDark.autoPlay = game.settings.darkAutoplay
+	
+	game.playerLight.updateOptions(0)
+	game.playerDark.updateOptions(0)
 
 	game.initWorker()
-	//&& game.turn === game.playerLight
-	if (AUTOPLAY) {
-		game.findBestMove("findMove")
-	}
 }
 function restartPress() {
 	start()
 }
 function togglePlayerLight() {
-	game.settings.lightAutoplay = !game.settings.lightAutoplay
-	game.playerLight.autoPlay = game.settings.lightAutoplay
+	// game.settings.lightAutoplay = !game.settings.lightAutoplay
+	// game.playerLight.autoPlay = game.settings.lightAutoplay
 
+	game.playerLight.updateOptions()
 	game.initWorker()
-	if (game.turn.autoPlay) {
+	if (game.turn.options.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }
 function togglePlayerDark() {
-	game.settings.darkAutoplay = !game.settings.darkAutoplay
-	game.playerDark.autoPlay = game.settings.darkAutoplay
-
+	// game.settings.darkAutoplay = !game.settings.darkAutoplay
+	// game.playerDark.autoPlay = game.settings.darkAutoplay
+	game.playerDark.updateOptions()
 	game.initWorker()
-	if (game.turn.autoPlay) {
+	if (game.turn.options.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }
 function toggleDifficulty() {
-	game.settings.difficulty = game.settings.difficulty === 4 ? 6 : 4
-	game.difficulty = game.settings.difficulty
+	// game.settings.difficulty = game.settings.difficulty === 4 ? 6 : 4
+	// game.difficulty = game.settings.difficulty
 	// game.initWorker()
 }
 function start() {
 	if (game && game.worker) {
 		game.initWorker()
 		gameSettings = {
-			difficulty: game.difficulty,
-			lightAutoplay: game.playerLight.autoPlay,
-			darkAutoplay: game.playerDark.autoPlay,
+			lightOption: game.playerLight.optionIndex,
+			darkOption: game.playerDark.optionIndex,
 		}
 	}
 	game = new Game(gameSettings)
 	locked = false
 	windowResized()
 	suggestionButton.style("visibility", "visible")
-	autoPlayButton.style("visibility", "visible")
+	// autoPlayButton.style("visibility", "visible")
 	pDarkButton.style("visibility", "visible")
 	pLightButton.style("visibility", "visible")
-	difficultyButton.style("visibility", "visible")
+	// difficultyButton.style("visibility", "visible")
 	//This is to auto play the first move for light wood player when loading the site
 	// && game.turn === game.playerLight
-	if (game.turn.autoPlay) {
+	if (game.turn.options.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }
 function windowResized() {
-
 	scaledWidth = min(windowWidth, defaultWidth)
 	scaledHeight = min(windowHeight, defaultHeight)
 	cnv.resize(scaledWidth, scaledHeight)
@@ -199,17 +225,21 @@ function windowResized() {
 	autoPlayButton.size(buttonWidth, buttonHeight)
 	autoPlayButton.style('font-size', circleSize * 0.6 + "px")
 
-	pLightButton.position(cnv.position().x + restartButton.width + suggestionButton.width + autoPlayButton.width, cnv.position().y)
-	pLightButton.size(buttonHeight, buttonHeight)
-	pLightButton.style('font-size', circleSize * 1.5 + "px")
+	// pLightButton.position(cnv.position().x + restartButton.width + suggestionButton.width + autoPlayButton.width, cnv.position().y)
+	// pLightButton.size(buttonHeight, buttonHeight)
+	// pLightButton.style('font-size', circleSize * 1.5 + "px")
 
-	pDarkButton.position(cnv.position().x + restartButton.width + suggestionButton.width + autoPlayButton.width + pLightButton.width, cnv.position().y)
-	pDarkButton.size(buttonHeight, buttonHeight)
-	pDarkButton.style('font-size', circleSize * 1.5 + "px")
+	// pDarkButton.position(cnv.position().x + restartButton.width + suggestionButton.width + autoPlayButton.width + pLightButton.width, cnv.position().y)
+	// pDarkButton.size(buttonHeight, buttonHeight)
+	// pDarkButton.style('font-size', circleSize * 1.5 + "px")
 
-	difficultyButton.position(cnv.position().x + circleSize / 3, cnv.position().y + cnv.height - difficultyButton.height - circleSize / 2)
-	difficultyButton.size(buttonWidth, buttonHeight)
-	difficultyButton.style('font-size', circleSize * 0.6 + "px")
+	pLightButton.position(cnv.position().x + circleSize / 3, cnv.position().y + cnv.height - buttonHeight)
+	pLightButton.size(buttonWidth, buttonHeight)
+	pLightButton.style('font-size', circleSize * 1 + "px")
+
+	pDarkButton.position(pLightButton.position().x + buttonWidth, cnv.position().y + cnv.height - buttonHeight)
+	pDarkButton.size(buttonWidth, buttonHeight)
+	pDarkButton.style('font-size', circleSize * 1 + "px")
 
 	// loadingGif.position(cnv.position(). , cnv.position().y)
 	// loadingGif.size(buttonWidth*1000, buttonWidth*1000)
@@ -221,10 +251,8 @@ function windowResized() {
 function touchStarted(e) {
 	if (e.target.id !== "restartButton" &&
 		e.target.id !== "suggestionButton" &&
-		e.target.id !== "autoPlayButton" &&
 		e.target.id !== "pDarkButton" &&
-		e.target.id !== "pLightButton" &&
-		e.target.id !== "difficultyButton") {
+		e.target.id !== "pLightButton") {
 		//Disables double clicking issues when placing chips
 		//And other unwanted actions on mobile like selecting text on buttons
 		e.preventDefault()
@@ -317,17 +345,21 @@ function drawDebug() {
 	pop()
 }
 function updateButtons() {
-	game.settings.darkAutoplay ? pDarkButton.html("A") : pDarkButton.html("P")
-	game.settings.lightAutoplay ? pLightButton.html("A") : pLightButton.html("P")
-	game.settings.difficulty === 4 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
-	AUTOPLAY = game.settings.lightAutoplay && game.settings.darkAutoplay
-	if (AUTOPLAY) {
+	pDarkButton.html(game.playerDark.options.text)
+	pLightButton.html(game.playerLight.options.text)
+	// game.settings.difficulty === 4 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
+	AUTOPLAY = game.playerLight.options.autoPlay && game.playerDark.options.autoPlay
+	if (AUTOPLAY && game.winner == undefined) {
+		autoPlayButton.style("visibility", "visible")
 		autoPlayButton.style('background', "transparent  url('./resources/img/redButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
 	} else {
-		autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
-		autoPlayButton.style("background-size", "cover")
+		autoPlayButton.style("visibility", "hidden")
 	}
+	// else {
+	// 	autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
+	// 	autoPlayButton.style("background-size", "cover")
+	// }
 }
 function drawUI() {
 	if (frameCount === 1) windowResized()

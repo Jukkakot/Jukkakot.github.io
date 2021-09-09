@@ -3,7 +3,11 @@ class Player {
         this.name = name
         this.color = color
         this.img = img
-        this.autoPlay = false
+        //Options on players play style (Which algoritm it uses and its settings)
+        //Defaulting to manual play
+        this.optionIndex = 0
+        this.options = OPTIONS[this.optionIndex]
+
         //Players short name, obivously have to make sure players name cant start with the same letter :D
         this.char = this.name[0]
         this.chipCount = 0
@@ -29,6 +33,13 @@ class Player {
         //Stage 3 turns is to encourage staying "alive" when player hits stage 3
         //This is benefical because opponent could make a mistake and therefore player could still win
         this.stage3Turns = 0
+    }
+    updateOptions(index) {
+        if(index == undefined) {
+            index = ++this.optionIndex % OPTIONS.length
+        }
+        this.optionIndex = index
+        this.options = OPTIONS[index]
     }
     drawMills() {
         this.mills.forEach(mill => mill.draw())
