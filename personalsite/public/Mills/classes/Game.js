@@ -5,17 +5,15 @@ class Game {
         //its a 3 x 8 dot long array, each array is a "layer" of dots on the board
         this.dots = this.initDots()
 
-        this.playerDark = new Player(color(100, 60, 20), darkDot, "Dark wood")
-        this.playerDark.updateOptions(this.settings.darkOption)
+        this.playerDark = new Player(color(100, 60, 20), darkDot, "Dark wood", this.settings.darkOption)
 
-        this.playerLight = new Player(color(145, 132, 102), lightDot, "Light wood")
-        this.playerLight.updateOptions(this.settings.lightOption)
+        this.playerLight = new Player(color(145, 132, 102), lightDot, "Light wood", this.settings.lightOption)
         //turn is current player that has the turn
-        this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
-
+        // this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
+        this.turn = this.playerLight
         this.eatMode = false
         this.winner
-        //Storage for the suggested dot so its easy to clear afterwards
+        //Storage for the suggested dot(s) so its easy to clear afterwards
         this.suggestion
 
         this.movingAnimations = []
@@ -30,6 +28,8 @@ class Game {
         //Helper variables for moving chips and for the hover effects
         this.prevDot
         this.prevHover
+
+        this.startTime = new Date().getTime()
     }
     stringify(board) {
         if (!board) {
@@ -83,7 +83,7 @@ class Game {
         }
         //If player manually playing but wants a suggestion, options are defaulted to minmax 4
         if (!data.options.autoPlay && cmd == "suggestion") {
-            data.options = OPTIONS[1]
+            data.options = OPTIONS[4]
             console.log("Settings options to", data.options.text)
         }
         this.worker.postMessage(deepClone(data))
@@ -438,13 +438,16 @@ class Game {
     setWinner(player) {
         this.winner = player
 
-        this.worker.terminate()
-        this.worker = undefined
+        this.initWorker()
 
         loadingGif.hide()
         LOADING = false
 
         var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
+        var totalTurns = this.winner.turns + oppPlayer.turns
+        var gameTime = new Date().getTime() - this.startTime
+        var avgTurnTime = (gameTime / totalTurns).toFixed(3)
+        console.log(this.winner.name, "won! total turns:", totalTurns, "game lasted for", gameTime / 1000, "s average turn time:", Number(avgTurnTime), "ms")
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
         oppPlayer.mills = getUpdatedMills(this.dots, oppPlayer)
