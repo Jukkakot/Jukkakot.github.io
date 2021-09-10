@@ -58,7 +58,7 @@ function handleGetMove(data) {
         //Add 1000 ms delay if easy mode
         //Because thats when we use depth 4 and it would go too fast for user
         //Otherwise 200 ms delay
-        var delay = options.difficulty === 4
+        // var delay = options.difficulty === 4
         setTimeout(() => {
             self.postMessage(data)
             // }, (delay ? 1000 : 200));
@@ -970,6 +970,7 @@ function fastFindBestMove(options) {
         return
     }
     console.time("time finding a move")
+
     //Resetting counters 
     nodeCount = 0
     checkedBoards.clear()
@@ -998,21 +999,24 @@ function fastFindBestMove(options) {
         stage3Turns: oppPlay.stage3Turns,
     }
     var board = stringify(workerGame.dots)
-
     let move
     let type
     let score
-
-    if (options.iterative) {
+    if (options.random) {
+        let movesObject = fastGetMoves(board, player, oppPlayer, workerGame.eatMode)
+        let moves = movesObject.moves
+        type = movesObject.type
+        move = moves[Math.floor(Math.random() * moves.length)]
+    } else if (options.iterative) {
         // let bestScore = -Infinity
         //TESTING
         // var time = 1000
         endTime = new Date().getTime() + options.time
         for (var depth = 1; depth <= MAXDEPTH; depth++) {
             //Resetting counters to not make them cumulative 
-            pruneCount = 0
-            nodeCount = 0
-            skipCount = 0
+            // pruneCount = 0
+            // nodeCount = 0
+            // skipCount = 0
             let result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
             if (new Date().getTime() >= endTime) {
                 console.log("Ran out of time at depth", depthCount.pop())
@@ -1046,20 +1050,22 @@ function fastFindBestMove(options) {
 
     //Play the best move
     if (type == "placing") {
-        console.log(workerGame.turn.name, type, "to", move, "score", score, "depth", depthCount.length - 1)
         move = indexToDot(move)
     } else if (type == "moving") {
-        console.log(workerGame.turn.name, type, "from/to", move, "score", score, "depth", depthCount.length - 1)
         move = [indexToDot(move[0]), indexToDot(move[1])]
     } else if (type == "eating") {
-
-        console.log(workerGame.turn.name, type, "to", move, "score", score, "depth", depthCount.length - 1)
         move = indexToDot(move)
     } else {
         console.log(type, move, "typeless move?")
     }
-    console.log("node count", nodeCount, "uniq boards",
-        checkedBoards.size, "skipped", skipCount, "pruned", pruneCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
+    if (!options.random) {
+        console.log(workerGame.turn.name, type, "move", move, "score", score, "depth", depthCount.length - 1)
+        console.log("node count", nodeCount, "uniq boards",
+            checkedBoards.size, "skipped", skipCount, "pruned", pruneCount, "skip %:", Math.floor(100 * skipCount / nodeCount))
+    } else {
+        
+        console.log(workerGame.turn.name, type, "move", move, "random")
+    }
     console.timeEnd("time finding a move")
     return [move, type]
 }

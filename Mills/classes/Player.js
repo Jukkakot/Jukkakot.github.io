@@ -1,12 +1,12 @@
 class Player {
-    constructor(color, img, name) {
+    constructor(color, img, name, optionIndex) {
         this.name = name
         this.color = color
         this.img = img
         //Options on players play style (Which algoritm it uses and its settings)
         //Defaulting to manual play
-        this.optionIndex = 0
-        this.options = OPTIONS[this.optionIndex]
+        this.optionIndex = optionIndex
+        this.options = OPTIONS[optionIndex]
 
         //Players short name, obivously have to make sure players name cant start with the same letter :D
         this.char = this.name[0]

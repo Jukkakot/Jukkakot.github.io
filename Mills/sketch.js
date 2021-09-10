@@ -16,6 +16,11 @@ const OPTIONS = [
 		autoPlay: false
 	},
 	{
+		text: "Random",
+		random: true,
+		autoPlay: true
+	},
+	{
 		text: "Minmax 4",
 		iterative: false,
 		difficulty: 4,
@@ -34,20 +39,26 @@ const OPTIONS = [
 		autoPlay: true
 	},
 	{
-		text: "Iterative 2s",
-		iterative: true,
-		time: 2000,
-		autoPlay: true
-	},
-	{
 		text: "Iterative 3s",
 		iterative: true,
 		time: 3000,
 		autoPlay: true
-	}
+	},
+	{
+		text: "Iterative 5s",
+		iterative: true,
+		time: 5000,
+		autoPlay: true
+	},
+	{
+		text: "Iterative 10s",
+		iterative: true,
+		time: 10000,
+		autoPlay: true
+	},
 ]
 var gameSettings = {
-	lightOption: 3,
+	lightOption: 4,
 	darkOption: 0,
 }
 
