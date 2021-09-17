@@ -2,7 +2,7 @@ const MAXCHIPCOUNT = 18
 const EASING = 0.10
 var ANGLE = 0.0
 var SPEED = 0.07
-
+const EMPTYDOT = '0'
 const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
@@ -33,6 +33,12 @@ const OPTIONS = [
 		autoPlay: true
 	},
 	{
+		text: "Iterative 0.5s",
+		iterative: true,
+		time: 500,
+		autoPlay: true
+	},
+	{
 		text: "Iterative 1s",
 		iterative: true,
 		time: 1000,
@@ -56,6 +62,11 @@ const OPTIONS = [
 		time: 10000,
 		autoPlay: true
 	},
+	{
+		text: "MCTS",
+		mcts: true,
+		autoPlay: true
+	},
 ]
 var gameSettings = {
 	lightOption: 4,
@@ -71,7 +82,7 @@ var fps
 var locked
 var movableDot
 var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
-var restartButton, suggestionButton, pDarkButton, pLightButton,autoPlayButton
+var restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton
 
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
@@ -127,7 +138,7 @@ function keyPressed(e) {
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
-			const worker = new Worker("workers/MinmaxWorker.js")
+			const worker = new Worker("workers/WorkerHelpers.js")
 			var data = {
 				game: deepClone(game),
 				board: game.stringify(),
@@ -148,11 +159,13 @@ function suggestionPress() {
 	// }).catch((error) => {
 	// 	console.error(error);
 	// });
-	game.findBestMove("suggestion")
+	if(!game.turn.options.autoPlay){
+		game.findBestMove("suggestion")
+	}
 }
 function autoPlayButtonPress() {
 	AUTOPLAY = !AUTOPLAY
-	
+
 	game.playerLight.updateOptions(0)
 	game.playerDark.updateOptions(0)
 
