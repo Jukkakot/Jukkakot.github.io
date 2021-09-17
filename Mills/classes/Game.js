@@ -46,13 +46,14 @@ class Game {
 
     initWorker() {
         if (this.worker) {
+            // this.worker.postMessage({cmd:"close"})
             this.worker.terminate()
             this.worker = undefined
             loadingGif.hide()
             LOADING = false
         }
 
-        this.worker = new Worker("workers/MinmaxWorker.js")
+        this.worker = new Worker("workers/WorkerHelpers.js")
         this.worker.onmessage = function (e) {
             var data = e.data
             switch (data.cmd) {
@@ -83,7 +84,7 @@ class Game {
         }
         //If player manually playing but wants a suggestion, options are defaulted to minmax 4
         if (!data.options.autoPlay && cmd == "suggestion") {
-            data.options = OPTIONS[4]
+            data.options = OPTIONS[5]
             console.log("Settings options to", data.options.text)
         }
         this.worker.postMessage(deepClone(data))
@@ -376,13 +377,13 @@ class Game {
     }
     switchTurn() {
         this.clearSuggestion()
-
+        this.turn.turns++
+        if (getStage(this.turn) === 3) this.turn.stage3Turns++
         //Checking for new mills before switching turn
         if (hasNewMills(this.dots, this.turn)) {
             this.eatMode = true
             if (this.turn.options.autoPlay)
                 this.findBestMove("findMove")
-
             //Mills are made not new in eatChip method as soon as player has eaten a chip
             return
         }
@@ -392,8 +393,6 @@ class Game {
             this.setWinner(oppPlayer)
             return
         }
-        if (getStage(this.turn) === 3) this.turn.stage3Turns++
-        this.turn.turns++
         this.turn = this.turn === this.playerDark ? this.playerLight : this.playerDark
         if (this.checkIfLost(this.turn)) {
             var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
@@ -443,11 +442,14 @@ class Game {
         loadingGif.hide()
         LOADING = false
 
-        var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
+        var oppPlayer = this.winner === this.playerDark ? this.playerLight : this.playerDark
         var totalTurns = this.winner.turns + oppPlayer.turns
         var gameTime = new Date().getTime() - this.startTime
         var avgTurnTime = (gameTime / totalTurns).toFixed(3)
-        console.log(this.winner.name, "won! total turns:", totalTurns, "game lasted for", gameTime / 1000, "s average turn time:", Number(avgTurnTime), "ms")
+        console.log(this.winner.name, "won! total turns:",
+            totalTurns, "game lasted for",
+            gameTime / 1000, "s average turn time:",
+            Number(avgTurnTime), "ms")
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
         oppPlayer.mills = getUpdatedMills(this.dots, oppPlayer)
@@ -463,7 +465,12 @@ class Game {
         pDarkButton.style("visibility", "hidden")
         pLightButton.style("visibility", "hidden")
         // difficultyButton.style("visibility", "hidden")
-
+        //Automatically restarting the game
+        if (AUTOPLAY) {
+            setTimeout(() => {
+                restartPress()
+            }, 500);
+        }
     }
     drawMills() {
         this.playerLight.drawMills()
