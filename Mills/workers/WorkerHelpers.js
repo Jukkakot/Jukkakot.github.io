@@ -6,11 +6,17 @@ let skipCount, depthCount, nodeCount, highDepthNum, topCount = 0, elseCount = 0,
 
 let endTime
 let prevBestMove
+const WIN = 100000000
+const LOST = -100000000
 const EMPTYDOT = '0'
 //Max depth for iterating (Very high depth because I dont want to do infinite while loop)
 const MAXDEPTH = 15
 const TOPX = 5
-
+//Turns on a random chance for minmax to choose new bestmove if found move has same score as current best move has
+//This basically removes all repeating patterns in the game when doing simulations with autoplay ON
+const RANDOMMOVES = true
+//The propability that a move with same score as best score is choosen
+// const RANDOMCHANCE = 0.1
 const millWindows = [
     [0, 1, 2], [2, 3, 4], [4, 5, 6], [6, 7, 0],
     [8, 9, 10], [10, 11, 12], [12, 13, 14], [14, 15, 8],
@@ -170,15 +176,22 @@ function fastCheckIfCanMove(board, player) {
     var movableDots = fastGetMoveableDots(board, player)
     return movableDots.length > 0
 }
-function fastCheckWin(board, player, oppPlayer, depth, eatMode) {
+function fastCheckWin(board, player, oppPlayer, depth = 1, eatMode) {
+    //Game cant have a winner if eatmode is on
     if (eatMode) return
+    player.chipCount = fastGetPlayerDots(board, player).length
+    oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
     var value
-    var boardStr = addInfo(board, player, oppPlayer, depth)
+    var boardStr = addInfo(board, player, oppPlayer)
     if (player.chipCount + player.chipsToAdd < 3 || !fastCheckIfCanMove(board, player)) {
-        value = -100000000 * depth
+        // console.log(player.char, player.chipCount, player.chipsToAdd, !fastCheckIfCanMove(board, player),
+        //     board, player.turns)
+        value = LOST * depth
+
         checkedBoards.set(boardStr, value)
     } else if (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !fastCheckIfCanMove(board, oppPlayer)) {
-        value = 100000000 * depth
+        // console.log("opp", oppPlayer.chipCount, oppPlayer.chipsToAdd, !fastCheckIfCanMove(board, oppPlayer))
+        value = WIN * depth
         checkedBoards.set(boardStr, value)
     }
     return value
@@ -194,7 +207,7 @@ function fastGetPlayerDots(board, player) {
 }
 function fastGetUnOrderedMoves(board, player, oppPlayer, eatMode, isMaximizing = false, depth = 1) {
     player.chipCount = fastGetPlayerDots(board, player).length
-    // oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
+    oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
     var stage = eatMode ? 4 : getStage(player)
     var result = { moves: [], type: "" }
     switch (stage) {
@@ -576,12 +589,15 @@ function fastEatChip(args) {
     let board = args.board
     var dot = args.move
     var oppPlayer = args.oppPlayer
+    var player = args.player
     oppPlayer.chipCount--
     if (oppPlayer.chipCount < 0 || board[dot] != oppPlayer.char) debugger
 
     board = setCharAt(board, dot, EMPTYDOT)
     //Checking mills again incase ate from a mill
     oppPlayer.mills = fastGetUpdatedMills(board, oppPlayer)
+    //Making players mills not new
+    player.mills.forEach(m => m.new = false)
     if (board.length > 24) {
         debugger
     }
@@ -618,11 +634,9 @@ function fastPlayRound(args) {
             //Player wins because opponent was on flying stage when eating
             //Have to check this before actually eating
             if (getStage(oppPlayer) === 3) {
-                result.winLose = isMaximizing ? [move, 100000000 * depth, type] : [move, -100000000 * depth, type]
+                result.winLose = isMaximizing ? [move, WIN * depth, type] : [move, LOST * depth, type]
             }
             result.board = fastEatChip(args)
-            //Making players mills not new
-            player.mills.forEach(m => m.new = false)
             break
         default:
             console.error("Invalid move", args)
@@ -634,9 +648,9 @@ function fastPlayRound(args) {
     //     player.mills.forEach(m => m.new = false)
     //     //TODO: EAT NOW BEFORE SCORING THE BOARD
     // }
-    if (result.winLose == undefined && !fastCheckIfCanMove(result.board, oppPlayer)) {
+    if (result.winLose == undefined && (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !fastCheckIfCanMove(result.board, oppPlayer))) {
         //Player wins because opponent can't move
-        result.winLose = isMaximizing ? [move, 100000000 * depth, type] : [move, -100000000 * depth, type]
+        result.winLose = isMaximizing ? [move, WIN * depth, type] : [move, LOST * depth, type]
     }
     return result
 }
@@ -666,23 +680,23 @@ function fastIsSameWindow(window, board) {
     // console.log(isSame)
     return isSame
 }
-function getCalcedValue(board, player, oppPlayer, depth) {
-    var boardStr = addInfo(board, player, oppPlayer, depth)
+function getCalcedValue(board, player, oppPlayer) {
+    var boardStr = addInfo(board, player, oppPlayer)
     var calcedValue = checkedBoards.get(boardStr)
     //Returning already calculated value for the board
     if (calcedValue != undefined) {
         //Adding the "bonus points" for new mills
-        player.mills.forEach(mill => {
-            if (mill.new) calcedValue += 3500
-        })
-        oppPlayer.mills.forEach(mill => {
+        for (var mill of player.mills) {
+            if (mill.new)  calcedValue += 3500
+        }
+        for (var mill of oppPlayer.mills) {
             if (mill.new) calcedValue -= 4000
-        })
+        }
         return calcedValue
     }
 }
-function addInfo(board, player, oppPlayer, depth = 0) {
-    var str = depth.toString() + getStage(player) + player.char + getStage(oppPlayer) + oppPlayer.char + board
+function addInfo(board, player, oppPlayer) {
+    var str = getStage(player) + player.char + getStage(oppPlayer) + oppPlayer.char + board
     return str
 }
 function getStage(player) {
@@ -715,4 +729,9 @@ function getBoardDotsFromWindow(board, window, char) {
             dots.push(i)
     }
     return dots
+}
+function scaleValue(value, from = [-10000, 10000], to = [-100, 100]) {
+    var scale = (to[1] - to[0]) / (from[1] - from[0]);
+    var capped = Math.min(from[1], Math.max(from[0], value)) - from[0];
+    return capped * scale + to[0]
 }

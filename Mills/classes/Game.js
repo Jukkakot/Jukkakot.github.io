@@ -446,10 +446,11 @@ class Game {
         var totalTurns = this.winner.turns + oppPlayer.turns
         var gameTime = new Date().getTime() - this.startTime
         var avgTurnTime = (gameTime / totalTurns).toFixed(3)
-        console.log(this.winner.name, "won! total turns:",
-            totalTurns, "game lasted for",
-            gameTime / 1000, "s average turn time:",
-            Number(avgTurnTime), "ms")
+        console.log(this.winner.name, "won!",
+            "total turns:", totalTurns,
+            "chip counts:", this.winner.char, this.winner.chipCount, oppPlayer.char, oppPlayer.chipCount,
+            "game lasted for", gameTime / 1000, "s",
+            "average turn time:", Number(avgTurnTime), "ms")
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
         oppPlayer.mills = getUpdatedMills(this.dots, oppPlayer)

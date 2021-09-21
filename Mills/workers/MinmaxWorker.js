@@ -54,23 +54,23 @@ function fastFindBestMove(options) {
             // pruneCount = 0
             // nodeCount = 0
             // skipCount = 0
-            
+
             highDepthNum = depth
-            result = fastMinimax(board, player, oppPlayer, depth, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, workerGame.eatMode, true)
+            result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
             if (new Date().getTime() >= endTime) {
                 console.log("Ran out of time at depth", depthCount.pop())
                 break
             } else {
                 move = result[0]
-                type = result[2]
                 score = result[1]
+                type = result[2]
 
                 prevBestMove = {
                     move: move,
                     type: type
                 }
                 // console.log("depth", depth, "node count", nodeCount, "score", score, "boards", checkedBoards.size, "pruned", pruneCount, "skipped", skipCount)
-                if (score >= 100000000) {
+                if (score >= WIN) {
                     console.log("found win!")
                     break
                 }
@@ -83,14 +83,14 @@ function fastFindBestMove(options) {
     } else {
         //"Normal" minmax
         var depth = options.difficulty
-        result = fastMinimax(board, player, oppPlayer, depth, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, workerGame.eatMode, true)
+        result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
         move = result[0]
         score = result[1]
         type = result[2]
     }
 
     if (move === undefined || type === undefined) {
-        console.error("Couldn't find a move", move,score,type,result)
+        console.error("Couldn't find a move", move, score, type, result)
         console.timeEnd("time finding a move")
         return
     }
@@ -126,13 +126,6 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     if (!depthCount.includes(depth)) depthCount.push(depth)
     nodeCount++
 
-    //Returning already calculated value for the board
-    var calcedValue = getCalcedValue(board, player, oppPlayer, depth)
-    if (calcedValue != undefined) {
-        skipCount++
-        return [undefined, calcedValue]
-    }
-
     //Returning potential winning or losing value
     var winLoseValue = fastCheckWin(board, player, oppPlayer, depth, eatMode)
     if (winLoseValue != undefined) {
@@ -141,12 +134,18 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
 
     //End node check
     if (depth <= 0 || endTime != undefined && new Date().getTime() >= endTime) {
-        return [undefined, fastEvaluateBoard(board, player, oppPlayer, depth)]
+        //Returning already calculated value for the board
+        var calcedValue = getCalcedValue(board, player, oppPlayer)
+        if (calcedValue != undefined) {
+            skipCount++
+            return [undefined, calcedValue]
+        }
+        return [undefined, fastEvaluateBoard(board, player, oppPlayer)]
     }
 
     //Building up "the tree" further
     if (isMaximizing) {
-        let bestScore = Number.MIN_SAFE_INTEGER
+        let bestScore = -Infinity
         let bestMove
         var movesObject = fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing)
         var moves = movesObject.moves
@@ -158,7 +157,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             if (getStage(player) !== 2)
                 console.error("Couldn't find moves", movesObject)
 
-            return [undefined, -100000000 * depth]
+            return [undefined, LOST * depth]
         }
         for (var move of moves) {
             let cBoard = board
@@ -184,8 +183,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             } else {
                 score = fastMinimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, eatMode)[1]
             }
-            //|| (score === bestScore && Math.random() < 0.5)
-            if (score > bestScore) {
+            if (score > bestScore || (RANDOMMOVES && score == bestScore && Math.random() < 1 / moves.length)) {
                 bestScore = score
                 bestMove = move
             }
@@ -198,7 +196,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         }
         return [bestMove, bestScore, type]
     } else {
-        let bestScore = Number.MAX_SAFE_INTEGER;
+        let bestScore = Infinity;
         let bestMove
         var movesObject = fastGetMoves(board, oppPlayer, player, eatMode, isMaximizing)
         var moves = movesObject.moves
@@ -210,7 +208,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             if (getStage(oppPlayer) !== 2)
                 console.error("Couldn't find moves", movesObject)
 
-            return [undefined, 100000000 * depth]
+            return [undefined, WIN * depth]
         }
         for (var move of moves) {
             let cBoard = board
@@ -238,8 +236,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             } else {
                 score = fastMinimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, !eatMode)[1]
             }
-            //|| (score === bestScore && Math.random() < 0.5)
-            if (score < bestScore) {
+            if (score < bestScore || (RANDOMMOVES && score == bestScore && Math.random() < 1 / moves.length)) {
                 bestScore = score
                 bestMove = move
             }
@@ -253,7 +250,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     }
 }
 
-function fastEvaluateBoard(board, player, oppPlayer, depth) {
+function fastEvaluateBoard(board, player, oppPlayer) {
     if (DEBUG) console.time("fastScoreBoard")
     var boardValue = 0
     //Object to store info about where the different points for each board is coming from
@@ -295,7 +292,7 @@ function fastEvaluateBoard(board, player, oppPlayer, depth) {
         boardValue += windowValue
     }
 
-    var boardStr = addInfo(board, player, oppPlayer, depth)
+    const boardStr = addInfo(board, player, oppPlayer)
     //Adding the board to checked boards map
     checkedBoards.set(boardStr, boardValue)
 
@@ -318,7 +315,7 @@ function fastEvaluateBoard(board, player, oppPlayer, depth) {
         boardValue += 3500 * scoreObject["newMill"]
 
     if (scoreObject["oppNewMill"] != undefined)
-        boardValue -= 4000 * scoreObject["opNewMill"]
+        boardValue -= 4000 * scoreObject["oppNewMill"]
 
     return boardValue
 }
@@ -330,7 +327,6 @@ function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
     var oppMill = oppPlayer.char + oppPlayer.char + oppPlayer.char
     //New mill
     if (windowStr == playerMill) {
-
         //Getting the non deepCopied player
         var workerGamePlayer = player.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
         var clonePlayerMill = player.mills.find(m => m.fastId == fastGetWindowFastId(window))
@@ -345,16 +341,10 @@ function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
             // if (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId) console.log("toka@@@")
             scoreObject.update("newMill")
             value += 3500
-            //Win
-            // if (getStage(oppPlayer) === 3) {
-            //     console.log(oppPlayer.name, "stage on 3 joten voitto")
-            //     return 100000000
-            // }
         }
     }
     //opp new mill
     if (windowStr == oppMill) {
-
         //Getting the non deepCopied player
         var workerGamePlayer = oppPlayer.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
         var clonePlayerMill = oppPlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
@@ -365,13 +355,10 @@ function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
         //This has to be checked with unique number given to every mill formed in the workerGame
         //So that two mills that are in same place but formed at different times can be differentiated
         if ((clonePlayerMill && !fastIsSameWindow(window, board)) || (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId)) {
+            // if (clonePlayerMill && !fastIsSameWindow(window, board)) console.log("eka@@@@", clonePlayerMill != undefined, !fastIsSameWindow(window, board))
+            // if (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId) console.log("toka@@@")
             scoreObject.update("oppNewMill")
             value -= 4000
-            //Win
-            // if (getStage(player) === 3) {
-            //     console.log(player.name, "stage is 3 so lose")
-            //     return -100000000
-            // }
         }
     }
 
@@ -599,4 +586,3 @@ function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
     }
     return value
 }
-
