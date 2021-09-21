@@ -33,11 +33,28 @@ class Player {
         //Stage 3 turns is to encourage staying "alive" when player hits stage 3
         //This is benefical because opponent could make a mistake and therefore player could still win
         this.stage3Turns = 0
+        this.turnData = []
     }
-    updateOptions(index) {
-        if(index == undefined) {
-            index = ++this.optionIndex % OPTIONS.length
+    getData() {
+        const totalTurnTime = this.turnData.reduce((a, b) => a + b.time, 0)
+        const avgTurnTime = totalTurnTime / this.turnData.length
+
+        return {
+            name: this.name,
+            char: this.char,
+            chipCount: this.chipCount,
+            chipsToAdd: this.chipsToAdd,
+            moveableChips: this.checkMovableDots(game.dots).length,
+            turns: this.turns,
+            stage3Turns: this.stage3Turns,
+            turnData: this.turnData,
+            avgTurnTime: avgTurnTime,
+            totalTurnTime: totalTurnTime,
+            options: this.options,
+
         }
+    }
+    updateOptions(index = ++this.optionIndex % OPTIONS.length) {
         this.optionIndex = index
         this.options = OPTIONS[index]
     }

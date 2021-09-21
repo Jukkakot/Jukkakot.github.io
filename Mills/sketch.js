@@ -159,7 +159,7 @@ function suggestionPress() {
 	// }).catch((error) => {
 	// 	console.error(error);
 	// });
-	if(!game.turn.options.autoPlay){
+	if (!game.turn.options.autoPlay) {
 		game.findBestMove("suggestion")
 	}
 }
@@ -399,4 +399,19 @@ function drawUI() {
 		mY = mouseY - height / 2
 	}
 
+}
+function sendData(data = "test data", type = "test") {
+	axios.defaults.baseURL = 'http://localhost:3001';
+	let testData = {
+		type: type,
+		data: {
+			time: Date(),
+			data: data
+		}
+	}
+	axios.post("/api", testData).then(res => {
+		console.log(res.data)
+	}).catch(err => {
+		console.error("Error sending data", err)
+	})
 }

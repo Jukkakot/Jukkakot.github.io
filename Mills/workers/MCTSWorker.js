@@ -140,7 +140,14 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
         "playoutCount", randomGameTurns.length,
         "nodeCount", mctsNodeCount,
         "root", root)
-    return result
+    var data = {
+        maxTurns: Math.max(...randomGameTurns),
+        minTurns: Math.min(...randomGameTurns),
+        avgTurns: Math.round(avgTurns),
+        playoutCount: randomGameTurns.length,
+        nodeCount: mctsNodeCount,
+    }
+    return { result: result, data: data }
 }
 
 function selectNode(root) {
@@ -217,10 +224,14 @@ function backprop(node, reward) {
     while (node != undefined) {
         node.visits++
         node.wins += reward
-        
+
         let winner = node.getWinner()
         if (winner && winner.char == maxPlayer.char) {
-            node.parent.wins = Infinity
+            if(node.parent) {
+                node.parent.wins = Infinity
+            } else {
+                console.log("first move is win?")
+            }
         }
         // //Node is lost move if all children are lost moves
         // if (node.children.every(c => c.getWinner() && c.getWinner().char == minPlayer.char)) {
