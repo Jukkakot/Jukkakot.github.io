@@ -1,31 +1,41 @@
 const iterations = 5000
 const exploration = 1.41
-const WIN = 100000000
-const LOST = -100000000
+
+// const MINVISITS = 50
 let maxPlayer, minPlayer
-let MCTSCheckedBoards
+// let MCTSCheckedBoards
 let randomGameTurns
 let mctsNodeCount = 0
+let roundCount
 class Node {
     constructor(state, move, parent) {
         this.move = move
         this.parent = parent
-        this.state = state
+        this.setState(state)
+        // this.value
+        // this.movesObject = this.getMovesObj()
+        // this.moves = this.movesObject.moves
+        // this.type = this.movesObject.type
+        this.numUnexpandedMoves = this.getMovesObj().moves.length
         this.visits = 0
         this.wins = 0
-        this.numUnexpandedMoves = this.getMovesObj().moves.length
+
+        // this.numUnexpandedMoves = this.getMovesObj().moves.length
         // this.children = new Array(this.numUnexpandedMoves).fill(null) //temporary store move for debugging purposes
         this.children = []
     }
     setState(state) {
-        this.state = {
-            board: state.board,
-            player: JSON.parse(JSON.stringify(state.player)),
-            oppPlayer: JSON.parse(JSON.stringify(state.oppPlayer)),
-            eatMode: state.eatMode,
-            isPlayerTurn: state.isPlayerTurn,
-            winner: this.getWinner(state)
-        }
+        this.state = JSON.parse(JSON.stringify(state))
+        // this.state = { ...state }
+        this.state.winner = this.getWinner()
+        // this.state = {
+        //     board: state.board,
+        //     player: JSON.parse(JSON.stringify(state.player)),
+        //     oppPlayer: JSON.parse(JSON.stringify(state.oppPlayer)),
+        //     eatMode: state.eatMode,
+        //     isPlayerTurn: state.isPlayerTurn,
+        //     winner: this.getWinner(state)
+        // }
         // this.numUnexpandedMoves = this.getMovesObj().moves.length
     }
     getMovesObj(state = this.state) {
@@ -48,7 +58,9 @@ class Node {
             return state.oppPlayer
         } else {
             let moves = this.getMovesObj(state).moves
-            if (moves.length === 0) return state.isPlayerTurn ? state.oppPlayer : state.player
+            if (moves.length === 0) {
+                return state.isPlayerTurn ? state.oppPlayer : state.player
+            }
         }
     }
     // gameOver() {
@@ -59,9 +71,12 @@ class Node {
 function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
     maxPlayer = player
     minPlayer = oppPlayer
-    MCTSCheckedBoards = new Map()
+    // MCTSCheckedBoards = new Map()
     randomGameTurns = []
     mctsNodeCount = 0
+    roundCount = 1
+    let result
+    let bestNode
     const originalState = {
         board: board,
         player: player,
@@ -70,55 +85,49 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
         isPlayerTurn: true,
         winner: undefined,
     }
-    const root = new Node(originalState, undefined, undefined)
-    mctsNodeCount++
-    for (let i = 0; i < iterations; i++) {
-        root.setState(JSON.parse(JSON.stringify(originalState)))
-        // root.setState(JSON.parse(JSON.stringify(originalState)))
-        let selectedNode = selectNode(root)
 
-        //if selected node is terminal and player lost, make sure we never choose that move
-        let winner = selectedNode.getWinner()
-        if (winner != undefined && winner.char == minPlayer.char) {
-            selectedNode.parent.wins = Number.MIN_SAFE_INTEGER
+    const root = new Node(originalState)
+    let movesObj = root.getMovesObj()
+    let moves = movesObj.moves
+    let type = movesObj.type
+
+    // mctsNodeCount++
+    // let iterateCount = 0
+    if (moves.length > 1) {
+        for (let i = 0; i < iterations; i++) {
+            // iterateCount++
+            root.setState(originalState)
+            let selectedNode = selectNode(root)
+
+
+
+            let expandedNode = expandNode(selectedNode)
+            let won = playout(expandedNode)
+            let reward = won ? 1 : -1
+            backprop(expandedNode, reward)
+            // if (i == iterations - 1) {
+            //     roundCount++
+            //     console.log("round", roundCount)
+            //     i = 0
+            // }
         }
-
-        let expandedNode = expandNode(selectedNode)
-        // let won
-        // if (selectedNode.visits == 0) {
-        //     let boardStr = addInfo(expandedNode.state.board, expandedNode.state.player, expandedNode.state.oppPlayer)
-        //     let checkedValue = MCTSCheckedBoards.get(boardStr)
-        //     if( checkedValue != undefined) {
-        //         won = checkedValue
-        //     } else {
-        //         won = playout(expandedNode)
-        //         MCTSCheckedBoards.set(boardStr, won)
-        //     }
-
-        // } else {
-        //     won = playout(expandedNode)
-        // }
-        let won = playout(expandedNode)
-        let reward = won ? 1 : -1
-        backprop(expandedNode, reward)
-        // if (i === iterations - 1 && randomGameTurns.length / mctsNodeCount > 0.95) {
-        //     console.log(i, randomGameTurns.length, mctsNodeCount, randomGameTurns.length / mctsNodeCount)
-        //     i = 0
-        // } 
-    }
-    // root.setState(originalState)
-    //choose move with most wins
-    let maxWins = Number.MIN_SAFE_INTEGER
-    //Giving the bestnode some initial value because if every possible move from root is loss
-    //Then bestnode would be undefined (So AI didn't find any move that wouldnt lead into loss)
-    let bestNode = root.children[0]
-    for (let child of root.children) {
-        if (child.wins >= maxWins) {
-            maxWins = child.wins
-            bestNode = child
+        let maxWins = -Infinity
+        for (let child of root.children) {
+            if (child.wins >= maxWins) {
+                maxWins = child.wins
+                bestNode = child
+            }
         }
+        result = bestNode.move
+
     }
-    let result = bestNode.move
+    else {
+        console.log("returning only move available")
+        bestNode = root
+        result = [moves[0], type]
+    }
+
+
     let avgTurns = randomGameTurns.reduce((a, b) => a + b, 0) / randomGameTurns.length
     console.log(maxPlayer.name, result,
         "wins", bestNode.wins,
@@ -137,30 +146,26 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
 function selectNode(root) {
     const c = exploration
     while (root.numUnexpandedMoves == 0) {
-        let maxUBC = Number.MIN_SAFE_INTEGER
-        let maxIndex = -1
+        let maxUBC = -Infinity
+        let bestChild
         let Ni = root.visits
-        for (let i in root.children) {
-            const child = root.children[i]
+        for (let child of root.children) {
             const ni = child.visits
             const wi = child.wins
             const ubc = computeUCB(wi, ni, c, Ni)
             // console.log(ubc)
-            if (ubc > maxUBC) {
+            if (ubc >= maxUBC) {
                 maxUBC = ubc
-                maxIndex = i
+                bestChild = child
             }
         }
-        // //Leaf node check
-        if (maxIndex == -1) {
-            console.error("erroria", root.children)
-        }
+        if (bestChild === undefined) console.error("undefined node", bestChild, root)
         //Moving to next best node
-        root = root.children[maxIndex]
+        root = bestChild
         if (root.getWinner() != undefined) {
+            //Game has ended, so node is leaf node
             return root
         }
-
     }
     return root
 }
@@ -169,9 +174,11 @@ function expandNode(node) {
     if (node.getWinner() != undefined) {
         return node
     }
-    const movesObj = node.getMovesObj()
-    const moves = movesObj.moves
-    const type = movesObj.type
+    if (node.numUnexpandedMoves === 0) console.error("No more moves left?", node)
+    let movesObj = node.getMovesObj()
+    let moves = movesObj.moves
+    let type = movesObj.type
+
     let isUniqueMove = false
     let randIndex
     while (!isUniqueMove) {
@@ -179,8 +186,9 @@ function expandNode(node) {
         let move = [moves[randIndex], type]
         isUniqueMove = node.children.every(n => JSON.parse(JSON.stringify(n.move) !=
             JSON.parse(JSON.stringify(move))))
-
     }
+
+    //Creating new children node
     const newState = playMove(node, randIndex)
     const newNode = new Node(newState, [moves[randIndex], type], node)
     mctsNodeCount++
@@ -191,12 +199,9 @@ function expandNode(node) {
 }
 
 function playout(node) {
-    let roundCount = 0
-
-    let winner = node.getWinner()
-    if (winner != undefined) return winner.char == maxPlayer.char
+    let winner
     const clonedState = JSON.parse(JSON.stringify(node.state))
-
+    let roundCount = 0
     while (!winner) {
         roundCount++
         node.setState(playMove(node))
@@ -212,25 +217,22 @@ function backprop(node, reward) {
     while (node != undefined) {
         node.visits++
         node.wins += reward
+        
+        let winner = node.getWinner()
+        if (winner && winner.char == maxPlayer.char) {
+            node.parent.wins = Infinity
+        }
+        // //Node is lost move if all children are lost moves
+        // if (node.children.every(c => c.getWinner() && c.getWinner().char == minPlayer.char)) {
+        //     node.parent.wins = -Infinity
+        // }
+        // //Node is win move if any children are win move
+        // if (node.children.some(c => c.getWinner() && c.getWinner().char == maxPlayer.char)) {
+        //     node.wins = Infinity
+        // }
         node = node.parent
     }
 }
-
-// returns index of a random unexpanded child of node
-// function selectRandomUnexpandedChild(node) {
-//     //expand random nth unexpanded node
-//     const choice = Math.floor(Math.random() * node.numUnexpandedMoves)
-//     let count = -1
-//     for (let i in node.children) {
-//         const child = node.children[i]
-//         if (child == null) {
-//             count += 1
-//         }
-//         if (count == choice) {
-//             return i
-//         }
-//     }
-// }
 
 function computeUCB(wi, ni, c, Ni) {
     return (wi / ni) + c * Math.sqrt(Math.log(Ni) / ni)
@@ -238,6 +240,10 @@ function computeUCB(wi, ni, c, Ni) {
 
 
 function playMove(node, index) {
+    //Checking if game has ended
+    if (node.getWinner() != undefined) {
+        return node.state
+    }
     const movesObject = node.getMovesObj()
     const moves = movesObject.moves
     const type = movesObject.type
@@ -245,13 +251,12 @@ function playMove(node, index) {
         index = Math.floor(Math.random() * moves.length)
     }
     if (moves.length == 0) {
-        // console.log(node.state.board)
         node.state.winner = node.state.isPlayerTurn ? node.state.oppPlayer : node.state.player
         return node.state
     }
     if (moves[index] == undefined) {
         debugger
-        console.error("invalid index", moves.length, index)
+        console.error("invalid move", moves.length, index)
     }
 
     var args = {
@@ -271,19 +276,14 @@ function playMove(node, index) {
     }
 
     let newState = {
-        board: result.board,
         player: node.state.player,
         oppPlayer: node.state.oppPlayer,
+        board: result.board,
         eatMode: result.eatMode,
+        //Only switching turn if eatmode is false
         isPlayerTurn: result.eatMode ? node.state.isPlayerTurn : !node.state.isPlayerTurn,
         winner: node.state.winner
     }
     newState.winner = node.getWinner(newState)
-    // if (result.eatMode) {
-    //     node.setState(newState)
-    //     return playMove(node)
-    // } else {
-    //     return newState
-    // }
     return newState
 }
