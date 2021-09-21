@@ -1,3 +1,4 @@
+
 class Game {
     constructor(settings) {
         this.settings = settings
@@ -30,11 +31,9 @@ class Game {
         this.prevHover
 
         this.startTime = new Date().getTime()
+        this.startDate = Date()
     }
-    stringify(board) {
-        if (!board) {
-            var board = this.dots
-        }
+    stringify(board = this.dots) {
         var str = ""
         for (var layer of board) {
             for (var dot of layer) {
@@ -61,11 +60,13 @@ class Game {
                     LOADING = false
                     loadingGif.hide()
                     game.playRound(data.move)
+                    game.turn.turnData.push(data.moveData)
                     break;
                 case "suggestion":
                     LOADING = false
                     loadingGif.hide()
                     game.setSuggestion(data.move)
+                    game.turn.turnData.push(data.moveData)
                     break;
             };
         }
@@ -377,8 +378,6 @@ class Game {
     }
     switchTurn() {
         this.clearSuggestion()
-        this.turn.turns++
-        if (getStage(this.turn) === 3) this.turn.stage3Turns++
         //Checking for new mills before switching turn
         if (hasNewMills(this.dots, this.turn)) {
             this.eatMode = true
@@ -387,7 +386,9 @@ class Game {
             //Mills are made not new in eatChip method as soon as player has eaten a chip
             return
         }
-
+        //Adding turn to player after checking for eatmode to not add 2 turns whenever player eats
+        this.turn.turns++
+        if (getStage(this.turn) === 3) this.turn.stage3Turns++
         if (this.checkIfLost(this.turn)) {
             var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
             this.setWinner(oppPlayer)
@@ -444,7 +445,8 @@ class Game {
 
         var oppPlayer = this.winner === this.playerDark ? this.playerLight : this.playerDark
         var totalTurns = this.winner.turns + oppPlayer.turns
-        var gameTime = new Date().getTime() - this.startTime
+        let currTime = new Date().getTime()
+        var gameTime = currTime - this.startTime
         var avgTurnTime = (gameTime / totalTurns).toFixed(3)
         console.log(this.winner.name, "won!",
             "total turns:", totalTurns,
@@ -454,6 +456,25 @@ class Game {
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
         oppPlayer.mills = getUpdatedMills(this.dots, oppPlayer)
+        const gameData = {
+            players: {
+                winner: this.winner.getData(),
+                oppPlayer: oppPlayer.getData(),
+            },
+            game: {
+                gameTime: gameTime,
+                averageTurnTime: Number(avgTurnTime),
+                totalTurns: totalTurns,
+                autoPlay: AUTOPLAY,
+                maxChipCount: MAXCHIPCOUNT,
+                gameSettings: this.settings,
+                board: this.stringify(),
+                startDate: this.startDate,
+                endDate: Date()
+            }
+
+        }
+        sendData(gameData, "game")
 
         restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)

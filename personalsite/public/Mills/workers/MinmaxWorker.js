@@ -3,17 +3,19 @@ function fastFindBestMove(options) {
         console.log(this.winner.name, "won the workerGame")
         return
     }
-    console.time("time finding a move")
-
+    let startTime = new Date().getTime()
+    let moveEndTime
     //Resetting counters 
     nodeCount = 0
     checkedBoards.clear()
     skipCount = 0
     depthCount = []
     pruneCount = 0
-    endTime = undefined
+    iterativeEndTime = undefined
     prevBestMove = {}
-
+    let moveData = {
+        options: options,
+    }
     var player = {
         name: workerGame.turn.name,
         char: workerGame.turn.char,
@@ -34,7 +36,7 @@ function fastFindBestMove(options) {
         stage3Turns: oppPlay.stage3Turns,
     }
     var board = workerGame.fastDots
-    if (board.length > 24) console.error("errrorrrr", board)
+    if (board.length > 24) console.error("Invalid board", board)
     let move
     let type
     let score
@@ -46,9 +48,20 @@ function fastFindBestMove(options) {
         let moves = movesObject.moves
         type = movesObject.type
         move = moves[Math.floor(Math.random() * moves.length)]
+
+        moveEndTime = new Date().getTime()
+        moveData = {
+            ...moveData,
+            time: moveEndTime - startTime,
+            data: {
+                move: move,
+                type: type,
+            }
+        }
+
     } else if (options.iterative) {
         //Iterative
-        endTime = new Date().getTime() + options.time
+        iterativeEndTime = new Date().getTime() + options.time
         for (var depth = 1; depth <= MAXDEPTH; depth++) {
             //Resetting counters to not make them cumulative 
             // pruneCount = 0
@@ -57,7 +70,7 @@ function fastFindBestMove(options) {
 
             highDepthNum = depth
             result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
-            if (new Date().getTime() >= endTime) {
+            if (new Date().getTime() >= iterativeEndTime) {
                 console.log("Ran out of time at depth", depthCount.pop())
                 break
             } else {
@@ -77,9 +90,23 @@ function fastFindBestMove(options) {
             }
         }
     } else if (options.mcts) {
-        result = MCTSFindBestMove(board, player, oppPlayer, workerGame.eatMode)
+        let mctsResult = MCTSFindBestMove(board, player, oppPlayer, workerGame.eatMode)
+        result = mctsResult.result
+        let mctsData = mctsResult.data
+
         move = result[0]
         type = result[1]
+
+        moveEndTime = new Date().getTime()
+        moveData = {
+            ...moveData,
+            time: moveEndTime - startTime,
+            data: {
+                ...mctsData,
+                move: move,
+                type: type,
+            }
+        }
     } else {
         //"Normal" minmax
         var depth = options.difficulty
@@ -91,7 +118,8 @@ function fastFindBestMove(options) {
 
     if (move === undefined || type === undefined) {
         console.error("Couldn't find a move", move, score, type, result)
-        console.timeEnd("time finding a move")
+        moveEndTime = new Date().getTime()
+        console.log("Time finding a move", moveEndTime - startTime)
         return
     }
 
@@ -105,8 +133,24 @@ function fastFindBestMove(options) {
             "pruned", pruneCount,
             "skip %:", Math.floor(100 * skipCount / nodeCount),
             "top" + TOPX, topCount, "else", elseCount, "total", topCount + elseCount,
-            "prevbestmoves", prevBestMove
+            "prevbestmove", prevBestMove
         )
+        moveEndTime = new Date().getTime()
+        moveData = {
+            ...moveData,
+            time: moveEndTime - startTime,
+            data: {
+                move: move,
+                type: type,
+                score: score,
+                depth: depthCount.length - 1,
+                nodeCount: nodeCount,
+                boards: checkedBoards.length,
+                skipped: skipCount,
+                pruned: pruneCount,
+                skipPercent: Math.floor(100 * skipCount / nodeCount),
+            }
+        }
     } else {
         console.log(workerGame.turn.name, type, move, options.text)
     }
@@ -116,10 +160,18 @@ function fastFindBestMove(options) {
     } else if (type == "moving") {
         move = [indexToDot(move[0]), indexToDot(move[1])]
     } else {
-        console.log(type, move, "typeless move?")
+        console.error("typeless move?", type, move)
     }
-    console.timeEnd("time finding a move")
-    return [move, type]
+    moveData = {
+        ...moveData,
+        eatMode: workerGame.eatMode,
+        boardScore: fastEvaluateBoard(board, player, oppPlayer),
+        player: player,
+        oppPlayer: oppPlayer,
+        turnNumber: player.turns
+    }
+    console.log("Time finding the move", moveData.time, "ms")
+    return { move: [move, type], data: moveData }
 }
 function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
     //Calcing depth count
@@ -133,7 +185,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     }
 
     //End node check
-    if (depth <= 0 || endTime != undefined && new Date().getTime() >= endTime) {
+    if (depth <= 0 || iterativeEndTime != undefined && new Date().getTime() >= iterativeEndTime) {
         //Returning already calculated value for the board
         var calcedValue = getCalcedValue(board, player, oppPlayer)
         if (calcedValue != undefined) {

@@ -4,7 +4,7 @@ let DEBUG = false
 let checkedBoards = new Map()
 let skipCount, depthCount, nodeCount, highDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
 
-let endTime
+let iterativeEndTime
 let prevBestMove
 const WIN = 100000000
 const LOST = -100000000
@@ -58,12 +58,13 @@ function handleGetMove(data) {
     DEBUG = data.DEBUG
 
     let options = data.options
-    var data
-    data = {
+    const result = fastFindBestMove(options)
+    var data = {
         cmd: data.cmd,
-        move: fastFindBestMove(options)
+        move: result.move,
+        moveData: result.data
     }
-    if (options.iterative || options.mcts) {
+    if (options.noDelay || options.iterative || options.mcts) {
         self.postMessage(data)
     } else {
         //Add 1000 ms delay if easy mode
@@ -687,7 +688,7 @@ function getCalcedValue(board, player, oppPlayer) {
     if (calcedValue != undefined) {
         //Adding the "bonus points" for new mills
         for (var mill of player.mills) {
-            if (mill.new)  calcedValue += 3500
+            if (mill.new) calcedValue += 3500
         }
         for (var mill of oppPlayer.mills) {
             if (mill.new) calcedValue -= 4000
