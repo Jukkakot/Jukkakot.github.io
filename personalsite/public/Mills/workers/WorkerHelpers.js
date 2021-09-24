@@ -56,6 +56,7 @@ function handleGetMove(data) {
     workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
     workerGame.fastDots = stringify(workerGame.dots)
     DEBUG = data.DEBUG
+    NODELAY = data.NODELAY
 
     let options = data.options
     const result = fastFindBestMove(options)
@@ -64,17 +65,12 @@ function handleGetMove(data) {
         move: result.move,
         moveData: result.data
     }
-    if (options.noDelay || options.iterative || options.mcts) {
+    if (!options.delay || NODELAY) {
         self.postMessage(data)
     } else {
-        //Add 1000 ms delay if easy mode
-        //Because thats when we use depth 4 and it would go too fast for user
-        //Otherwise 200 ms delay
-        // var delay = options.difficulty === 4
         setTimeout(() => {
             self.postMessage(data)
-            // }, (delay ? 1000 : 200));
-        }, 200);
+        }, 500);
     }
 }
 function toFastMills(player) {
@@ -686,15 +682,13 @@ function getCalcedValue(board, player, oppPlayer) {
     var calcedValue = checkedBoards.get(boardStr)
     //Returning already calculated value for the board
     if (calcedValue != undefined) {
-        //Adding the "bonus points" for new mills
-        for (var mill of player.mills) {
-            if (mill.new) calcedValue += 3500
-        }
-        for (var mill of oppPlayer.mills) {
-            if (mill.new) calcedValue -= 4000
-        }
-        return calcedValue
+        let newMillCount = player.mills.filter(m => m.new).length || 0
+        calcedValue += 3500 * newMillCount
+
+        newMillCount = oppPlayer.mills.filter(m => m.new).length || 0
+        calcedValue -= 4000 * newMillCount
     }
+    return calcedValue
 }
 function addInfo(board, player, oppPlayer) {
     var str = getStage(player) + player.char + getStage(oppPlayer) + oppPlayer.char + board

@@ -2,84 +2,153 @@
 <html>
 
 <head>
-	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<script>
 		window.onload = function () {
+			getData()
+		}
+		function getData(type = "boardScore", avg = false) {
+			let gameData
 			axios.defaults.baseURL = 'http://localhost:3001';
-			axios.get("/api/turntimesCumulative").then(res => {
-				let gameData = res.data
+			axios.get("/api/" + type, {
+				params: {
+					avg: avg
+				}
+			}).then(res => {
+				gameData = res.data
 				console.log(gameData)
-				drawChart(gameData)
 			}).catch(err => {
 				console.error("Error getting data", err)
+			}).then(res => {
+				if (gameData.type == "line") {
+					drawLineChart(gameData,avg)
+				} else if (gameData.type == "bar") {
+					drawBarChart(gameData)
+				}
 			})
 		}
-		
-		function drawChart(data) {
+		function drawLineChart(data,avg) {
 			let gameData = data
 			const dataPoints = gameData.data.map(game => {
-					let defaultOptions = {
-						type: "spline",
-						axisYType: "secondary",
-						showInLegend: true,
-						markerSize: 0,
-						yValueFormatString: "#####Ms",
+				let defaultOptions = {
+					type: avg ? "spline": "line",
+					// axisYType: "secondary",
+					showInLegend: true,
+					markerSize: 5,
+					// yValueFormatString: "#####Ms",
+				}
+				return [{
+					...defaultOptions,
+					name: game.winnerText,
+					dataPoints: game.winnerValues.map(move => {
+						return { y: move.value, x: move.turnNumber }
+					})
+				},
+				{
+					...defaultOptions,
+					name: game.oppPlayerText,
+					dataPoints: game.oppValues.map(move => {
+						return { y: move.value, x: move.turnNumber }
+					})
+				}]
+			})
+
+			// console.log(dataPoints)
+			const chartData = []
+			dataPoints.map(game => { return chartData.push(...game) })
+
+			var chart = new CanvasJS.Chart("chartContainer", {
+				zoomEnabled: true,
+				animationEnabled: true,
+				theme: "dark2",
+				toolTip: {
+					// content: "{name}: {x},{y}",
+					shared: true
+				},
+				title: {
+					text: gameData.title
+				},
+				axisX: {
+					title: gameData.xTitle,
+					crosshair: {
+						enabled: true,
+						snapToDataPoint: true
 					}
-					return [{
-						...defaultOptions,
-						name: gameData.data.indexOf(game) +" Win " + game.winnerText,
-						dataPoints: game.winnerTimes.map(move => {
-							return { y: move.time, x: move.turnNumber }
-						})
-					},
-					{
-						...defaultOptions,
-						name: gameData.data.indexOf(game) +" Opp " + game.oppPlayerText,
-						dataPoints: game.oppPlayerTimes.map(move => {
-							return { y: move.time, x: move.turnNumber }
-						})
-					}]
-				})
-
-				console.log(dataPoints)
-				const chartData = []
-				dataPoints.map(game => { return chartData.push(...game) })
-				var chart = new CanvasJS.Chart("chartContainer", {
-					animationEnabled: true,
-					theme: "dark2",
-					title: {
-						text: gameData.title
-					},
-					toolTip: {
-						shared: true
-					},
-					legend: {
-						cursor: "pointer",
-						verticalAlign: "top",
-						horizontalAlign: "center",
-						dockInsidePlotArea: true,
-						itemclick: toogleDataSeries
-					},
-					data: chartData
-				});
-
-
-				function toogleDataSeries(e) {
-					if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-						e.dataSeries.visible = false;
-					} else {
-						e.dataSeries.visible = true;
+				},
+				axisY: {
+					title: gameData.yTitle,
+					// title:"joo",
+					includeZero: true,
+					crosshair: {
+						enabled: true
 					}
-					chart.render();
+				},
+				legend: {
+					cursor: "pointer",
+					verticalAlign: "top",
+					horizontalAlign: "center",
+					dockInsidePlotArea: true,
+					itemclick: toogleDataSeries
+				},
+				data: chartData
+			});
+			chart.render();
+			function toogleDataSeries(e) {
+				if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+					e.dataSeries.visible = false;
+				} else {
+					e.dataSeries.visible = true;
 				}
 				chart.render();
+			}
 		}
+
+		function drawBarChart(data) {
+			let gameData = data
+			// console.log(gameData)
+			var chart = new CanvasJS.Chart("chartContainer", {
+				animationEnabled: true,
+				theme: "dark2",
+				axisY: {
+					includeZero: true,
+					interval: 10,
+					title: gameData.yTitle
+				},
+				// axisX: {
+				// 	interval: 1,
+				// },
+				title: {
+					text: gameData.title
+				},
+				data: [{
+					type: "column",
+					showInLegend: true,
+					legendText: "Game lengths",
+					dataPoints: gameData.data.map((game, index) => {
+						return { y: game.value, label: game.label + " " + game.gameCount + " games" }
+					})
+				}]
+			});
+			chart.render();
+		}
+
 	</script>
+
 </head>
 
 <body>
-	<div id="chartContainer" style="height: 300px; width: 100%;"></div>
-	<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+	<button onClick="getData('boardScore')">Board score</button>
+	<button onClick="getData('boardScore',true)">Avg Board score</button>
+	<button onClick="getData('turnTimes')">Turn times</button>
+	<button onClick="getData('turnTimes',true)">Avg Turn times</button>
+	<button onClick="getData('turnTimesCumulative')">Turn times cumulatives</button>
+	<button onClick="getData('turnTimesCumulative',true)">Avg Turn times cumulatives</button>
+	<button onClick="getData('chipcount')">Chip counts</button>
+	<button onClick="getData('chipcount',true)">Avg Chip counts</button>
+	<button onClick="getData('gameLength')">Game lengths</button>
+	<div id="chartContainer" style="height: 100%; width: 100%;"></div>
+
+	<script src=" https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </body>
 
 </html>

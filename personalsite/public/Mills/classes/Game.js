@@ -12,6 +12,9 @@ class Game {
         //turn is current player that has the turn
         // this.turn = random(1) < 0.5 ? this.playerDark : this.playerLight
         this.turn = this.playerLight
+        //Games turn number is counter for player turns but each turn has its own number
+        //First player gets turn 0 and 2nd player gets turn 1 etc..
+        this.turnNum = 0
         this.eatMode = false
         this.winner
         //Storage for the suggested dot(s) so its easy to clear afterwards
@@ -42,7 +45,17 @@ class Game {
         }
         return str
     }
-
+    getEmptyDots(board = this.dots) {
+        var dots = []
+        for (var layer of board) {
+            for (var dot of layer) {
+                if (!dot.player) {
+                    dots.push(dot)
+                }
+            }
+        }
+        return dots
+    }
     initWorker() {
         if (this.worker) {
             // this.worker.postMessage({cmd:"close"})
@@ -82,6 +95,7 @@ class Game {
             cmd: cmd,
             options: game.turn.options,
             DEBUG: DEBUG,
+            NODELAY: NODELAY
         }
         //If player manually playing but wants a suggestion, options are defaulted to minmax 4
         if (!data.options.autoPlay && cmd == "suggestion") {
@@ -308,7 +322,7 @@ class Game {
         this.switchTurn()
 
         //Checking the mills again incase had to eat from (at the time) opponents  mill
-        this.turn.mills = getUpdatedMills(this.dots, this.turn)
+        this.turn.mills = this.turn.getUpdatedMills()
 
     }
     clearSuggestion() {
@@ -374,12 +388,12 @@ class Game {
     }
 
     checkIfLost(player) {
-        return (player.chipCount + player.chipsToAdd) < 3 || !checkIfCanMove(player, this.dots)
+        return (player.chipCount + player.chipsToAdd) < 3 || !player.checkIfCanMove()
     }
     switchTurn() {
         this.clearSuggestion()
         //Checking for new mills before switching turn
-        if (hasNewMills(this.dots, this.turn)) {
+        if (this.turn.hasNewMills()) {
             this.eatMode = true
             if (this.turn.options.autoPlay)
                 this.findBestMove("findMove")
@@ -388,6 +402,7 @@ class Game {
         }
         //Adding turn to player after checking for eatmode to not add 2 turns whenever player eats
         this.turn.turns++
+        this.turnNum++
         if (getStage(this.turn) === 3) this.turn.stage3Turns++
         if (this.checkIfLost(this.turn)) {
             var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
@@ -455,26 +470,28 @@ class Game {
             "average turn time:", Number(avgTurnTime), "ms")
         //Checking the mills again incase had to eat from (at the time) opponents  mill
         //This is to clear mill lines from not anymore mills
-        oppPlayer.mills = getUpdatedMills(this.dots, oppPlayer)
-        const gameData = {
-            players: {
-                winner: this.winner.getData(),
-                oppPlayer: oppPlayer.getData(),
-            },
-            game: {
-                gameTime: gameTime,
-                averageTurnTime: Number(avgTurnTime),
-                totalTurns: totalTurns,
-                autoPlay: AUTOPLAY,
-                maxChipCount: MAXCHIPCOUNT,
-                gameSettings: this.settings,
-                board: this.stringify(),
-                startDate: this.startDate,
-                endDate: Date()
-            }
+        oppPlayer.mills = oppPlayer.getUpdatedMills()
+        if (SENDDATA) {
+            const gameData = {
+                players: {
+                    winner: this.winner.getData(),
+                    oppPlayer: oppPlayer.getData(),
+                },
+                game: {
+                    gameTime: gameTime,
+                    averageTurnTime: Number(avgTurnTime),
+                    totalTurns: totalTurns,
+                    autoPlay: AUTOPLAY,
+                    maxChipCount: MAXCHIPCOUNT,
+                    gameSettings: this.settings,
+                    board: this.stringify(),
+                    startDate: this.startDate,
+                    endDate: Date()
+                }
 
+            }
+            sendData(gameData, "game")
         }
-        sendData(gameData, "game")
 
         restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
@@ -559,4 +576,16 @@ function deepClone(obj) {
         return item; // not object, not array, therefore primitive
     }
     return clone(obj);
+}
+function getStage(player) {
+    if (player.chipsToAdd > 0) {
+        return 1
+    } else if (player.chipCount + player.chipsToAdd === 3) {
+        return 3
+    } else if (player.chipsToAdd === 0) {
+        return 2
+    } else {
+        console.log("returning 0 stage", player)
+        return 0
+    }
 }

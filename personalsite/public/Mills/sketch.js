@@ -1,15 +1,17 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.10
-var ANGLE = 0.0
-var SPEED = 0.07
+let ANGLE = 0.0
+let SPEED = 0.07
 const EMPTYDOT = '0'
 const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
 const isMobileDevice = /Mobi/i.test(window.navigator.userAgent)
-var LOADING = false
-var DEBUG = false
-var AUTOPLAY = false
+let LOADING = false
+let DEBUG = false
+let AUTOPLAY = false
+let NODELAY = false
+let SENDDATA = false
 const OPTIONS = [
 	{
 		text: "Manual",
@@ -18,54 +20,63 @@ const OPTIONS = [
 	{
 		text: "Random",
 		random: true,
-		autoPlay: true
+		autoPlay: true,
+		delay: true
 	},
 	{
 		text: "Minmax 4",
 		iterative: false,
 		difficulty: 4,
-		autoPlay: true
+		autoPlay: true,
+		delay: true
 	},
 	{
 		text: "Minmax 6",
 		iterative: false,
 		difficulty: 6,
-		autoPlay: true
+		autoPlay: true,
+		delay: true
 	},
 	{
 		text: "Iterative 0.5s",
 		iterative: true,
 		time: 500,
-		autoPlay: true
+		autoPlay: true,
+		delay: false
 	},
 	{
 		text: "Iterative 1s",
 		iterative: true,
 		time: 1000,
-		autoPlay: true
+		autoPlay: true,
+		delay: false
 	},
 	{
 		text: "Iterative 3s",
 		iterative: true,
 		time: 3000,
-		autoPlay: true
+		autoPlay: true,
+		delay: false
 	},
 	{
 		text: "Iterative 5s",
 		iterative: true,
 		time: 5000,
-		autoPlay: true
+		autoPlay: true,
+		delay: false
 	},
 	{
 		text: "Iterative 10s",
 		iterative: true,
 		time: 10000,
-		autoPlay: true
+		autoPlay: true,
+		delay: false
 	},
 	{
 		text: "MCTS",
 		mcts: true,
-		autoPlay: true
+		autoPlay: true,
+		delay: false
 	},
 ]
 var gameSettings = {
@@ -130,9 +141,13 @@ function setup() {
 function keyPressed(e) {
 	if (e.key === "r") {
 		restartPress()
-	} else if (e.key === "b") {
-		// game.playRound(game.findBestMove())
-		game.findBestMove("findMove")
+	} else if (e.key === "e") {
+		NODELAY = !NODELAY
+		console.log("NODELAY:", NODELAY)
+
+	} else if (e.key === "t") {
+		SENDDATA = !SENDDATA
+		console.log("SENDDATA:", SENDDATA)
 	} else if (e.key === "s") {
 		suggestionPress()
 	} else if (e.key === "d") {
@@ -151,6 +166,16 @@ function keyPressed(e) {
 		togglePlayerLight()
 	} else if (e.key === "2") {
 		togglePlayerDark()
+	} else if (e.key === "h") {
+		console.log("r: restart\n",
+			"e: no delay\n",
+			"t: send data\n",
+			"s: suggestion\n",
+			"d: debug\n",
+			"1: toggle light player button\n",
+			"2: toggle dark player button\n",
+			"h: help"
+		)
 	}
 }
 function suggestionPress() {
@@ -402,14 +427,14 @@ function drawUI() {
 }
 function sendData(data = "test data", type = "test") {
 	axios.defaults.baseURL = 'http://localhost:3001';
-	let testData = {
+	let body = {
 		type: type,
 		data: {
 			time: Date(),
 			data: data
 		}
 	}
-	axios.post("/api", testData).then(res => {
+	axios.post("/api", body).then(res => {
 		console.log(res.data)
 	}).catch(err => {
 		console.error("Error sending data", err)

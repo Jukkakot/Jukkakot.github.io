@@ -168,7 +168,8 @@ function fastFindBestMove(options) {
         boardScore: fastEvaluateBoard(board, player, oppPlayer),
         player: player,
         oppPlayer: oppPlayer,
-        turnNumber: player.turns
+        turnNumber: player.turns,
+        uniqTurnNumber: workerGame.turnNum
     }
     console.log("Time finding the move", moveData.time, "ms")
     return { move: [move, type], data: moveData }
@@ -308,15 +309,15 @@ function fastEvaluateBoard(board, player, oppPlayer) {
     //Object to store info about where the different points for each board is coming from
     //Helpful for debugging
     var scoreObject = {
-        update: function (property) {
-            this[property] ? this[property]++ : this[property] = 1
+        update: function (prop) {
+            this[prop] ? this[prop]++ : this[prop] = 1
         }
     }
     let playerDots = fastGetPlayerDots(board, player)
     //100 points for each players chip
-    boardValue += (playerDots.length + player.chipsToAdd) * 100
+    boardValue += player.chipCount * 100
     //-100 points for each opponent player chip
-    boardValue -= (fastGetPlayerDots(board, oppPlayer).length + oppPlayer.chipsToAdd) * 100
+    boardValue -= oppPlayer.chipCount * 100
     if (getStage(player) === 1) {
         //Giving points for each neighbour dot of players dots
         for (var dot of playerDots) {
@@ -343,7 +344,6 @@ function fastEvaluateBoard(board, player, oppPlayer) {
         var windowValue = fastEvaluateWindow(board, window, player, oppPlayer, scoreObject)
         boardValue += windowValue
     }
-
     const boardStr = addInfo(board, player, oppPlayer)
     //Adding the board to checked boards map
     checkedBoards.set(boardStr, boardValue)
@@ -420,9 +420,10 @@ function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
         case (2):
             return fastStage2Score(board, window, player, oppPlayer, scoreObject) + value
         case (3):
-            return fastStage3Score(board, window, player, oppPlayer, scoreObject) + value
+            //Trying out just using the stage 2 scoring 
+            return fastStage2Score(board, window, player, oppPlayer, scoreObject) + value
         default:
-            console.log("Player has won or lost?", player)
+            console.error("Player has won or lost?", player)
     }
 }
 function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
@@ -635,6 +636,16 @@ function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
     if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
         scoreObject.update("oppOpenMillStage3")
         value -= 2000
+    }
+    //Syhky miilu is finnish and means double mill
+    //which happens when you have 2 mills next to eachother and can get a mill every turn
+    //Opp double mill
+    if (oppStage == 2 && oppCount === 2 && emptyCount === 1 && !scoreObject["oppDoubleMill"] &&
+        getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
+            !oppDots.some(pDot => pDot == dot) &&
+            oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
+        scoreObject.update("oppDoubleMill")
+        value -= 2500
     }
     return value
 }
