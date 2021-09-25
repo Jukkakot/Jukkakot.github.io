@@ -227,6 +227,7 @@ function backprop(node, reward) {
 
         let winner = node.getWinner()
         if (winner && winner.char == maxPlayer.char) {
+            node.wins = Infinity
             if(node.parent) {
                 node.parent.wins = Infinity
             } else {

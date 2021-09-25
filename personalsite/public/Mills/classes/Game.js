@@ -72,14 +72,13 @@ class Game {
                 case "findMove":
                     LOADING = false
                     loadingGif.hide()
-                    game.playRound(data.move)
                     game.turn.turnData.push(data.moveData)
+                    game.playRound(data.move)
                     break;
                 case "suggestion":
                     LOADING = false
                     loadingGif.hide()
                     game.setSuggestion(data.move)
-                    game.turn.turnData.push(data.moveData)
                     break;
             };
         }
@@ -416,7 +415,7 @@ class Game {
             return
         }
         if (this.turn.options.autoPlay) {
-            game.findBestMove("findMove")
+            this.findBestMove("findMove")
         }
     }
     playRound(move) {

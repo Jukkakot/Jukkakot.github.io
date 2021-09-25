@@ -12,71 +12,69 @@ let DEBUG = false
 let AUTOPLAY = false
 let NODELAY = false
 let SENDDATA = false
+const defaultOption  = {
+	autoPlay: true,
+	delay:true,
+	autoPlay:true,
+	random: false,
+	iterative:false,
+	mcts: false,
+}
 const OPTIONS = [
 	{
+		...defaultOption,
 		text: "Manual",
 		autoPlay: false
 	},
 	{
+		...defaultOption,
 		text: "Random",
 		random: true,
-		autoPlay: true,
-		delay: true
 	},
 	{
+		...defaultOption,
 		text: "Minmax 4",
-		iterative: false,
 		difficulty: 4,
-		autoPlay: true,
-		delay: true
 	},
 	{
+		...defaultOption,
 		text: "Minmax 6",
-		iterative: false,
 		difficulty: 6,
-		autoPlay: true,
-		delay: true
 	},
 	{
+		...defaultOption,
 		text: "Iterative 0.5s",
 		iterative: true,
 		time: 500,
-		autoPlay: true,
-		delay: false
 	},
 	{
+		...defaultOption,
 		text: "Iterative 1s",
 		iterative: true,
 		time: 1000,
-		autoPlay: true,
-		delay: false
 	},
 	{
+		...defaultOption,
 		text: "Iterative 3s",
 		iterative: true,
 		time: 3000,
-		autoPlay: true,
-		delay: false
 	},
 	{
+		...defaultOption,
 		text: "Iterative 5s",
 		iterative: true,
 		time: 5000,
-		autoPlay: true,
-		delay: false
 	},
 	{
+		...defaultOption,
 		text: "Iterative 10s",
 		iterative: true,
 		time: 10000,
-		autoPlay: true,
-		delay: false
 	},
 	{
+		...defaultOption,
 		text: "MCTS",
 		mcts: true,
-		autoPlay: true,
-		delay: false
 	},
 ]
 var gameSettings = {

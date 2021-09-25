@@ -59,11 +59,11 @@ function handleGetMove(data) {
     NODELAY = data.NODELAY
 
     let options = data.options
-    const result = fastFindBestMove(options)
+    const bestMoveResult = fastFindBestMove(options)
     var data = {
         cmd: data.cmd,
-        move: result.move,
-        moveData: result.data
+        move: bestMoveResult.move,
+        moveData: bestMoveResult.moveData
     }
     if (!options.delay || NODELAY) {
         self.postMessage(data)

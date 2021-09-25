@@ -172,7 +172,7 @@ function fastFindBestMove(options) {
         uniqTurnNumber: workerGame.turnNum
     }
     console.log("Time finding the move", moveData.time, "ms")
-    return { move: [move, type], data: moveData }
+    return { move: [move, type], moveData: moveData }
 }
 function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
     //Calcing depth count

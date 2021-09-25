@@ -4,12 +4,16 @@ import path from 'path'
 import { LowSync, JSONFileSync } from 'lowdb'
 
 const app = express()
-app.use(express.json());
-app.use(cors())
 
-const db = new LowSync(new JSONFileSync("db.json"))
+app.use(express.json({limit: '50mb'}));
+app.use(cors())
+app.listen(3001)
+
+const db = new LowSync(new JSONFileSync("JSON/db.json"))
+
 db.read()
-// drawGraph()
+
+
 app.get('/', function (req, res) {
   res.sendFile(path.join(path.resolve(), '/index.html'));
 });
@@ -17,6 +21,25 @@ app.get('/', function (req, res) {
 app.get('/api', function (req, res) {
   res.send(db.data)
 })
+
+app.post("/api", function (req, res) {
+
+  const body = req.body
+  if (!body || !body.type) {
+    res.send("Invalid data, specify data type")
+    return
+  }
+
+  if (!db.data[body.type]) db.data[body.type] = []
+
+
+  db.data[body.type].push(body.data)
+  db.write()
+  console.log("New", body.type, "added")
+  res.send("New " + body.type + " added")
+
+})
+
 app.get('/api/chipcount', function (req, res) {
   let data = {
     type: "line",
@@ -30,14 +53,17 @@ app.get('/api/chipcount', function (req, res) {
     return
   }
   for (let game of db.data.game) {
-    let winner = game.data.players.winner
-    let oppPlayer = game.data.players.oppPlayer
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
+
     let playersTurnData = {
-      winnerValues: getChipCounts(winner),
-      oppValues: getChipCounts(oppPlayer),
-      label: winner.options.text + " " + oppPlayer.options.text,
-      winnerText: winner.char + " " + winner.options.text,
-      oppPlayerText: oppPlayer.char + " " + oppPlayer.options.text,
+      darkValues: getChipCounts(darkPlayer),
+      lightValues: getChipCounts(lightPlayer),
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
     }
     data.data.push(playersTurnData)
   }
@@ -60,14 +86,16 @@ app.get('/api/turntimes', function (req, res) {
     return
   }
   for (let game of db.data.game) {
-    let winner = game.data.players.winner
-    let oppPlayer = game.data.players.oppPlayer
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
     let playersTurnData = {
-      winnerValues: getMoveTimes(winner),
-      oppValues: getMoveTimes(oppPlayer),
-      label: winner.options.text + " " + oppPlayer.options.text,
-      winnerText: winner.char + " " + winner.options.text,
-      oppPlayerText: oppPlayer.char + " " + oppPlayer.options.text,
+      darkValues: getMoveTimes(darkPlayer),
+      lightValues: getMoveTimes(lightPlayer),
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
     }
     data.data.push(playersTurnData)
   }
@@ -91,14 +119,16 @@ app.get('/api/turntimesCumulative', function (req, res) {
     return
   }
   for (let game of db.data.game) {
-    let winner = game.data.players.winner
-    let oppPlayer = game.data.players.oppPlayer
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
     let playersTurnData = {
-      winnerValues: getCumulativeTimes(winner),
-      oppValues: getCumulativeTimes(oppPlayer),
-      winnerText: winner.char + " " + winner.options.text,
-      oppPlayerText: oppPlayer.char + " " + oppPlayer.options.text,
-      label: winner.options.text + " " + oppPlayer.options.text,
+      darkValues: getCumulativeTimes(darkPlayer),
+      lightValues: getCumulativeTimes(lightPlayer),
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
     }
     data.data.push(playersTurnData)
   }
@@ -121,14 +151,16 @@ app.get('/api/boardScore', function (req, res) {
     return
   }
   for (let game of db.data.game) {
-    let winner = game.data.players.winner
-    let oppPlayer = game.data.players.oppPlayer
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
     let playersTurnData = {
-      winnerValues: getBoardScores(winner),
-      oppValues: getBoardScores(oppPlayer),
-      winnerText: winner.char + " " + winner.options.text,
-      oppPlayerText: oppPlayer.char + " " + oppPlayer.options.text,
-      label: winner.options.text + " " + oppPlayer.options.text,
+      darkValues: getBoardScores(darkPlayer),
+      lightValues: getBoardScores(lightPlayer),
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
     }
     data.data.push(playersTurnData)
   }
@@ -140,12 +172,47 @@ app.get('/api/boardScore', function (req, res) {
   res.send(data)
 })
 
-app.get('/api/gameLength', function (req, res) {
+app.get('/api/boardScoreCumulative', function (req, res) {
+  let data = {
+    type: "line",
+    title: "Cumulative Mill board scores",
+    xTitle: "Turns",
+    yTitle: "Score",
+    data: []
+  }
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
+    let playersTurnData = {
+      darkValues: getCumulativeBoardScores(darkPlayer),
+      lightValues: getCumulativeBoardScores(lightPlayer),
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+    }
+    data.data.push(playersTurnData)
+  }
+  if (req.query.avg == "true") {
+    let groupedGames = groupBy(data.data, "label")
+    data.data = getAvgValueByKey(groupedGames, "value", "turnNumber")
+  }
+
+  res.send(data)
+})
+
+app.get('/api/winlose', function (req, res) {
   let data = {
     type: "bar",
-    title: "Average Mill game length",
+    title: "Average win/lose ratio",
     xTitle: "Game",
-    yTitle: "Turns",
+    yTitle: "Wins/loses",
+    yInterval: 0.1,
     data: []
   }
   if (!db.data.game) {
@@ -154,9 +221,82 @@ app.get('/api/gameLength', function (req, res) {
   }
 
   for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+    let winner = players.winner
+    let columnData = {
+      darkPlayer: {
+        name: darkPlayer.name,
+        char: darkPlayer.char,
+        value: darkPlayer.char == winner.char ? 1 : 0,
+        text: darkPlayer.options.text
+      },
+      lightPlayer: {
+        name: lightPlayer.name,
+        char: lightPlayer.char,
+        value: lightPlayer.char == winner.char ? 1 : 0,
+        text: lightPlayer.options.text
+      },
+      label: lightPlayer.options.text + " / " + darkPlayer.options.text,
+    }
+    data.data.push(columnData)
+  }
+
+  let groupedGames = groupBy(data.data, "label")
+  let result = []
+  for (let key in groupedGames) {
+    let group = groupedGames[key]
+
+    let totalDark = 0
+    let totalLight = 0
+    for (let column of group) {
+      totalDark += column.darkPlayer.value
+      totalLight += column.lightPlayer.value
+    }
+    let newGroup = {}
+    if (totalDark >= totalLight) {
+      newGroup.value = totalDark / group.length
+      newGroup.text = group[0].darkPlayer.text
+      newGroup.color = "#a05627"
+    } else {
+      newGroup.value = totalLight / group.length
+      newGroup.text = group[0].lightPlayer.text
+      newGroup.color = "#d1b496"
+    }
+    newGroup.gameCount = group.length
+    newGroup.label = key
+    result.push(newGroup)
+  }
+  result.sort((a, b) => a.value - b.value)
+  data.data = result
+  // console.log(data.data)
+  res.send(data)
+})
+
+app.get('/api/gameLength', function (req, res) {
+  let data = {
+    type: "bar",
+    title: "Average Mill game length",
+    xTitle: "Game",
+    yTitle: "Turns",
+    yInterval: 10,
+    data: []
+  }
+
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
     let columnData = {
       value: game.data.game.totalTurns,
-      label: game.data.players.winner.options.text + " / " + game.data.players.oppPlayer.options.text
+      label: lightPlayer.options.text + " / " + darkPlayer.options.text,
     }
     data.data.push(columnData)
   }
@@ -176,21 +316,6 @@ app.get('/api/gameLength', function (req, res) {
   data.data = result
   res.send(data)
 })
-app.post("/api", function (req, res) {
-  const body = req.body
-  if (!body || !body.type) {
-    res.send("Invalid data, specify data type")
-    return
-  }
-
-  if (!db.data[body.type]) db.data[body.type] = []
-
-  db.data[body.type].push(body.data)
-  db.write()
-  console.log("New", body.type, "added")
-  res.send("New " + body.type + " added")
-})
-app.listen(3001)
 
 function getMoveTimes(player) {
   let times = []
@@ -212,14 +337,23 @@ function getCumulativeTimes(player) {
   for (let turn of player.turnData) {
     totalTime += turn.time
     times.push({ value: totalTime, turnNumber: turn.turnNumber })
-
   }
+  // console.log(player,times)
   return times
 }
 function getBoardScores(player) {
   let scores = []
   for (let turn of player.turnData) {
     scores.push({ value: turn.boardScore, turnNumber: turn.turnNumber })
+  }
+  return scores
+}
+function getCumulativeBoardScores(player) {
+  let scores = []
+  let totalScore = 0
+  for (let turn of player.turnData) {
+    totalScore += turn.boardScore
+    scores.push({ value: totalScore, turnNumber: turn.turnNumber })
   }
   return scores
 }
@@ -256,16 +390,16 @@ function getAvgValueByKey(groupedData, val, key) {
   for (let groupKey in groupedData) {
     let group = groupedData[groupKey]
     // consoles.log(group)
-    let winnerValues = []
-    let oppValues = []
+    let darkValues = []
+    let lightValues = []
     for (let column of group) {
-      winnerValues = winnerValues.concat(column.winnerValues)
-      oppValues = oppValues.concat(column.oppValues)
+      darkValues = darkValues.concat(column.darkValues)
+      lightValues = lightValues.concat(column.lightValues)
     }
     let newGroup = { ...group[0] }
-    newGroup.winnerValues = avgValuesByKey(winnerValues, val, key)
-    newGroup.oppValues = avgValuesByKey(oppValues, val, key)
-    newGroup.label = groupKey
+    newGroup.darkValues = avgValuesByKey(darkValues, val, key)
+    newGroup.lightValues = avgValuesByKey(lightValues, val, key)
+    // newGroup.label = groupKey
 
     result.push(newGroup)
     // console.log(winnerObject)
@@ -277,15 +411,15 @@ function getAvgValueByKey(groupedData, val, key) {
 //   for (let groupKey in groupedData) {
 //     let group = groupedData[groupKey]
 //     // consoles.log(group)
-//     let winnerValues = []
-//     let oppValues = []
+//     let darkValues = []
+//     let lightValues = []
 //     for (let column of group) {
-//       winnerValues = winnerValues.concat(column.winnerTimes)
-//       oppValues = oppValues.concat(column.oppPlayerTimes)
+//       darkValues = darkValues.concat(column.winnerTimes)
+//       lightValues = lightValues.concat(column.oppPlayerTimes)
 //     }
 //     let newGroup = {...group[0]}
-//     newGroup.winnerValues = avgValuesByKey(winnerValues, val, key)
-//     newGroup.oppValues = avgValuesByKey(oppValues, val, key)
+//     newGroup.darkValues = avgValuesByKey(darkValues, val, key)
+//     newGroup.lightValues = avgValuesByKey(lightValues, val, key)
 //     newGroup.label = groupKey
 
 //     result.push(newGroup)
