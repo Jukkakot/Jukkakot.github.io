@@ -77,21 +77,21 @@ const OPTIONS = [
 		mcts: true,
 	},
 ]
-var gameSettings = {
-	lightOption: 4,
+let gameSettings = {
+	lightOption: 6,
 	darkOption: 0,
 }
 
-var outBoxSize, circleSize, distance
-var cnv
-var scaledWidth, scaledHeight
-var game
-var mX, mY
-var fps
-var locked
-var movableDot
-var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
-var restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton
+let outBoxSize, circleSize, distance
+let cnv
+let scaledWidth, scaledHeight
+let game
+let mX, mY
+let fps
+let locked
+let movableDot
+let darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
+let restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton
 
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
@@ -152,7 +152,7 @@ function keyPressed(e) {
 		DEBUG = !DEBUG
 		if (DEBUG) {
 			const worker = new Worker("workers/WorkerHelpers.js")
-			var data = {
+			let data = {
 				game: deepClone(game),
 				board: game.stringify(),
 				cmd: "debug",
@@ -252,8 +252,8 @@ function windowResized() {
 	outBoxSize = min(width, height / ASPECTRATIO) - circleSize * 2.5
 	distance = min(width, height / ASPECTRATIO) * 0.28
 
-	var buttonWidth = circleSize * 7
-	var buttonHeight = buttonWidth / 2.5
+	let buttonWidth = circleSize * 7
+	let buttonHeight = buttonWidth / 2.5
 
 	loadingGif.size(circleSize * 3, circleSize)
 	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width / 2, cnv.position().y + cnv.height / 2 - circleSize * 3)
@@ -328,8 +328,8 @@ function mouseDragged() {
 	}
 
 	if (movableDot && movableDot.player && movableDot.player === game.turn) {
-		var r = movableDot.player ? movableDot.r * 0.6 : movableDot.r * 2
-		var size = movableDot.size()
+		let r = movableDot.player ? movableDot.r * 0.6 : movableDot.r * 2
+		let size = movableDot.size()
 		if (pointInCircle(mX, mY, movableDot.x * size, movableDot.y * size, r)) {
 			locked = true
 		}

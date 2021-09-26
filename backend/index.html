@@ -2,9 +2,11 @@
 <html>
 
 <head>
+	<script src=" https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<script>
 		window.onload = function () {
-			getData()
+			getData("turntimesCumulativePerStage", true)
 		}
 		function getData(type = "boardScore", avg = false) {
 			let gameData
@@ -20,15 +22,17 @@
 				console.error("Error getting data", err)
 			}).then(res => {
 				if (gameData.type == "line") {
-					drawLineChart(gameData, avg)
+					drawLineChart(gameData, 0, avg)
 				} else if (gameData.type == "bar") {
 					drawBarChart(gameData)
-				} else if (gameData.type == "multibar") {
-					drawMultiBarChart(gameData)
+				} else if (gameData.type == "multiline") {
+					drawLineChart(gameData, 0, avg)
+					drawLineChart(gameData, 1, avg)
+					drawLineChart(gameData, 2, avg)
 				}
 			})
 		}
-		function drawLineChart(data, avg) {
+		function drawLineChart(data, id = 0, avg) {
 			let gameData = data
 			const dataPoints = gameData.data.map(game => {
 				let defaultOptions = {
@@ -38,23 +42,25 @@
 					markerSize: 5,
 					// yValueFormatString: "#####Ms",
 				}
+				const darkValues = game.darkValues.constructor != Array ? game.darkValues[id + 1] : game.darkValues
+				const lightValues = game.lightValues.constructor != Array ? game.lightValues[id + 1] : game.lightValues
 				return [{
 					...defaultOptions,
 					name: game.darkText,
-					dataPoints: game.darkValues.map(move => {
+					dataPoints: darkValues.map(move => {
 						return { y: move.value, x: move.turnNumber }
 					})
 				},
 				{
 					...defaultOptions,
 					name: game.lightText,
-					dataPoints: game.lightValues.map(move => {
+					dataPoints: lightValues.map(move => {
 						return { y: move.value, x: move.turnNumber }
 					})
 				}]
 			})
 
-			var chart = new CanvasJS.Chart("chartContainer", {
+			var chart = new CanvasJS.Chart("chartContainer" + id, {
 				zoomEnabled: true,
 				animationEnabled: true,
 				theme: "dark2",
@@ -63,7 +69,7 @@
 					// shared: true
 				},
 				title: {
-					text: gameData.title
+					text: gameData.title + " " + Number(id + 1)
 				},
 				axisX: {
 					title: gameData.xTitle,
@@ -100,9 +106,9 @@
 			}
 		}
 
-		function drawBarChart(data) {
+		function drawBarChart(data, id = 0) {
 			let gameData = data
-			var chart = new CanvasJS.Chart("chartContainer", {
+			var chart = new CanvasJS.Chart("chartContainer" + id, {
 				animationEnabled: true,
 				theme: "dark2",
 				axisY: {
@@ -122,82 +128,30 @@
 			});
 			chart.render();
 		}
-		// function drawMultiBarChart(data) {
-		// 	let gameData = data
-		// 	const dataPoints = gameData.data.map((game, index) => {
-		// 		return {
-		// 			type: "column",
-		// 			label: game.label,
-		// 			dataPoints: [
-		// 				{ y: game.value, label: game.label, color: game.color },
-		// 				// {x:gameData.data.indexOf(game), y: game.lightPlayer.value, label: game.lightPlayer.name, color: "#d1b496" }
-		// 			]
-		// 		}
-
-		// 	})
-		// 	console.log(dataPoints)
-
-		// 	var chart = new CanvasJS.Chart("chartContainer", {
-		// 		animationEnabled: true,
-		// 		theme: "dark2",
-		// 		title: {
-		// 			text: gameData.title
-		// 		},
-		// 		axisY: {
-		// 			title: gameData.yTitle,
-		// 			includeZero: true,
-		// 			interval: gameData.yInterval
-		// 		},
-		// 		data: dataPoints
-		// 	});
-		// 	chart.render();
-
-		// 	function toolTipFormatter(e) {
-		// 		var str = "";
-		// 		var total = 0;
-		// 		var str3;
-		// 		var str2;
-		// 		for (var i = 0; i < e.entries.length; i++) {
-		// 			var str1 = "<span style= \"color:" + e.entries[i].dataSeries.color + "\">" + e.entries[i].dataSeries.name + "</span>: <strong>" + e.entries[i].dataPoint.y + "</strong> <br/>";
-		// 			total = e.entries[i].dataPoint.y + total;
-		// 			str = str.concat(str1);
-		// 		}
-		// 		str2 = "<strong>" + e.entries[0].dataPoint.label + "</strong> <br/>";
-		// 		str3 = "<span style = \"color:Tomato\">Total: </span><strong>" + total + "</strong><br/>";
-		// 		return (str2.concat(str)).concat(str3);
-		// 	}
-
-		// 	function toggleDataSeries(e) {
-		// 		if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-		// 			e.dataSeries.visible = false;
-		// 		}
-		// 		else {
-		// 			e.dataSeries.visible = true;
-		// 		}
-		// 		chart.render();
-		// 	}
-
-		// }
 	</script>
 
 </head>
 
-<body>
+<body style="background-color: #646464;">
+	<div id="chartContainer0" style="height: 370px; width: 100%; margin-bottom: 10px;">First</div>
+	<div id="chartContainer1" style="height: 370px; width: 100%; margin-bottom: 10px;">Second</div>
+	<div id="chartContainer2" style="height: 370px; width: 100%; margin-bottom: 10px;">Third</div>
 	<button onClick="getData('boardScore')">Board score</button>
 	<button onClick="getData('boardScore',true)">Avg Board score</button>
+	<button onClick="getData('boardScorePerStage',true)">Avg Board score per stage</button>
 	<button onClick="getData('boardScoreCumulative',true)">Avg cumulative Board score</button>
+	<button onClick="getData('boardScoreCumulativePerStage',true)">Avg cumulative Board score per stage</button>
 	<button onClick="getData('turnTimes')">Turn times</button>
 	<button onClick="getData('turnTimes',true)">Avg Turn times</button>
+	<button onClick="getData('turntimesPerStage',true)">Avg Turn times per stage</button>
 	<button onClick="getData('turnTimesCumulative')">Turn times cumulatives</button>
 	<button onClick="getData('turnTimesCumulative',true)">Avg Turn times cumulatives</button>
+	<button onClick="getData('turntimesCumulativePerStage',true)">Avg Turn times cumulatives per stage</button>
 	<button onClick="getData('chipcount')">Chip counts</button>
 	<button onClick="getData('chipcount',true)">Avg Chip counts</button>
+	<button onClick="getData('chipcountPerStage',true)">Avg Chip counts per stage</button>
 	<button onClick="getData('gameLength')">Game lengths</button>
 	<button onClick="getData('winlose')">Win lose ratios</button>
-	<div id="chartContainer"></div>
-
-	<script src=" https://canvasjs.com/assets/script/canvasjs.min.js"></script>
-	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </body>
 
 </html>

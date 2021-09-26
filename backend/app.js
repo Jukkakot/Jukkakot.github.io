@@ -2,10 +2,10 @@ import express from "express"
 import cors from "cors"
 import path from 'path'
 import { LowSync, JSONFileSync } from 'lowdb'
-
+const AVGTHRESHOLD = 0.01
 const app = express()
 
-app.use(express.json({limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
 app.use(cors())
 app.listen(3001)
 
@@ -57,7 +57,6 @@ app.get('/api/chipcount', function (req, res) {
     let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
     let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
 
-
     let playersTurnData = {
       darkValues: getChipCounts(darkPlayer),
       lightValues: getChipCounts(lightPlayer),
@@ -70,6 +69,70 @@ app.get('/api/chipcount', function (req, res) {
   if (req.query.avg == "true") {
     let groupedGames = groupBy(data.data, "label")
     data.data = getAvgValueByKey(groupedGames, "value", "turnNumber")
+  }
+  res.send(data)
+})
+app.get('/api/chipcountPerStage', function (req, res) {
+  let data = {
+    type: "multiline",
+    title: "Mill chip count per stage",
+    xTitle: "Turns",
+    yTitle: "Chip count",
+    data: []
+  }
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
+    let playersTurnData = {
+      darkValues: groupBy(getChipCounts(darkPlayer), "stage"),
+      lightValues: groupBy(getChipCounts(lightPlayer), "stage"),
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+    }
+    data.data.push(playersTurnData)
+  }
+  if (req.query.avg == "true") {
+    let groupedGames = groupBy(data.data, "label")
+    data.data = getAvgValuePerStageByKey(groupedGames, "value", "turnNumber")
+  }
+  res.send(data)
+})
+app.get('/api/turntimesPerStage', function (req, res) {
+  let data = {
+    type: "multiline",
+    title: "Mill turn times nonCumulative per stage",
+    xTitle: "Turns",
+    yTitle: "Turn time",
+    data: []
+  }
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
+    let playersTurnData = {
+      darkValues: groupBy(getMoveTimes(darkPlayer), "stage"),
+      lightValues: groupBy(getMoveTimes(lightPlayer), "stage"),
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+    }
+    data.data.push(playersTurnData)
+  }
+  if (req.query.avg == "true") {
+    let groupedGames = groupBy(data.data, "label")
+    data.data = getAvgValuePerStageByKey(groupedGames, "value", "turnNumber")
   }
   res.send(data)
 })
@@ -105,8 +168,39 @@ app.get('/api/turntimes', function (req, res) {
   }
   res.send(data)
 })
-app.get('/api/turntimesCumulative', function (req, res) {
+app.get('/api/turntimesCumulativePerStage', function (req, res) {
+  let data = {
+    type: "multiline",
+    title: "Mill turn times cumulative per stage",
+    xTitle: "Turns",
+    yTitle: "Total turn time",
+    data: []
+  }
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
 
+    let playersTurnData = {
+      darkValues: groupBy(getCumulativeTimes(darkPlayer), "stage"),
+      lightValues: groupBy(getCumulativeTimes(lightPlayer), "stage"),
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+    }
+    data.data.push(playersTurnData)
+  }
+  if (req.query.avg == "true") {
+    let groupedGames = groupBy(data.data, "label")
+    data.data = getAvgValuePerStageByKey(groupedGames, "value", "turnNumber")
+  }
+  res.send(data)
+})
+app.get('/api/turntimesCumulative', function (req, res) {
   let data = {
     type: "line",
     title: "Mill turn times cumulative",
@@ -171,7 +265,72 @@ app.get('/api/boardScore', function (req, res) {
 
   res.send(data)
 })
+app.get('/api/boardScorePerStage', function (req, res) {
+  let data = {
+    type: "multiline",
+    title: "Mill board scores per stage",
+    xTitle: "Turns",
+    yTitle: "Score",
+    data: []
+  }
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
 
+    let playersTurnData = {
+      darkValues: groupBy(getBoardScores(darkPlayer), "stage"),
+      lightValues: groupBy(getBoardScores(lightPlayer), "stage"),
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+    }
+    data.data.push(playersTurnData)
+  }
+  if (req.query.avg == "true") {
+    let groupedGames = groupBy(data.data, "label")
+    data.data = getAvgValuePerStageByKey(groupedGames, "value", "turnNumber")
+  }
+
+  res.send(data)
+})
+app.get('/api/boardScoreCumulativePerStage', function (req, res) {
+  let data = {
+    type: "multiline",
+    title: "Cumulative Mill board scores per stage",
+    xTitle: "Turns",
+    yTitle: "Score",
+    data: []
+  }
+  if (!db.data.game) {
+    res.send("no games available")
+    return
+  }
+  for (let game of db.data.game) {
+    let players = game.data.players
+    let darkPlayer = players.winner.char == "D" ? players.winner : players.oppPlayer
+    let lightPlayer = players.winner.char == "D" ? players.oppPlayer : players.winner
+
+    let playersTurnData = {
+      darkValues: groupBy(getCumulativeBoardScores(darkPlayer), "stage"),
+      lightValues: groupBy(getCumulativeBoardScores(lightPlayer), "stage"),
+      darkText: darkPlayer.char + " " + darkPlayer.options.text,
+      lightText: lightPlayer.char + " " + lightPlayer.options.text,
+      label: lightPlayer.options.text + " " + darkPlayer.options.text,
+    }
+    data.data.push(playersTurnData)
+  }
+  if (req.query.avg == "true") {
+    let groupedGames = groupBy(data.data, "label")
+    data.data = getAvgValuePerStageByKey(groupedGames, "value", "turnNumber")
+  }
+
+  res.send(data)
+})
 app.get('/api/boardScoreCumulative', function (req, res) {
   let data = {
     type: "line",
@@ -320,14 +479,14 @@ app.get('/api/gameLength', function (req, res) {
 function getMoveTimes(player) {
   let times = []
   for (let turn of player.turnData) {
-    times.push({ value: turn.time, turnNumber: turn.turnNumber })
+    times.push({ value: turn.time, turnNumber: turn.turnNumber, stage: Math.max(getStage(turn.player), getStage(turn.oppPlayer)) })
   }
   return times
 }
 function getChipCounts(player) {
   let counts = []
   for (let turn of player.turnData) {
-    counts.push({ value: turn.player.chipCount, turnNumber: turn.turnNumber })
+    counts.push({ value: turn.player.chipCount, turnNumber: turn.turnNumber, stage: Math.max(getStage(turn.player), getStage(turn.oppPlayer)) })
   }
   return counts
 }
@@ -336,7 +495,7 @@ function getCumulativeTimes(player) {
   let totalTime = 0
   for (let turn of player.turnData) {
     totalTime += turn.time
-    times.push({ value: totalTime, turnNumber: turn.turnNumber })
+    times.push({ value: totalTime, turnNumber: turn.turnNumber, stage: Math.max(getStage(turn.player), getStage(turn.oppPlayer)) })
   }
   // console.log(player,times)
   return times
@@ -344,7 +503,7 @@ function getCumulativeTimes(player) {
 function getBoardScores(player) {
   let scores = []
   for (let turn of player.turnData) {
-    scores.push({ value: turn.boardScore, turnNumber: turn.turnNumber })
+    scores.push({ value: turn.boardScore, turnNumber: turn.turnNumber, stage: Math.max(getStage(turn.player), getStage(turn.oppPlayer)) })
   }
   return scores
 }
@@ -353,12 +512,12 @@ function getCumulativeBoardScores(player) {
   let totalScore = 0
   for (let turn of player.turnData) {
     totalScore += turn.boardScore
-    scores.push({ value: totalScore, turnNumber: turn.turnNumber })
+    scores.push({ value: totalScore, turnNumber: turn.turnNumber, stage: Math.max(getStage(turn.player), getStage(turn.oppPlayer)) })
   }
   return scores
 }
-function groupBy(xs, key) {
-  return xs.reduce(function (rv, x) {
+function groupBy(arr, key) {
+  return arr.reduce(function (rv, x) {
     (rv[x[key]] = rv[x[key]] || []).push(x);
     return rv;
   }, {});
@@ -381,7 +540,39 @@ function avgValuesByKey(arr, val, key) {
     let res = {}
     res[key] = Number(prop)
     res[val] = holder[prop] / counts[prop]
-    result.push(res)
+
+    //Not adding too rare occurrences of turnNUmbers (key)
+    if (counts[prop] / arr.length >= AVGTHRESHOLD) {
+      result.push(res)
+    }
+
+  }
+  return result
+}
+function getAvgValuePerStageByKey(groupedData, val, key) {
+  let result = []
+  for (let groupKey in groupedData) {
+
+    let group = groupedData[groupKey]
+    // consoles.log(group)
+    let darkValuesPerStage = { 1: [], 2: [], 3: [] }
+    let lightValuesPerStage = { 1: [], 2: [], 3: [] }
+    for (let column of group) {
+
+      for (let stage in column.darkValues) {
+        darkValuesPerStage[stage] = darkValuesPerStage[stage].concat(column.darkValues[stage])
+      }
+      for (let stage in column.lightValues) {
+        lightValuesPerStage[stage] = lightValuesPerStage[stage].concat(column.lightValues[stage])
+      }
+    }
+    let newGroup = { ...group[0] }
+    for (let stage in darkValuesPerStage) {
+      newGroup.darkValues[stage] = avgValuesByKey(darkValuesPerStage[stage], val, key)
+      newGroup.lightValues[stage] = avgValuesByKey(lightValuesPerStage[stage], val, key)
+    }
+    result.push(newGroup)
+    // console.log(newGroup)
   }
   return result
 }
@@ -406,24 +597,15 @@ function getAvgValueByKey(groupedData, val, key) {
   }
   return result
 }
-// function getAvgScoreByKey(groupedData, val, key) {
-//   let result = []
-//   for (let groupKey in groupedData) {
-//     let group = groupedData[groupKey]
-//     // consoles.log(group)
-//     let darkValues = []
-//     let lightValues = []
-//     for (let column of group) {
-//       darkValues = darkValues.concat(column.winnerTimes)
-//       lightValues = lightValues.concat(column.oppPlayerTimes)
-//     }
-//     let newGroup = {...group[0]}
-//     newGroup.darkValues = avgValuesByKey(darkValues, val, key)
-//     newGroup.lightValues = avgValuesByKey(lightValues, val, key)
-//     newGroup.label = groupKey
-
-//     result.push(newGroup)
-//     // console.log(winnerObject)
-//   }
-//   return result
-// }
+function getStage(player) {
+  if (player.chipsToAdd > 0) {
+    return 1
+  } else if (player.chipCount + player.chipsToAdd === 3) {
+    return 3
+  } else if (player.chipsToAdd === 0) {
+    return 2
+  } else {
+    console.error("returning 0 stage", player)
+    return 0
+  }
+}

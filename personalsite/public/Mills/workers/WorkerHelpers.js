@@ -44,9 +44,10 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             DEBUG = data.DEBUG
             // workeridNumber = data.idNumber
             console.log("stages", workerGame.playerDark.char, getStage(workerGame.playerDark), workerGame.playerLight.char, getStage(workerGame.playerLight))
-            fastEvaluateBoard(workerGame.fastDots, workerGame.playerLight, workerGame.playerDark, -1)
-            fastEvaluateBoard(workerGame.fastDots, workerGame.playerDark, workerGame.playerLight, -1)
+            fastNewEvaluateBoard(workerGame.fastDots, workerGame.playerLight, workerGame.playerDark, -1)
+            fastNewEvaluateBoard(workerGame.fastDots, workerGame.playerDark, workerGame.playerLight, -1)
             self.close()
+            break;
     };
 })
 
