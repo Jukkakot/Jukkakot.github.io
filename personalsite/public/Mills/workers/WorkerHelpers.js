@@ -504,23 +504,21 @@ function fastGetPlayerMillDots(board, player) {
     return [... new Set(dots)]
 }
 function fastGetEatableDots(board, player) {
-    var dotsInMill = fastGetPlayerMillDots(board, player)
-    var allDots = fastGetPlayerDots(board, player)
+    let dotsInMill = fastGetPlayerMillDots(board, player)
+    let allDots = fastGetPlayerDots(board, player)
 
     //if there is same amount if dots in mills as total player dots, then all of them are eatable
     if (dotsInMill.length === allDots.length) {
-        // console.log("All dots in mills", board, player.char, player.mills)
         return allDots
     }
 
-
-    var eatableDots = []
     //Otherwise have to look for the dots that are not in mills
-    eatableDots.push(...allDots.filter(dot => !dotsInMill.includes(dot)))
+    let eatableDots = allDots.filter(dot => !dotsInMill.includes(dot))
     return eatableDots
 }
 function fastGetSortedEatableDots(board, player) {
     var dots = []
+    let allEatableDots = fastGetEatableDots(board, player)
     for (var window of millWindows) {
         // var oppStage = getStage(oppPlayer)
         var windowStr = windowToStr(board, window)
@@ -532,19 +530,19 @@ function fastGetSortedEatableDots(board, player) {
 
         // Eating from almost mill
         if (pieceCount === 2 && emptyCount === 1) {
-            if (!dots.includes(playerDots[0]))
+            if (allEatableDots.includes(playerDots[0]) && !dots.includes(playerDots[0]))
                 dots.push(playerDots[0])
-            if (!dots.includes(playerDots[1]))
+            if (allEatableDots.includes(playerDots[1]) && !dots.includes(playerDots[1]))
                 dots.push(playerDots[1])
         }
         // Eating from potentially blocking a mill
         if (oppCount === 2 && pieceCount === 1) {
-            if (!dots.includes(playerDots[0]))
+            if (allEatableDots.includes(playerDots[0]) && !dots.includes(playerDots[0]))
                 dots.push(playerDots[0])
         }
     }
     //Adding all the rest of the moves
-    let allEatableDots = fastGetEatableDots(board, player)
+
     for (var dot of allEatableDots) {
         if (!dots.includes(dot))
             dots.push(dot)
