@@ -46,7 +46,7 @@ class Dot {
         if (getStage(this.player) !== 3) {
             return this.neighbours
         } else {
-            return getEmptyDots(game.dots)
+            return game.getEmptyDots()
         }
     }
     size() {

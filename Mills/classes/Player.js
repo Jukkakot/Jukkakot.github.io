@@ -88,7 +88,7 @@ class Player {
     dotIsInMill(dot) {
         return this.mills.some(m => m.contain(dot))
     }
-    checkMovableDots(board) {
+    checkMovableDots(board = game.dots) {
         var movableDots = []
         for (var layer of board) {
             for (var dot of layer) {
@@ -99,5 +99,45 @@ class Player {
             }
         }
         return movableDots
+    }
+    checkIfCanMove() {
+        if (getStage(this) !== 2) return true
+        var movableDots = this.checkMovableDots()
+        return movableDots.length > 0
+    }
+    hasNewMills() {
+        this.mills = this.getUpdatedMills()
+        return this.mills.some(m => m.new)
+    }
+    getUpdatedMills(board = game.dots) {
+        var oldMills = this.mills
+        var allMills = []
+        for (var layer of board) {
+            for (var d = 0; d < 8; d++) {
+                var mill
+                if (d % 2 === 0) {
+                    //d = 0,2,4,6
+                    //Checking mills on layers (even indexes)
+                    mill = isMill(this, layer[d], layer[(d + 1) % 8], layer[(d + 2) % 8])
+                } else if (layer[d].l === 0) {
+                    //This only needs to be checked once and not on every layer (it caused duplicated mills otherwise)
+                    //d = 1,3,5,7
+                    //Checking mills between layers (odd indexes)
+                    mill = isMill(this, board[0][d], board[1][d], board[2][d])
+                }
+                if (mill) {
+                    var oldMill = oldMills.find(m => m.id == mill.id)
+                    if (oldMill && !allMills.some(m => m.id == mill.id)) {
+                        allMills.push(oldMill)
+                    } else if (!allMills.some(m => m.id == mill.id)) {
+                        allMills.push(mill)
+                    }
+
+                }
+            }
+        }
+        //Now mills that are returned are mostly the same, just new ones are added and non excistant removed
+        //instead of replacing them all which is helpful in future because we can then compare then mills unique id's
+        return allMills
     }
 }

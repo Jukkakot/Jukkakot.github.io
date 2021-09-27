@@ -1,88 +1,97 @@
 const MAXCHIPCOUNT = 18
 const EASING = 0.10
-var ANGLE = 0.0
-var SPEED = 0.07
+let ANGLE = 0.0
+let SPEED = 0.07
 const EMPTYDOT = '0'
 const defaultWidth = 800
 const defaultHeight = 1100
 const ASPECTRATIO = defaultHeight / defaultWidth
 const isMobileDevice = /Mobi/i.test(window.navigator.userAgent)
-var LOADING = false
-var DEBUG = false
-var AUTOPLAY = false
+let LOADING = false
+let DEBUG = false
+let AUTOPLAY = false
+let NODELAY = false
+let SENDDATA = false
+const defaultOption  = {
+	autoPlay: true,
+	delay:true,
+	autoPlay:true,
+	random: false,
+	iterative:false,
+	mcts: false,
+}
 const OPTIONS = [
 	{
+		...defaultOption,
 		text: "Manual",
 		autoPlay: false
 	},
 	{
+		...defaultOption,
 		text: "Random",
 		random: true,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Minmax 4",
-		iterative: false,
 		difficulty: 4,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Minmax 6",
-		iterative: false,
 		difficulty: 6,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Iterative 0.5s",
 		iterative: true,
 		time: 500,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Iterative 1s",
 		iterative: true,
 		time: 1000,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Iterative 3s",
 		iterative: true,
 		time: 3000,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Iterative 5s",
 		iterative: true,
 		time: 5000,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "Iterative 10s",
 		iterative: true,
 		time: 10000,
-		autoPlay: true
 	},
 	{
+		...defaultOption,
 		text: "MCTS",
 		mcts: true,
-		autoPlay: true
 	},
 ]
-var gameSettings = {
-	lightOption: 4,
+let gameSettings = {
+	lightOption: 6,
 	darkOption: 0,
 }
 
-var outBoxSize, circleSize, distance
-var cnv
-var scaledWidth, scaledHeight
-var game
-var mX, mY
-var fps
-var locked
-var movableDot
-var darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
-var restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton
+let outBoxSize, circleSize, distance
+let cnv
+let scaledWidth, scaledHeight
+let game
+let mX, mY
+let fps
+let locked
+let movableDot
+let darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
+let restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton
 
 function preload() {
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
@@ -130,16 +139,20 @@ function setup() {
 function keyPressed(e) {
 	if (e.key === "r") {
 		restartPress()
-	} else if (e.key === "b") {
-		// game.playRound(game.findBestMove())
-		game.findBestMove("findMove")
+	} else if (e.key === "e") {
+		NODELAY = !NODELAY
+		console.log("NODELAY:", NODELAY)
+
+	} else if (e.key === "t") {
+		SENDDATA = !SENDDATA
+		console.log("SENDDATA:", SENDDATA)
 	} else if (e.key === "s") {
 		suggestionPress()
 	} else if (e.key === "d") {
 		DEBUG = !DEBUG
 		if (DEBUG) {
 			const worker = new Worker("workers/WorkerHelpers.js")
-			var data = {
+			let data = {
 				game: deepClone(game),
 				board: game.stringify(),
 				cmd: "debug",
@@ -151,6 +164,16 @@ function keyPressed(e) {
 		togglePlayerLight()
 	} else if (e.key === "2") {
 		togglePlayerDark()
+	} else if (e.key === "h") {
+		console.log("r: restart\n",
+			"e: no delay\n",
+			"t: send data\n",
+			"s: suggestion\n",
+			"d: debug\n",
+			"1: toggle light player button\n",
+			"2: toggle dark player button\n",
+			"h: help"
+		)
 	}
 }
 function suggestionPress() {
@@ -229,8 +252,8 @@ function windowResized() {
 	outBoxSize = min(width, height / ASPECTRATIO) - circleSize * 2.5
 	distance = min(width, height / ASPECTRATIO) * 0.28
 
-	var buttonWidth = circleSize * 7
-	var buttonHeight = buttonWidth / 2.5
+	let buttonWidth = circleSize * 7
+	let buttonHeight = buttonWidth / 2.5
 
 	loadingGif.size(circleSize * 3, circleSize)
 	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width / 2, cnv.position().y + cnv.height / 2 - circleSize * 3)
@@ -305,8 +328,8 @@ function mouseDragged() {
 	}
 
 	if (movableDot && movableDot.player && movableDot.player === game.turn) {
-		var r = movableDot.player ? movableDot.r * 0.6 : movableDot.r * 2
-		var size = movableDot.size()
+		let r = movableDot.player ? movableDot.r * 0.6 : movableDot.r * 2
+		let size = movableDot.size()
 		if (pointInCircle(mX, mY, movableDot.x * size, movableDot.y * size, r)) {
 			locked = true
 		}
@@ -402,14 +425,14 @@ function drawUI() {
 }
 function sendData(data = "test data", type = "test") {
 	axios.defaults.baseURL = 'http://localhost:3001';
-	let testData = {
+	let body = {
 		type: type,
 		data: {
 			time: Date(),
 			data: data
 		}
 	}
-	axios.post("/api", testData).then(res => {
+	axios.post("/api", body).then(res => {
 		console.log(res.data)
 	}).catch(err => {
 		console.error("Error sending data", err)
