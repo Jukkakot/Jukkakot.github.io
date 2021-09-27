@@ -1,5 +1,5 @@
 class Dot {
-    constructor(x, y, l, d, extraChip) {
+    constructor(x, y, l, d, isExtraChip) {
         //x and y are indexes used to calculate exacty position of the dot
         this.x = x
         this.y = y
@@ -33,7 +33,10 @@ class Dot {
         //Dots player is changed in the middle of animation again
         this.animPlayer
 
-        this.extraChip = extraChip
+        //Boolean if dot is chip indicating player chips to add or eaten chips
+        //Extra chips are located on top or at the bottom of the game board
+        this.isExtraChip = isExtraChip
+        
         this.visible = true
         this.moving = false
         this.hover = false
@@ -50,7 +53,7 @@ class Dot {
         }
     }
     size() {
-        if (this.extraChip) return (outBoxSize - distance) / 2
+        if (this.isExtraChip) return (outBoxSize - distance) / 2
         return (outBoxSize - distance * this.l) / 2
     }
 
@@ -100,7 +103,7 @@ class Dot {
             this.drawSuggested()
         }
         //Text labels to help debugging
-        if (!this.extraChip && DEBUG) {
+        if (!this.isExtraChip && DEBUG) {
             var l = this.l
             var d = this.d
             fill(0, 0, 255)
@@ -152,7 +155,7 @@ class Dot {
         return false
     }
     canMove() {
-        if (this.extraChip) return false
+        if (this.isExtraChip) return false
         //Always moveable if player is on stage 3 (flying)
         if (this.player && getStage(this.player) === 3) return true
         //Checking for empty dot in neighbour dots
@@ -193,7 +196,7 @@ class Dot {
         pop()
     }
     drawEmpty() {
-        if (this.extraChip) return
+        if (this.isExtraChip) return
         push()
         this.r = circleSize
         noStroke()
@@ -209,7 +212,7 @@ class Dot {
         pop()
     }
     setTargetDot(prevDot) {
-        playAudio("moving")
+        // playAudio("moving")
         this.player = prevDot.player
         this.animPlayer = prevDot.player
 
@@ -248,7 +251,10 @@ class Dot {
             var index = game.movingAnimations.indexOf(this)
 
             game.movingAnimations.splice(index, 1)
-            playAudio("placing")
+
+            if (!this.isExtraChip)
+                playAudio("placing")
+
         } else {
             this.drawMovingAnimation()
         }
