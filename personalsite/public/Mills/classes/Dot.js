@@ -209,6 +209,7 @@ class Dot {
         pop()
     }
     setTargetDot(prevDot) {
+        playAudio("moving")
         this.player = prevDot.player
         this.animPlayer = prevDot.player
 
@@ -247,6 +248,7 @@ class Dot {
             var index = game.movingAnimations.indexOf(this)
 
             game.movingAnimations.splice(index, 1)
+            playAudio("placing")
         } else {
             this.drawMovingAnimation()
         }

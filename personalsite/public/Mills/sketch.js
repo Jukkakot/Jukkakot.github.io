@@ -12,12 +12,13 @@ let DEBUG = false
 let AUTOPLAY = false
 let NODELAY = false
 let SENDDATA = false
-const defaultOption  = {
+let audioIsOn = true
+const defaultOption = {
 	autoPlay: true,
-	delay:true,
-	autoPlay:true,
+	delay: true,
+	autoPlay: true,
 	random: false,
-	iterative:false,
+	iterative: false,
 	mcts: false,
 }
 const OPTIONS = [
@@ -90,49 +91,62 @@ let mX, mY
 let fps
 let locked
 let movableDot
-let darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton
-let restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton
+let darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton, audioOffImg, audioOnImg
+let restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton, audioButton
+let chipPlacingSound, chipEatingSound, chipMovingSound
 
 function preload() {
+	//Images
 	darkDot = loadImage("./resources/img/darkDotSharp.png")
 	lightDot = loadImage("./resources/img/lightDotSharp.png")
 	backgroundImg = loadImage("./resources/img/background2.jpg")
 	bAndwDotImg = loadImage("./resources/img/blackAndWhiteDot.png")
-	loadingGif = createImg("./resources/img/loading.gif")
 	darkButton = loadImage("./resources/img/darkButton.png")
-	// spinnerGif = createImg("./resources/img/spinner.gif")
+	audioOffImg = loadImage("./resources/img/audioOffButton.png")
+	audioOnImg = loadImage("./resources/img/audioOnButton.png")
+
+	loadingGif = createImg("./resources/img/loading.gif")
 	loadingGif.hide()
-	// buttonImg = loadImage("./resources/img/woodenButton.png")
-	// cursorImg = loadImage("./resources/img/cursor.png")
+
+	//Audio
+	chipPlacingSound = loadSound("./resources/audio/chipPlacing.mp3")
+	chipEatingSound = loadSound("./resources/audio/chipEating.mp3")
+	chipMovingSound = loadSound("./resources/audio/chipMoving.mp3")
+}
+function playAudio(key) {
+	//Not playing audio if muted
+	if(!audioIsOn) return
+
+	switch (key) {
+		case "placing":
+			chipPlacingSound.play()
+			break;
+		case "moving":
+			chipMovingSound.play()
+			break;
+		case "eating":
+			chipEatingSound.play()
+			break;
+		default:
+			console.error("invalid audio key", key)
+			break;
+	}
+}
+function setupButton(txt, id, func) {
+	let btn = createButton(txt)
+	btn.id(id)
+	btn.mousePressed(() => func())
+	return btn
 }
 function setup() {
 	cnv = createCanvas(defaultWidth, defaultHeight);
-
 	textFont('Holtwood One SC')
-
-	restartButton = createButton("Restart")
-	restartButton.id("restartButton")
-	restartButton.mousePressed(() => restartPress())
-
-	suggestionButton = createButton("Suggestion")
-	suggestionButton.id("suggestionButton")
-	suggestionButton.mousePressed(() => suggestionPress())
-
-	autoPlayButton = createButton("Autoplay")
-	autoPlayButton.id("autoPlayButton")
-	autoPlayButton.mousePressed(() => autoPlayButtonPress())
-
-	pDarkButton = createButton("P")
-	pDarkButton.id("pDarkButton")
-	pDarkButton.mousePressed(() => togglePlayerDark())
-
-	pLightButton = createButton("P")
-	pLightButton.id("pLightButton")
-	pLightButton.mousePressed(() => togglePlayerLight())
-
-	// difficultyButton = createButton("Difficulty")
-	// difficultyButton.id("difficultyButton")
-	// difficultyButton.mousePressed(() => toggleDifficulty())
+	restartButton = setupButton("Restart", "restartButton", restartPress)
+	suggestionButton = setupButton("Suggestion", "suggestionButton", suggestionPress)
+	autoPlayButton = setupButton("Autoplay", "autoPlayButton", autoPlayButtonPress)
+	pDarkButton = setupButton(" ", "pDarkButton", togglePlayerDark)
+	pLightButton = setupButton(" ", "pLightButton", togglePlayerLight)
+	audioButton = setupButton(" ", "audioButton", toggleAudio)
 	start()
 	windowResized()
 }
@@ -216,10 +230,8 @@ function togglePlayerDark() {
 		game.findBestMove("findMove")
 	}
 }
-function toggleDifficulty() {
-	// game.settings.difficulty = game.settings.difficulty === 4 ? 6 : 4
-	// game.difficulty = game.settings.difficulty
-	// game.initWorker()
+function toggleAudio() {
+	audioIsOn = !audioIsOn
 }
 function start() {
 	if (game && game.worker) {
@@ -263,7 +275,6 @@ function windowResized() {
 		restartButton.style('font-size', circleSize * 0.6 + "px")
 	}
 
-
 	suggestionButton.position(cnv.position().x + restartButton.width, cnv.position().y)
 	suggestionButton.size(buttonWidth, buttonHeight)
 	suggestionButton.style('font-size', circleSize * 0.6 + "px")
@@ -271,14 +282,6 @@ function windowResized() {
 	autoPlayButton.position(cnv.position().x + restartButton.width + suggestionButton.width, cnv.position().y)
 	autoPlayButton.size(buttonWidth, buttonHeight)
 	autoPlayButton.style('font-size', circleSize * 0.6 + "px")
-
-	// pLightButton.position(cnv.position().x + restartButton.width + suggestionButton.width + autoPlayButton.width, cnv.position().y)
-	// pLightButton.size(buttonHeight, buttonHeight)
-	// pLightButton.style('font-size', circleSize * 1.5 + "px")
-
-	// pDarkButton.position(cnv.position().x + restartButton.width + suggestionButton.width + autoPlayButton.width + pLightButton.width, cnv.position().y)
-	// pDarkButton.size(buttonHeight, buttonHeight)
-	// pDarkButton.style('font-size', circleSize * 1.5 + "px")
 
 	pLightButton.position(cnv.position().x + circleSize / 3, cnv.position().y + cnv.height - buttonHeight)
 	pLightButton.size(buttonWidth, buttonHeight)
@@ -288,11 +291,9 @@ function windowResized() {
 	pDarkButton.size(buttonWidth, buttonHeight)
 	pDarkButton.style('font-size', circleSize * 1 + "px")
 
-	// loadingGif.position(cnv.position(). , cnv.position().y)
-	// loadingGif.size(buttonWidth*1000, buttonWidth*1000)
-	// autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
-	// autoPlayButton.style("background-size", "cover")
-
+	audioButton.position(cnv.position().x + cnv.width - buttonHeight * 0.8, 0)
+	audioButton.size(buttonHeight * 0.8, buttonHeight * 0.8)
+	audioButton.style('font-size', circleSize * 1 + "px")
 
 }
 function touchStarted(e) {
@@ -375,7 +376,7 @@ function drawFps() {
 	textAlign(CENTER)
 	textSize(circleSize * 0.8)
 	fill(0)
-	text(floor(fps) + " fps", width / 2 - circleSize * 2, -height * 0.48)
+	text(floor(fps) + " fps", width / 2 - circleSize * 4, -height * 0.48)
 	pop()
 }
 function drawDebug() {
@@ -403,10 +404,13 @@ function updateButtons() {
 	} else {
 		autoPlayButton.style("visibility", "hidden")
 	}
-	// else {
-	// 	autoPlayButton.style('background', "transparent  url('./resources/img/greenButton.png') no-repeat center top")
-	// 	autoPlayButton.style("background-size", "cover")
-	// }
+	if (audioIsOn) {
+		audioButton.style('background', "transparent  url('./resources/img/audioOnButton.png') no-repeat center top")
+		audioButton.style("background-size", "cover")
+	} else {
+		audioButton.style('background', "transparent  url('./resources/img/audioOffButton.png') no-repeat center top")
+		audioButton.style("background-size", "cover")
+	}
 }
 function drawUI() {
 	if (frameCount === 1) windowResized()

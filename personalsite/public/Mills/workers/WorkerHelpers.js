@@ -542,7 +542,6 @@ function fastGetSortedEatableDots(board, player) {
         }
     }
     //Adding all the rest of the moves
-
     for (var dot of allEatableDots) {
         if (!dots.includes(dot))
             dots.push(dot)

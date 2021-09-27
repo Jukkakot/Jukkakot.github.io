@@ -311,7 +311,7 @@ class Game {
     eatChip(dot) {
         dot = this.dots[dot.l][dot.d]
         dot.player.chipCount--
-
+        playAudio("eating")
         this.turn.eatenChips[this.turn.eatenChipsCount].setTargetDot(dot)
         this.turn.eatenChips[this.turn.eatenChipsCount++].visible = true
 
@@ -357,7 +357,6 @@ class Game {
 
         var prevDot = this.turn.startChips.pop()
         dot.setTargetDot(prevDot)
-
         this.switchTurn()
     }
     hover() {
@@ -447,6 +446,7 @@ class Game {
         toDot = this.dots[toDot.l][toDot.d]
 
         toDot.setTargetDot(fromDot)
+        playAudio("moving")
         this.switchTurn()
     }
     setWinner(player) {

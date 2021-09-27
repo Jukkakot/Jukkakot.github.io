@@ -36,3 +36,7 @@ html, body{
     background: transparent  url("./resources/img/lightButton.png") no-repeat center top;
     background-size: cover;
   }
+  #audioButton {
+    background: transparent  url("./resources/img/audioOnButton.png") no-repeat center top;
+    background-size: cover;
+  }
