@@ -296,6 +296,7 @@ class Game {
             if (dot.player === this.turn || (!dot.player && this.prevDot && this.prevDot.player === this.turn)) {
                 //Check if moving was succesful
                 if (dot.click(this.prevDot)) {
+                    playAudio("moving")
                     this.prevDot = undefined
                     this.switchTurn()
                 } else {
