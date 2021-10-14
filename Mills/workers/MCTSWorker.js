@@ -140,7 +140,7 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
         "playoutCount", randomGameTurns.length,
         "nodeCount", mctsNodeCount,
         "root", root)
-    var data = {
+    let data = {
         maxTurns: Math.max(...randomGameTurns),
         minTurns: Math.min(...randomGameTurns),
         avgTurns: Math.round(avgTurns),
@@ -271,7 +271,7 @@ function playMove(node, index) {
         console.error("invalid move", moves.length, index)
     }
 
-    var args = {
+    let args = {
         move: moves[index],
         type: type,
         board: node.state.board,

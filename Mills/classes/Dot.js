@@ -69,7 +69,7 @@ class Dot {
             strokeWeight(this.r / 10)
 
             if (eatMode && this.player.canEat(this)) {
-                var value = map(sin(ANGLE), -1, 1, 0.8, 1.4)
+                let value = map(sin(ANGLE), -1, 1, 0.8, 1.4)
                 this.r = this.r * value
             }
             if (this.canMove()) {
@@ -104,8 +104,8 @@ class Dot {
         }
         //Text labels to help debugging
         if (!this.isExtraChip && DEBUG) {
-            var l = this.l
-            var d = this.d
+            let l = this.l
+            let d = this.d
             fill(0, 0, 255)
             textAlign(CENTER)
             textSize(circleSize * 0.75)
@@ -145,7 +145,7 @@ class Dot {
             this.hlColor = color(0, 0, 255)
 
             //Highlighting dots where player can move
-            for (var n of this.getNeighbours()) {
+            for (let n of this.getNeighbours()) {
                 if (!n.player) {
                     n.highlight = !n.highlight
                     n.hlColor = color(0, 255, 0)
@@ -248,7 +248,7 @@ class Dot {
             this.animTargetX = undefined
             this.animTargetY = undefined
 
-            var index = game.movingAnimations.indexOf(this)
+            let index = game.movingAnimations.indexOf(this)
 
             game.movingAnimations.splice(index, 1)
 
