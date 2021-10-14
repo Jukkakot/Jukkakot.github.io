@@ -65,7 +65,7 @@ class Player {
         return this.mills.some(m => !m.isSame(mill))
     }
     canEat(dot) {
-        var oppPlayer = game.turn === game.playerDark ? game.playerLight : game.playerDark
+        let oppPlayer = game.turn === game.playerDark ? game.playerLight : game.playerDark
         //Dot has to be opponent player AND
         //Either all dots in are mill or this dot is not in a mill
         //Comparing player names because of deepcloning players sometimes
@@ -75,9 +75,9 @@ class Player {
 
     }
     allDotsInMill() {
-        var uniqueDots = []
-        for (var mill of this.mills) {
-            for (var dot of mill.dots) {
+        let uniqueDots = []
+        for (let mill of this.mills) {
+            for (let dot of mill.dots) {
                 if (!uniqueDots.includes(dot)) {
                     uniqueDots.push(dot)
                 }
@@ -89,9 +89,9 @@ class Player {
         return this.mills.some(m => m.contain(dot))
     }
     checkMovableDots(board = game.dots) {
-        var movableDots = []
-        for (var layer of board) {
-            for (var dot of layer) {
+        let movableDots = []
+        for (let layer of board) {
+            for (let dot of layer) {
                 //Check if player has 3 chips left or dots neighbours has empty dot
                 if (dot.player && dot.player === this && (this.chipCount === 3 || dot.neighbours.some(nDot => !nDot.player))) {
                     movableDots.push(dot)
@@ -102,7 +102,7 @@ class Player {
     }
     checkIfCanMove() {
         if (getStage(this) !== 2) return true
-        var movableDots = this.checkMovableDots()
+        let movableDots = this.checkMovableDots()
         return movableDots.length > 0
     }
     hasNewMills() {
@@ -110,11 +110,11 @@ class Player {
         return this.mills.some(m => m.new)
     }
     getUpdatedMills(board = game.dots) {
-        var oldMills = this.mills
-        var allMills = []
-        for (var layer of board) {
-            for (var d = 0; d < 8; d++) {
-                var mill
+        let oldMills = this.mills
+        let allMills = []
+        for (let layer of board) {
+            for (let d = 0; d < 8; d++) {
+                let mill
                 if (d % 2 === 0) {
                     //d = 0,2,4,6
                     //Checking mills on layers (even indexes)
@@ -126,7 +126,7 @@ class Player {
                     mill = isMill(this, board[0][d], board[1][d], board[2][d])
                 }
                 if (mill) {
-                    var oldMill = oldMills.find(m => m.id == mill.id)
+                    let oldMill = oldMills.find(m => m.id == mill.id)
                     if (oldMill && !allMills.some(m => m.id == mill.id)) {
                         allMills.push(oldMill)
                     } else if (!allMills.some(m => m.id == mill.id)) {

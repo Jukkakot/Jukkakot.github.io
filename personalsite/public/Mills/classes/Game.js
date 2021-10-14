@@ -37,18 +37,18 @@ class Game {
         this.startDate = Date()
     }
     stringify(board = this.dots) {
-        var str = ""
-        for (var layer of board) {
-            for (var dot of layer) {
+        let str = ""
+        for (let layer of board) {
+            for (let dot of layer) {
                 str += !dot.player ? EMPTYDOT : dot.player.char
             }
         }
         return str
     }
     getEmptyDots(board = this.dots) {
-        var dots = []
-        for (var layer of board) {
-            for (var dot of layer) {
+        let dots = []
+        for (let layer of board) {
+            for (let dot of layer) {
                 if (!dot.player) {
                     dots.push(dot)
                 }
@@ -67,7 +67,7 @@ class Game {
 
         this.worker = new Worker("workers/WorkerHelpers.js")
         this.worker.onmessage = function (e) {
-            var data = e.data
+            let data = e.data
             switch (data.cmd) {
                 case "findMove":
                     LOADING = false
@@ -88,7 +88,7 @@ class Game {
         LOADING = true
         // if(!AUTOPLAY)cursor(WAIT)
         loadingGif.show()
-        var data = {
+        let data = {
             game: deepClone(this),
             board: this.stringify(),
             cmd: cmd,
@@ -98,7 +98,7 @@ class Game {
         }
         //If player manually playing but wants a suggestion, options are defaulted to minmax 4
         if (!data.options.autoPlay && cmd == "suggestion") {
-            data.options = OPTIONS[5]
+            data.options = OPTIONS[6]
             console.log("Settings options to", data.options.text)
         }
         this.worker.postMessage(deepClone(data))
@@ -133,13 +133,13 @@ class Game {
         push()
         strokeWeight(circleSize / 5)
 
-        var startX = (outBoxSize - distance) / 2 - distance / 2
-        var end = startX + distance
+        let startX = (outBoxSize - distance) / 2 - distance / 2
+        let end = startX + distance
         line(startX, 0, end, 0)
         line(-startX, 0, -end, 0)
         line(0, -startX, 0, -end)
         line(0, startX, 0, end)
-        for (var layers = 0; layers < 3; layers++) {
+        for (let layers = 0; layers < 3; layers++) {
             this.drawRect(outBoxSize - distance * layers)
         }
         pop()
@@ -183,18 +183,18 @@ class Game {
         rectMode(CENTER)
         noFill()
         rect(0, 0, w, w)
-        for (var l in this.dots) {
-            for (var d in this.dots[l]) {
-                var dot = this.dots[l][d]
+        for (let l in this.dots) {
+            for (let d in this.dots[l]) {
+                let dot = this.dots[l][d]
                 dot.draw(this.eatMode)
             }
         }
         pop()
     }
     initDots() {
-        var dots = []
-        for (var l = 0; l < 3; l++) {
-            var rect = []
+        let dots = []
+        for (let l = 0; l < 3; l++) {
+            let rect = []
             //Top
             rect.push(new Dot(-1, -1, l, 0))
             rect.push(new Dot(0, -1, l, 1))
@@ -210,17 +210,17 @@ class Game {
             dots.push(rect)
         }
         //Adding neighbours to dots
-        for (var l in dots) {
-            for (var dot in dots[l]) {
+        for (let l in dots) {
+            for (let dot in dots[l]) {
                 dot = Number(dot)
-                var currD = dots[l][dot]
-                var nextD = dot < 7 ? dots[l][dot + 1] : dots[l][0]
+                let currD = dots[l][dot]
+                let nextD = dot < 7 ? dots[l][dot + 1] : dots[l][0]
                 nextD.neighbours.push(currD)
                 currD.neighbours.push(nextD)
             }
         }
 
-        for (var i = 1; i < 8; i += 2) {
+        for (let i = 1; i < 8; i += 2) {
             dots[0][i].neighbours.push(dots[1][i])
             dots[1][i].neighbours.push(dots[0][i], dots[2][i])
             dots[2][i].neighbours.push(dots[1][i])
@@ -229,9 +229,9 @@ class Game {
     }
     //Initializes start chips and eaten chips
     initExtraChips() {
-        for (var i = 0; i < MAXCHIPCOUNT / 2; i++) {
+        for (let i = 0; i < MAXCHIPCOUNT / 2; i++) {
             //Start chips
-            var dot = new Dot(-1.4 + i / 10, -1.7, -1, -1, true)
+            let dot = new Dot(-1.4 + i / 10, -1.7, -1, -1, true)
             dot.player = this.playerLight
             this.playerLight.startChips.push(dot)
 
@@ -261,11 +261,11 @@ class Game {
     }
     click() {
         if (this.turn.options.autoPlay || this.winner) return
-        var dot = this.getDot(mX, mY)
+        let dot = this.getDot(mX, mY)
         if (!dot) {
             //unhighlight everything
-            for (var layer of game.dots) {
-                for (var d of layer) {
+            for (let layer of game.dots) {
+                for (let d of layer) {
                     d.highlight = false
                 }
             }
@@ -286,8 +286,8 @@ class Game {
             //MOVING CHIPS (Stage 2 & 3)
 
             //unhighlighting everything at the start
-            for (var layer of this.dots) {
-                for (var d of layer) {
+            for (let layer of this.dots) {
+                for (let d of layer) {
                     d.highlight = false
                 }
             }
@@ -327,14 +327,14 @@ class Game {
     }
     clearSuggestion() {
         if (!this.suggestion) return
-        for (var dot of this.suggestion) {
+        for (let dot of this.suggestion) {
             this.dots[dot.l][dot.d].suggested = false
         }
         this.suggestion = undefined
     }
     setSuggestion(move) {
-        var type = move[1]
-        var move = move[0]
+        let type = move[1]
+        move = move[0]
         this.clearSuggestion()
         if (type == "moving") {
             this.suggestion = move
@@ -344,7 +344,7 @@ class Game {
             })
         } else {
             this.suggestion = [move]
-            var dot = this.dots[move.l][move.d]
+            let dot = this.dots[move.l][move.d]
             dot.suggested = true
         }
     }
@@ -356,12 +356,12 @@ class Game {
         this.turn.chipCount++
         this.turn.chipsToAdd--
 
-        var prevDot = this.turn.startChips.pop()
+        let prevDot = this.turn.startChips.pop()
         dot.setTargetDot(prevDot)
         this.switchTurn()
     }
     hover() {
-        var dot = this.getDot(mX, mY)
+        let dot = this.getDot(mX, mY)
         if (dot) {
 
             if (getStage(this.turn) !== 1 && dot.player === this.turn) {
@@ -404,13 +404,13 @@ class Game {
         this.turnNum++
         if (getStage(this.turn) === 3) this.turn.stage3Turns++
         if (this.checkIfLost(this.turn)) {
-            var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
+            let oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
             this.setWinner(oppPlayer)
             return
         }
         this.turn = this.turn === this.playerDark ? this.playerLight : this.playerDark
         if (this.checkIfLost(this.turn)) {
-            var oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
+            let oppPlayer = this.turn === this.playerDark ? this.playerLight : this.playerDark
             this.setWinner(oppPlayer)
             return
         }
@@ -422,8 +422,8 @@ class Game {
         // console.log("move",move)
         //This is just to prevent an error happening
         if (!move) return
-        var type = move[1]
-        var move = move[0]
+        let type = move[1]
+        move = move[0]
 
         switch (type) {
             case ("placing"):
@@ -440,8 +440,8 @@ class Game {
         }
     }
     moveChip(move) {
-        var fromDot = move[0]
-        var toDot = move[1]
+        let fromDot = move[0]
+        let toDot = move[1]
         //Have to find the "same" dot from this.dots because given dots are cloned dots so they are not the same
         fromDot = this.dots[fromDot.l][fromDot.d]
         toDot = this.dots[toDot.l][toDot.d]
@@ -458,11 +458,11 @@ class Game {
         loadingGif.hide()
         LOADING = false
 
-        var oppPlayer = this.winner === this.playerDark ? this.playerLight : this.playerDark
-        var totalTurns = this.winner.turns + oppPlayer.turns
+        let oppPlayer = this.winner === this.playerDark ? this.playerLight : this.playerDark
+        let totalTurns = this.winner.turns + oppPlayer.turns
         let currTime = new Date().getTime()
-        var gameTime = currTime - this.startTime
-        var avgTurnTime = (gameTime / totalTurns).toFixed(3)
+        let gameTime = currTime - this.startTime
+        let avgTurnTime = (gameTime / totalTurns).toFixed(3)
         console.log(this.winner.name, "won!",
             "total turns:", totalTurns,
             "chip counts:", this.winner.char, this.winner.chipCount, oppPlayer.char, oppPlayer.chipCount,
@@ -517,10 +517,10 @@ class Game {
     }
     //Returns a dot at given coordinates (Like cursor place)
     getDot(x, y) {
-        for (var layer of this.dots) {
-            for (var dot of layer) {
-                var size = dot.size()
-                var r = dot.r
+        for (let layer of this.dots) {
+            for (let dot of layer) {
+                let size = dot.size()
+                let r = dot.r
                 if (!dot.player) r *= 1.3
                 if (pointInCircle(x, y, dot.x * size, dot.y * size, r)) {
                     return dot
@@ -537,19 +537,19 @@ class Game {
 
 
 function pointInCircle(x, y, cx, cy, radius) {
-    var distancesquared = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+    let distancesquared = (x - cx) * (x - cx) + (y - cy) * (y - cy);
     return distancesquared <= radius * radius;
 }
 function deepClone(obj) {
-    var visitedNodes = [];
-    var clonedCopy = [];
+    let visitedNodes = [];
+    let clonedCopy = [];
     function clone(item) {
         if (typeof item === "object" && !Array.isArray(item)) {
             if (visitedNodes.indexOf(item) === -1) {
                 visitedNodes.push(item);
-                var cloneObject = {};
+                let cloneObject = {};
                 clonedCopy.push(cloneObject);
-                for (var i in item) {
+                for (let i in item) {
                     if (item.hasOwnProperty(i)) {
                         cloneObject[i] = clone(item[i]);
                     }
@@ -561,10 +561,10 @@ function deepClone(obj) {
         }
         else if (typeof item === "object" && Array.isArray(item)) {
             if (visitedNodes.indexOf(item) === -1) {
-                var cloneArray = [];
+                let cloneArray = [];
                 visitedNodes.push(item);
                 clonedCopy.push(cloneArray);
-                for (var j = 0; j < item.length; j++) {
+                for (let j = 0; j < item.length; j++) {
                     cloneArray.push(clone(item[j]));
                 }
                 return cloneArray;

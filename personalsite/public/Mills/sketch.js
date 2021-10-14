@@ -34,6 +34,11 @@ const OPTIONS = [
 	},
 	{
 		...defaultOption,
+		text: "Minmax 1",
+		difficulty: 1,
+	},
+	{
+		...defaultOption,
 		text: "Minmax 4",
 		difficulty: 4,
 	},
@@ -79,7 +84,7 @@ const OPTIONS = [
 	},
 ]
 let gameSettings = {
-	lightOption: 6,
+	lightOption: 7,
 	darkOption: 0,
 }
 
@@ -184,10 +189,13 @@ function keyPressed(e) {
 			"t: send data\n",
 			"s: suggestion\n",
 			"d: debug\n",
+			"m: mute audio\n",
 			"1: toggle light player button\n",
 			"2: toggle dark player button\n",
 			"h: help"
 		)
+	} else if (e.key === "m") {
+		toggleAudio()
 	}
 }
 function suggestionPress() {

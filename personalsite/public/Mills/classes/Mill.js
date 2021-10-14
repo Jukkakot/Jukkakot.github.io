@@ -26,8 +26,8 @@ class Mill {
         push()
         this.new ? stroke(color(255, 0, 0)) : stroke(this.player.color)
         strokeWeight(circleSize / 3)
-        var d1 = this.dots[0]
-        var d2 = this.dots[2]
+        let d1 = this.dots[0]
+        let d2 = this.dots[2]
         line(d1.x * d1.size(), d1.y * d1.size(), d2.x * d2.size(), d2.y * d2.size())
 
         pop()
@@ -54,6 +54,6 @@ function isMill(player, d1, d2, d3) {
     return new Mill(d1, d2, d3)
 }
 function toFastDot(dot) {
-    var layer = dot.l * 8
+    let layer = dot.l * 8
     return dot.d + layer
 }

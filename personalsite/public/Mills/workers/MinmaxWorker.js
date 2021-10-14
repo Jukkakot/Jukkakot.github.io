@@ -16,7 +16,7 @@ function fastFindBestMove(options) {
     let moveData = {
         options: options,
     }
-    var player = {
+    let player = {
         name: workerGame.turn.name,
         char: workerGame.turn.char,
         chipCount: workerGame.turn.chipCount,
@@ -25,8 +25,8 @@ function fastFindBestMove(options) {
         turns: workerGame.turn.turns,
         stage3Turns: workerGame.turn.stage3Turns,
     }
-    var oppPlay = workerGame.turn.name == workerGame.playerDark.name ? workerGame.playerLight : workerGame.playerDark
-    var oppPlayer = {
+    let oppPlay = workerGame.turn.name == workerGame.playerDark.name ? workerGame.playerLight : workerGame.playerDark
+    let oppPlayer = {
         name: oppPlay.name,
         char: oppPlay.char,
         chipCount: oppPlay.chipCount,
@@ -35,7 +35,7 @@ function fastFindBestMove(options) {
         turns: oppPlay.turns,
         stage3Turns: oppPlay.stage3Turns,
     }
-    var board = workerGame.fastDots
+    let board = workerGame.fastDots
     if (board.length > 24) console.error("Invalid board", board)
     let move
     let type
@@ -62,14 +62,18 @@ function fastFindBestMove(options) {
     } else if (options.iterative) {
         //Iterative
         iterativeEndTime = new Date().getTime() + options.time
-        for (var depth = 1; depth <= MAXDEPTH; depth++) {
+        for (let depth = 1; depth <= MAXDEPTH; depth++) {
             //Resetting counters to not make them cumulative 
             // pruneCount = 0
             // nodeCount = 0
             // skipCount = 0
 
+
             highDepthNum = depth
-            result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
+            result = fastMinimax(board,
+                JSON.parse(JSON.stringify(player)),
+                JSON.parse(JSON.stringify(oppPlayer)),
+                depth, -Infinity, Infinity, workerGame.eatMode, true)
             if (new Date().getTime() >= iterativeEndTime) {
                 console.log("Ran out of time at depth", depthCount.pop())
                 break
@@ -109,7 +113,7 @@ function fastFindBestMove(options) {
         }
     } else {
         //"Normal" minmax
-        var depth = options.difficulty
+        let depth = options.difficulty
         result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
         move = result[0]
         score = result[1]
@@ -180,7 +184,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     nodeCount++
 
     //Returning potential winning or losing value
-    var winLoseValue = fastCheckWin(board, player, oppPlayer, depth, eatMode)
+    let winLoseValue = fastCheckWin(board, player, oppPlayer, depth, eatMode)
     if (winLoseValue != undefined) {
         return [undefined, winLoseValue]
     }
@@ -188,7 +192,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     //End node check
     if (depth <= 0 || iterativeEndTime != undefined && new Date().getTime() >= iterativeEndTime) {
         //Returning already calculated value for the board
-        var calcedValue = getCalcedValue(board, player, oppPlayer)
+        let calcedValue = getCalcedValue(board, player, oppPlayer)
         if (calcedValue != undefined) {
             skipCount++
             return [undefined, calcedValue]
@@ -200,9 +204,9 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
-        var movesObject = fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing)
-        var moves = movesObject.moves
-        var type = movesObject.type
+        let movesObject = fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing)
+        let moves = movesObject.moves
+        let type = movesObject.type
 
         if (moves.length === 0) {
             //Player lost because no possible moves to do
@@ -212,12 +216,12 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
 
             return [undefined, LOST * depth]
         }
-        for (var move of moves) {
+        for (let move of moves) {
             let cBoard = board
             //Cloning players 
-            var cPlayer = JSON.parse(JSON.stringify(player))
-            var cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
-            var args = {
+            let cPlayer = JSON.parse(JSON.stringify(player))
+            let cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
+            let args = {
                 move: move,
                 type: type,
                 board: cBoard,
@@ -227,7 +231,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
                 isMaximizing: isMaximizing,
             }
             if (cBoard.length > 24) console.error("invalid board", cBoard)
-            var result = fastPlayRound(args)
+            let result = fastPlayRound(args)
             eatMode = result.eatMode
             cBoard = result.board
             let score
@@ -251,9 +255,9 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     } else {
         let bestScore = Infinity;
         let bestMove
-        var movesObject = fastGetMoves(board, oppPlayer, player, eatMode, isMaximizing)
-        var moves = movesObject.moves
-        var type = movesObject.type
+        let movesObject = fastGetMoves(board, oppPlayer, player, eatMode, isMaximizing)
+        let moves = movesObject.moves
+        let type = movesObject.type
 
         if (moves.length === 0) {
             //Player lost because no possible moves to do
@@ -263,12 +267,12 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
 
             return [undefined, WIN * depth]
         }
-        for (var move of moves) {
+        for (let move of moves) {
             let cBoard = board
             //Cloning players 
-            var cPlayer = JSON.parse(JSON.stringify(player))
-            var cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
-            var args = {
+            let cPlayer = JSON.parse(JSON.stringify(player))
+            let cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
+            let args = {
                 move: move,
                 type: type,
                 board: cBoard,
@@ -278,7 +282,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
                 isMaximizing: isMaximizing,
             }
             if (cBoard.length > 24) console.error("invalid board", cBoard)
-            var result = fastPlayRound(args)
+            let result = fastPlayRound(args)
 
             eatMode = result.eatMode
             cBoard = result.board
@@ -304,7 +308,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
 }
 function printScoreObject(scoreObject) {
     let output = "";
-    for (var property in scoreObject) {
+    for (let property in scoreObject) {
         if (property.toString() == "update") continue
         output += property + ': ' + scoreObject[property] + "\n"
     }
@@ -325,7 +329,6 @@ function fastNewEvaluateBoard(board, player, oppPlayer) {
     const boardStr = addInfo(board, player, oppPlayer)
     //Adding the board to checked boards map
     checkedBoards.set(boardStr, checkBoardVal)
-
     //Board total value is the players board values before adding new mill "bonus points"
     const boardValue = playerVal - oppVal
 
@@ -350,10 +353,6 @@ function fastEvaluateBoard(board, player, oppPlayer) {
         }
     }
 
-    // 300 points for each players chip
-    boardValue += player.chipCount * 300
-    //-100 points for each opponent player chip
-    // boardValue -= oppPlayer.chipCount * 100
     if (getStage(player) === 1) {
         //Giving points for each neighbour dot of players dots
         for (let dot of fastGetPlayerDots(board, player)) {
@@ -366,88 +365,41 @@ function fastEvaluateBoard(board, player, oppPlayer) {
         boardValue += moveableDots * 50
         scoreObject.moveableDots = moveableDots
     }
-    // if (getStage(oppPlayer) === 2) {
-    //     //Adding 25 points for each opponents un moveable dot
-    //     let oppMoveableDots = fastGetMoveableDots(board, oppPlayer).length
-    //     let oppUnmoveableDots = oppPlayer.chipCount - oppMoveableDots
 
-    //     boardValue += oppUnmoveableDots * 50
-    //     scoreObject.oppUnmoveableDots = oppUnmoveableDots
-    // }
+    if (getStage(player) !== 1) {
+        // 300 points for each players chip when on stage 2 or 3
+        boardValue += (player.chipCount - oppPlayer.chipCount) * 100
+    }
 
     for (let window of millWindows) {
         let windowValue = fastEvaluateWindow(board, window, player, oppPlayer, scoreObject)
         boardValue += windowValue
     }
 
-    // const boardStr = addInfo(board, player, oppPlayer)
-    // //Adding the board to checked boards map
-    // checkedBoards.set(boardStr, boardValue)
-
-    // if (DEBUG) {
-    //     //This is helpful when looking at where the score comes from for a board
-    //     var output = player.name + "\n";
-    //     for (var property in scoreObject) {
-    //         if (property.toString() == "update") continue
-    //         output += property + ': ' + scoreObject[property] + "\n"
-    //     }
-    //     output += "Board value: " + boardValue + "\n"
-    //     console.log(output)
-
-    // }
-    // //Adding the "bonus points" from new mills to value
-    // //Because there is no way to see if a mill is new or not from the board string
-    // //the points dont go do checked boards
-    // if (scoreObject["newMill"] != undefined)
-    //     boardValue += 3500 * scoreObject["newMill"]
-
-    // // if (scoreObject["oppNewMill"] != undefined)
-    // //     boardValue -= 4000 * scoreObject["oppNewMill"]
-
     return { value: boardValue, scoreObject: scoreObject }
 }
 
 function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
-    var value = 0
-    var windowStr = windowToStr(board, window)
-    var playerMill = player.char + player.char + player.char
-    // var oppMill = oppPlayer.char + oppPlayer.char + oppPlayer.char
+    let value = 0
+    let windowStr = windowToStr(board, window)
+    let playerMill = player.char + player.char + player.char
+
     //New mill
     if (windowStr == playerMill) {
         //Getting the non deepCopied player
-        var workerGamePlayer = player.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
-        var clonePlayerMill = player.mills.find(m => m.fastId == fastGetWindowFastId(window))
-        var workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        let workerGamePlayer = player.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
+        let clonePlayerMill = player.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        let workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
         if (!clonePlayerMill) console.log(clonePlayerMill, "shouldnt happen", player.mills)
         //First checking if this mill is in the workerGame.dots board, if it isnt, then its a new mill
+
         //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
         //This has to be checked with unique number given to every mill formed in the workerGame
         //So that two mills that are in same place but formed at different times can be differentiated
         if ((clonePlayerMill && !fastIsSameWindow(window, board)) || (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId)) {
-            // if (clonePlayerMill && !fastIsSameWindow(window, board)) console.log("eka@@@@", clonePlayerMill != undefined, !fastIsSameWindow(window, board))
-            // if (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId) console.log("toka@@@")
             scoreObject.update("newMill")
-            // value += 3500
         }
     }
-    // //opp new mill
-    // if (windowStr == oppMill) {
-    //     //Getting the non deepCopied player
-    //     var workerGamePlayer = oppPlayer.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
-    //     var clonePlayerMill = oppPlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
-    //     var workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
-    //     if (!clonePlayerMill) console.log(clonePlayerMill, "shouldnt happen", oppPlayer.mills)
-    //     //First checking if this mill is in the workerGame.dots board, if it isnt, then its a new mill
-    //     //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
-    //     //This has to be checked with unique number given to every mill formed in the workerGame
-    //     //So that two mills that are in same place but formed at different times can be differentiated
-    //     if ((clonePlayerMill && !fastIsSameWindow(window, board)) || (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId)) {
-    //         // if (clonePlayerMill && !fastIsSameWindow(window, board)) console.log("eka@@@@", clonePlayerMill != undefined, !fastIsSameWindow(window, board))
-    //         // if (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId) console.log("toka@@@")
-    //         scoreObject.update("oppNewMill")
-    //         value -= 4000
-    //     }
-    // }
 
     switch (getStage(player)) {
         case (1):
@@ -462,16 +414,18 @@ function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
     }
 }
 function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
-    var value = 0
-    var oppStage = getStage(oppPlayer)
+    let value = 0
+    let oppStage = getStage(oppPlayer)
 
-    var playerDots = getBoardDotsFromWindow(board, window, player.char)
-    var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-    var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+    let playerDots = getBoardDotsFromWindow(board, window, player.char)
+    let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+    let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
 
-    var pieceCount = playerDots.length
-    var oppCount = oppDots.length
-    var emptyCount = emptyDots.length
+    let pieceCount = playerDots.length
+    let oppCount = oppDots.length
+    let emptyCount = emptyDots.length
+
+    if (pieceCount + oppCount + emptyCount !== 3) console.error("Error calcing dot counts")
 
     //blocking opp mill stage 1
     if (oppStage === 1 && oppCount === 2 && pieceCount === 1) {
@@ -505,42 +459,22 @@ function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
         value += 300
     }
 
-    // //opp mill
-    // if (oppCount === 3) {
-    //     scoreObject.update("oppMill")
-    //     value -= 100
-    // }
-    // //opp almost mill stage 1
-    // if (oppStage === 1 && oppCount === 2 && emptyCount === 1) {
-    //     scoreObject.update("oppAlmostMillStage1")
-    //     value -= 200
-    // }
-    // //opp blocking mill stage 1
-    // if (oppStage === 1 && pieceCount === 2 && oppCount === 1) {
-    //     scoreObject.update("oppBlockingMillStage1")
-    //     value -= 200
-    // }
-
-    // //opponent safe open mill stage2
-    // if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
-    //     getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
-    //         !oppDots.some(chip => chip == dot))) {
-    //     scoreObject.update("oppSafeOpenMillStage2")
-    //     value -= 300
-    // }
     return value
 }
 function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
-    var value = 0
-    var oppStage = getStage(oppPlayer)
+    let value = 0
+    let oppStage = getStage(oppPlayer)
 
-    var playerDots = getBoardDotsFromWindow(board, window, player.char)
-    var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-    var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+    let playerDots = getBoardDotsFromWindow(board, window, player.char)
+    let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+    let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
 
-    var pieceCount = playerDots.length
-    var oppCount = oppDots.length
-    var emptyCount = emptyDots.length
+    let pieceCount = playerDots.length
+    let oppCount = oppDots.length
+    let emptyCount = emptyDots.length
+
+    if (pieceCount + oppCount + emptyCount !== 3) console.error("Error calcing dot counts")
+
     //Syhky miilu is finnish and means double mill
     //which happens when you have 2 mills next to eachother and can get a mill every turn
     //also only limiting this to 1 because multiple double mills was encouraging not making a mill
@@ -552,14 +486,7 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
         scoreObject.update("doubleMill")
         value += 3500
     }
-    // //Blocking opp double mill
-    // if (oppCount === 2 && pieceCount === 1 &&
-    //     getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
-    //         !oppDots.some(pDot => pDot == dot) &&
-    //         oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
-    //     scoreObject.update("blockingOppDoubleMill")
-    //     value += 3500
-    // }
+
     //"safe" Open mill as in opponent player cant block it on next move 
     if (pieceCount === 2 && emptyCount === 1 &&
         !getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == oppPlayer.char) &&
@@ -568,22 +495,26 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
         scoreObject.update("safeOpenMill")
         value += 900
     }
+
     //mill
     if (pieceCount === 3) {
         scoreObject.update("mill")
         value += 700
     }
+
     //Opponent mill is blocked from opening
     if (oppStage === 2 && oppCount === 3 &&
         oppDots.every(dot => getNeighboursIndexes(dot).every(chip => board[chip] != EMPTYDOT))) {
         scoreObject.update("blockOppMillStuck")
         value += 400
     }
+
     //blocking opp mill stage 3
     if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
         scoreObject.update("blockOppMillStage3")
         value += 400
     }
+
     //blocking opp mill stage 2
     if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
@@ -591,42 +522,22 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
         scoreObject.update("blockOppMillStage2")
         value += 400
     }
-    // //opponent safe open mill stage2
-    // if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
-    //     getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
-    //         !oppDots.some(chip => chip == dot))) {
-    //     scoreObject.update("oppSafeOpenMillStage2")
-    //     value -= 300
-    // }
-    // //opponent open mill stage 3
-    // if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
-    //     scoreObject.update("oppOpenMillStage3")
-    //     value -= 300
-    // }
-    // //Syhky miilu is finnish and means double mill
-    // //which happens when you have 2 mills next to eachother and can get a mill every turn
-    // //Opp double mill
-    // if (oppCount === 2 && emptyCount === 1 && !scoreObject["oppDoubleMill"] &&
-    //     getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
-    //         !oppDots.some(pDot => pDot == dot) &&
-    //         oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
-    //     scoreObject.update("oppDoubleMill")
-    //     value -= 2500
-    // }
 
     return value
 }
 function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
-    var value = 0
-    var oppStage = getStage(oppPlayer)
+    let value = 0
+    let oppStage = getStage(oppPlayer)
 
-    var playerDots = getBoardDotsFromWindow(board, window, player.char)
-    var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-    var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+    let playerDots = getBoardDotsFromWindow(board, window, player.char)
+    let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+    let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
 
-    var pieceCount = playerDots.length
-    var oppCount = oppDots.length
-    var emptyCount = emptyDots.length
+    let pieceCount = playerDots.length
+    let oppCount = oppDots.length
+    let emptyCount = emptyDots.length
+
+    if (pieceCount + oppCount + emptyCount !== 3) console.error("Error calcing dot counts")
 
     //blocking opp mill when opp is on stage 2
     //this is important because player will lose on next move otherwise
@@ -636,6 +547,7 @@ function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
         scoreObject.update("blockOppMillStage2")
         value += 3000
     }
+
     //Blocking opp double mill
     if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
@@ -644,43 +556,25 @@ function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
         scoreObject.update("blockingOppDoubleMill")
         value += 10000
     }
+
     //blocking opp mill when opp is on stage 3
     //this is also important because player will lose on next move otherwise
     if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
         scoreObject.update("blockOppMillStage3")
         value += 2000
     }
+
     //almost mill
     if (pieceCount === 2 && emptyCount === 1) {
         scoreObject.update("almostMill")
         value += 800
     }
+
     //mill
     if (pieceCount === 3) {
         scoreObject.update("mill")
         value += 500
     }
-    // //opponent safe open mill stage 2
-    // if (oppStage === 2 && oppCount === 2 && emptyCount === 1 &&
-    //     getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == oppPlayer.char &&
-    //         !oppDots.some(dot => dot == chip))) {
-    //     scoreObject.update("oppOpenMillStage2")
-    //     value -= 2000
-    // }
-    // //opponent open mill stage 3
-    // if (oppStage === 3 && oppCount === 2 && emptyCount === 1) {
-    //     scoreObject.update("oppOpenMillStage3")
-    //     value -= 2000
-    // }
-    // //Syhky miilu is finnish and means double mill
-    // //which happens when you have 2 mills next to eachother and can get a mill every turn
-    // //Opp double mill
-    // if (oppStage == 2 && oppCount === 2 && emptyCount === 1 && !scoreObject["oppDoubleMill"] &&
-    //     getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
-    //         !oppDots.some(pDot => pDot == dot) &&
-    //         oppPlayer.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
-    //     scoreObject.update("oppDoubleMill")
-    //     value -= 2500
-    // }
+
     return value
 }

@@ -25,7 +25,7 @@ const millWindows = [
 ]
 
 self.addEventListener("message", function handleMessageFromGame(e) {
-    var data = e.data
+    let data = e.data
     switch (data.cmd) {
         case "close":
             self.close()
@@ -61,21 +61,21 @@ function handleGetMove(data) {
 
     let options = data.options
     const bestMoveResult = fastFindBestMove(options)
-    var data = {
+    let resultData = {
         cmd: data.cmd,
         move: bestMoveResult.move,
         moveData: bestMoveResult.moveData
     }
     if (!options.delay || NODELAY) {
-        self.postMessage(data)
+        self.postMessage(resultData)
     } else {
         setTimeout(() => {
-            self.postMessage(data)
+            self.postMessage(resultData)
         }, 500);
     }
 }
 function toFastMills(player) {
-    var mills = player.mills.map(m => {
+    let mills = player.mills.map(m => {
         return {
             fastDots: m.fastDots,
             fastId: m.fastId,
@@ -92,8 +92,8 @@ function getNeighboursIndexes(i) {
         console.error("invalid index", i)
         debugger
     }
-    var layer = getLayer(i) * 8
-    var neighbours = []
+    let layer = getLayer(i) * 8
+    let neighbours = []
     //All
     neighbours.push(((i + layer + 8 - 1) % 8) + layer)
     neighbours.push(((i + layer + 8 + 1) % 8) + layer)
@@ -120,14 +120,14 @@ function getLayer(i) {
     return Math.floor(i / 8)
 }
 function getNeighbours(board, i) {
-    var neighbours = ""
+    let neighbours = ""
     getNeighboursIndexes(i).forEach(i => {
         neighbours += board[i]
     });
     return neighbours
 }
 function getFastMill(dots, player) {
-    var fastId = dots.reduce((a, b) => a.toString() + b.toString())
+    let fastId = dots.reduce((a, b) => a.toString() + b.toString())
     return {
         fastDots: dots,
         fastId: fastId,
@@ -137,15 +137,15 @@ function getFastMill(dots, player) {
     }
 }
 function fastGetUpdatedMills(board, player) {
-    var oldMills = toFastMills(player)
-    var allMills = []
-    var pMill = player.char + player.char + player.char
+    let oldMills = toFastMills(player)
+    let allMills = []
+    let pMill = player.char + player.char + player.char
 
-    for (var window of millWindows) {
+    for (let window of millWindows) {
         if (windowToStr(board, window) == pMill) {
-            var newMill = getFastMill([window[0], window[1], window[2]], player)
+            let newMill = getFastMill([window[0], window[1], window[2]], player)
 
-            var oldMill = oldMills.find(m => m.fastId == newMill.fastId)
+            let oldMill = oldMills.find(m => m.fastId == newMill.fastId)
 
             if (oldMill && !allMills.some(m => m.fastId == newMill.fastId)) {
                 allMills.push(oldMill)
@@ -158,9 +158,9 @@ function fastGetUpdatedMills(board, player) {
 }
 
 function fastGetMoveableDots(board, player) {
-    var movableDots = []
-    for (var d = 0; d < board.length; d++) {
-        var dot = board[d]
+    let movableDots = []
+    for (let d = 0; d < board.length; d++) {
+        let dot = board[d]
         //Check if player has 3 chips left or dots neighbours has empty dot
         if (dot == player.char && (getStage(player) === 3 || getNeighbours(board, d).includes(EMPTYDOT))) {
             movableDots.push(d)
@@ -171,7 +171,7 @@ function fastGetMoveableDots(board, player) {
 }
 function fastCheckIfCanMove(board, player) {
     if (getStage(player) !== 2) return true
-    var movableDots = fastGetMoveableDots(board, player)
+    let movableDots = fastGetMoveableDots(board, player)
     return movableDots.length > 0
 }
 function fastCheckWin(board, player, oppPlayer, depth = 1, eatMode) {
@@ -179,8 +179,8 @@ function fastCheckWin(board, player, oppPlayer, depth = 1, eatMode) {
     if (eatMode) return
     player.chipCount = fastGetPlayerDots(board, player).length
     oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
-    var value
-    var boardStr = addInfo(board, player, oppPlayer)
+    let value
+    let boardStr = addInfo(board, player, oppPlayer)
     if (player.chipCount + player.chipsToAdd < 3 || !fastCheckIfCanMove(board, player)) {
         // console.log(player.char, player.chipCount, player.chipsToAdd, !fastCheckIfCanMove(board, player),
         //     board, player.turns)
@@ -195,8 +195,8 @@ function fastCheckWin(board, player, oppPlayer, depth = 1, eatMode) {
     return value
 }
 function fastGetPlayerDots(board, player) {
-    var dots = []
-    for (var d = 0; d < board.length; d++) {
+    let dots = []
+    for (let d = 0; d < board.length; d++) {
         if (board[d] == player.char) {
             dots.push(d)
         }
@@ -206,8 +206,8 @@ function fastGetPlayerDots(board, player) {
 function fastGetUnOrderedMoves(board, player, oppPlayer, eatMode, isMaximizing = false, depth = 1) {
     player.chipCount = fastGetPlayerDots(board, player).length
     oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
-    var stage = eatMode ? 4 : getStage(player)
-    var result = { moves: [], type: "" }
+    let stage = eatMode ? 4 : getStage(player)
+    let result = { moves: [], type: "" }
     switch (stage) {
         case 1:
             result = {
@@ -244,9 +244,9 @@ function fastGetUnOrderedMoves(board, player, oppPlayer, eatMode, isMaximizing =
     }
     //Adding previously best move to front of moves array (Iterative search thing)
     if (isMaximizing && depth - highDepthNum === 1) {
-        // var prevBestMove = prevBestMoves[depth]
+        // let prevBestMove = prevBestMoves[depth]
         if (prevBestMove != undefined && prevBestMove.type == result.type) {
-            var index = result.moves.indexOf(prevBestMove.move)
+            let index = result.moves.indexOf(prevBestMove.move)
             if (index >= 0) {
                 index <= TOPX ? topCount++ : elseCount++
                 //Deletes duplicated move when its "placing" or "eating" type
@@ -263,8 +263,8 @@ function fastGetUnOrderedMoves(board, player, oppPlayer, eatMode, isMaximizing =
 function fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing = false, depth = 1) {
     player.chipCount = fastGetPlayerDots(board, player).length
     // oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
-    var stage = eatMode ? 4 : getStage(player)
-    var result = { moves: [], type: "" }
+    let stage = eatMode ? 4 : getStage(player)
+    let result = { moves: [], type: "" }
     switch (stage) {
         case 1:
             result = {
@@ -302,9 +302,9 @@ function fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing = false, d
     }
     //Adding previously best move to front of moves array (Iterative search thing)
     if (isMaximizing && depth - highDepthNum === 1) {
-        // var prevBestMove = prevBestMoves[depth]
+        // let prevBestMove = prevBestMoves[depth]
         if (prevBestMove != undefined && prevBestMove.type == result.type) {
-            var index = result.moves.indexOf(prevBestMove.move)
+            let index = result.moves.indexOf(prevBestMove.move)
             if (index >= 0) {
                 index <= TOPX ? topCount++ : elseCount++
                 //Deletes duplicated move when its "placing" or "eating" type
@@ -319,25 +319,26 @@ function fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing = false, d
     return result
 }
 function fastGetEmptyDots(board) {
-    var dots = []
-    for (var d = 0; d < board.length; d++) {
+    let dots = []
+    for (let d = 0; d < board.length; d++) {
         if (board[d] == EMPTYDOT) dots.push(d)
     }
     return dots
 }
 function fastGetS1Moves(board, player, oppPlayer) {
-    var moves = []
+    let moves = []
     //Adding "better" moves to start of moves to be checked first
-    for (var window of millWindows) {
-        var oppStage = getStage(oppPlayer)
-        var windowStr = windowToStr(board, window)
-        var pieceCount = windowStr.split(player.char).length - 1
-        var oppCount = windowStr.split(oppPlayer.char).length - 1
-        var emptyCount = windowStr.split(EMPTYDOT).length - 1
+    for (let window of millWindows) {
+        let oppStage = getStage(oppPlayer)
 
-        var playerDots = getBoardDotsFromWindow(board, window, player.char)
-        var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-        var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+        let playerDots = getBoardDotsFromWindow(board, window, player.char)
+        let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+        let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+
+        let pieceCount = playerDots.length
+        let oppCount = oppDots.length
+        let emptyCount = emptyDots.length
+
         // Making mill stage 1
         if (oppStage === 1 && pieceCount === 2 && emptyCount === 1) {
             if (!moves.includes(emptyDots[0]))
@@ -365,28 +366,28 @@ function fastGetS1Moves(board, player, oppPlayer) {
         }
     }
     //Adding the rest of the dots into moves
-    var emptyDots = fastGetEmptyDots(board).filter(dot => !moves.includes(dot))
+    let emptyDots = fastGetEmptyDots(board).filter(dot => !moves.includes(dot))
     //Sorting the dots by their neighbour count
     emptyDots = emptyDots.sort((a, b) => getNeighboursIndexes(b).length - getNeighboursIndexes(a).length)
     moves.push(...emptyDots)
     return moves
 }
 function fastGetS2Moves(board, player, oppPlayer) {
-    var moves = []
+    let moves = []
     //Adding "better" moves to start of moves to be checked first
-    for (var window of millWindows) {
-        var oppStage = getStage(oppPlayer)
-        var windowStr = windowToStr(board, window)
-        var pieceCount = windowStr.split(player.char).length - 1
-        var oppCount = windowStr.split(oppPlayer.char).length - 1
-        var emptyCount = windowStr.split(EMPTYDOT).length - 1
+    for (let window of millWindows) {
+        let oppStage = getStage(oppPlayer)
 
-        var playerDots = getBoardDotsFromWindow(board, window, player.char)
-        var oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-        var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+        let playerDots = getBoardDotsFromWindow(board, window, player.char)
+        let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+        let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+
+        let pieceCount = playerDots.length
+        let oppCount = oppDots.length
+        let emptyCount = emptyDots.length
         // Making mill
         if (pieceCount === 2 && emptyCount === 1) {
-            var fromDot = getNeighboursIndexes(emptyDots[0]).find(dot => board[dot] == player.char)
+            let fromDot = getNeighboursIndexes(emptyDots[0]).find(dot => board[dot] == player.char)
             if (fromDot == undefined) {
                 console.error("Invalid dot", fromDot)
                 debugger
@@ -396,7 +397,7 @@ function fastGetS2Moves(board, player, oppPlayer) {
         }
         // Opening mill
         if (pieceCount === 3) {
-            for (var dot of playerDots) {
+            for (let dot of playerDots) {
                 getNeighboursIndexes(dot).forEach(nDot => {
                     if (board[nDot] == EMPTYDOT && !fastIsArrayInArray(moves, [dot, nDot]))
                         moves.push([dot, nDot])
@@ -408,7 +409,7 @@ function fastGetS2Moves(board, player, oppPlayer) {
             getNeighboursIndexes(emptyDots[0]).some(dot => board[dot] == oppPlayer.char &&
                 !oppDots.some(chip => chip == dot))) {
 
-            var fromDot = getNeighboursIndexes(emptyDots[0]).find(dot => board[dot] == player.char)
+            let fromDot = getNeighboursIndexes(emptyDots[0]).find(dot => board[dot] == player.char)
 
             if (fromDot != undefined && !fastIsArrayInArray(moves, [fromDot, emptyDots[0]]))
                 moves.push([fromDot, emptyDots[0]])
@@ -416,8 +417,8 @@ function fastGetS2Moves(board, player, oppPlayer) {
         }
     }
     //Adding the rest of the moves
-    for (var fromDot of fastGetMoveableDots(board, player)) {
-        for (var toDot of getNeighboursIndexes(fromDot)) {
+    for (let fromDot of fastGetMoveableDots(board, player)) {
+        for (let toDot of getNeighboursIndexes(fromDot)) {
             if (board[toDot] == EMPTYDOT && !fastIsArrayInArray(moves, [fromDot, toDot]))
                 moves.push([fromDot, toDot])
         }
@@ -425,24 +426,24 @@ function fastGetS2Moves(board, player, oppPlayer) {
     return moves
 }
 function fastGetS3Moves(board, player, oppPlayer) {
-    var moves = []
-    var fromDots = fastGetPlayerDots(board, player)
-    var toDots = fastGetEmptyDots(board)
+    let moves = []
+    let fromDots = fastGetPlayerDots(board, player)
+    let toDots = fastGetEmptyDots(board)
 
     //Adding "better" moves to start of moves to be checked first
-    for (var window of millWindows) {
-        var windowStr = windowToStr(board, window)
-        var pieceCount = windowStr.split(player.char).length - 1
-        var oppCount = windowStr.split(oppPlayer.char).length - 1
-        var emptyCount = windowStr.split(EMPTYDOT).length - 1
+    for (let window of millWindows) {
+        let playerDots = getBoardDotsFromWindow(board, window, player.char)
+        let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
+        let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
 
-        var playerDots = getBoardDotsFromWindow(board, window, player.char)
-        var emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+        let pieceCount = playerDots.length
+        let oppCount = oppDots.length
+        let emptyCount = emptyDots.length
         // Making mill
         if (pieceCount === 2 && emptyCount === 1) {
-            var fromDot = fromDots.find(dot => !playerDots.includes(dot))
+            let fromDot = fromDots.find(dot => !playerDots.includes(dot))
             if (fromDot == undefined) {
-                console.error("undifined dottt", fromDot)
+                console.error("undefined dot", fromDot)
             }
             if (!fastIsArrayInArray(moves, [fromDot, emptyDots[0]]))
                 moves.push([fromDot, emptyDots[0]])
@@ -451,7 +452,7 @@ function fastGetS3Moves(board, player, oppPlayer) {
         if (oppCount === 2 && emptyCount === 1) {
             fromDots.forEach(dot => {
                 if (dot == undefined) {
-                    console.error("undifined dottt", dot)
+                    console.error("undefined dot", dot)
                 }
                 if (!fastIsArrayInArray(moves, [dot, emptyDots[0]]))
                     moves.push([dot, emptyDots[0]])
@@ -459,8 +460,8 @@ function fastGetS3Moves(board, player, oppPlayer) {
         }
     }
     //Adding the rest of the moves
-    for (var fromDot of fromDots) {
-        for (var toDot of toDots) {
+    for (let fromDot of fromDots) {
+        for (let toDot of toDots) {
             if (fromDot == undefined) debugger
             if (!fastIsArrayInArray(moves, [fromDot, toDot]))
                 moves.push([fromDot, toDot])
@@ -475,8 +476,8 @@ function fastGetS1UnOrderedMoves(board) {
 function fastGetS2UnOrderedMoves(board, player) {
     let moves = []
     //Adding the rest of the moves
-    for (var fromDot of fastGetMoveableDots(board, player)) {
-        for (var toDot of getNeighboursIndexes(fromDot)) {
+    for (let fromDot of fastGetMoveableDots(board, player)) {
+        for (let toDot of getNeighboursIndexes(fromDot)) {
             if (board[toDot] == EMPTYDOT)
                 moves.push([fromDot, toDot])
         }
@@ -497,7 +498,7 @@ function fastGetS3UnOrderedMoves(board, player) {
 }
 function fastGetPlayerMillDots(board, player) {
     player.mills = fastGetUpdatedMills(board, player)
-    var dots = []
+    let dots = []
     player.mills.forEach(mill => dots.push(...mill.fastDots))
 
     //Removing duplicate dots
@@ -517,16 +518,16 @@ function fastGetEatableDots(board, player) {
     return eatableDots
 }
 function fastGetSortedEatableDots(board, player) {
-    var dots = []
+    let dots = []
     let allEatableDots = fastGetEatableDots(board, player)
-    for (var window of millWindows) {
-        // var oppStage = getStage(oppPlayer)
-        var windowStr = windowToStr(board, window)
-        var pieceCount = windowStr.split(player.char).length - 1
-        var emptyCount = windowStr.split(EMPTYDOT).length - 1
-        var oppCount = window.length - pieceCount - emptyCount
+    for (let window of millWindows) {
+        // let oppStage = getStage(oppPlayer)
+        let windowStr = windowToStr(board, window)
+        let pieceCount = windowStr.split(player.char).length - 1
+        let emptyCount = windowStr.split(EMPTYDOT).length - 1
+        let oppCount = window.length - pieceCount - emptyCount
 
-        var playerDots = getBoardDotsFromWindow(board, window, player.char)
+        let playerDots = getBoardDotsFromWindow(board, window, player.char)
 
         // Eating from almost mill
         if (pieceCount === 2 && emptyCount === 1) {
@@ -542,7 +543,7 @@ function fastGetSortedEatableDots(board, player) {
         }
     }
     //Adding all the rest of the moves
-    for (var dot of allEatableDots) {
+    for (let dot of allEatableDots) {
         if (!dots.includes(dot))
             dots.push(dot)
     }
@@ -556,10 +557,10 @@ function fastHasNewMills(board, player) {
     return player.mills.some(m => m.new)
 }
 function fastMovePlayerTo(args) {
-    var board = args.board
-    var fromDot = args.move[0]
-    var toDot = args.move[1]
-    var player = args.player
+    let board = args.board
+    let fromDot = args.move[0]
+    let toDot = args.move[1]
+    let player = args.player
     if (toDot == undefined || fromDot == undefined ||
         board[toDot] != EMPTYDOT || board[fromDot] != player.char) {
         debugger
@@ -570,8 +571,8 @@ function fastMovePlayerTo(args) {
 }
 function fastPlaceChip(args) {
     let board = args.board
-    var dot = args.move
-    var player = args.player
+    let dot = args.move
+    let player = args.player
 
     player.chipsToAdd--
     player.chipCount++
@@ -582,9 +583,9 @@ function fastPlaceChip(args) {
 }
 function fastEatChip(args) {
     let board = args.board
-    var dot = args.move
-    var oppPlayer = args.oppPlayer
-    var player = args.player
+    let dot = args.move
+    let oppPlayer = args.oppPlayer
+    let player = args.player
     oppPlayer.chipCount--
     if (oppPlayer.chipCount < 0 || board[dot] != oppPlayer.char) debugger
 
@@ -600,22 +601,23 @@ function fastEatChip(args) {
 }
 
 function fastPlayRound(args) {
-    var result = {
+    let result = {
         eatMode: false,
         board: args.board,
         winLose: undefined
     }
-    var move = args.move
-    var type = args.type
-    var oppPlayer = args.oppPlayer
-    var player = args.player
-    var isMaximizing = args.isMaximizing
-    // var board = args.board
-    var depth = args.depth
+    let move = args.move
+    let type = args.type
+    let oppPlayer = args.oppPlayer
+    let player = args.player
+    let isMaximizing = args.isMaximizing
+    let depth = args.depth
+
     player.turns++
     if (getStage(player) === 3) {
         player.stage3Turns++
     }
+
     switch (args.type) {
         case "moving":
             result.board = fastMovePlayerTo(args)
@@ -626,6 +628,7 @@ function fastPlayRound(args) {
             result.eatMode = fastHasNewMills(result.board, player)
             break;
         case "eating":
+            if (player.mills.find(m => m.new) == undefined) console.error("Player has no mill")
             //Player wins because opponent was on flying stage when eating
             //Have to check this before actually eating
             if (getStage(oppPlayer) === 3) {
@@ -668,28 +671,55 @@ function indexToDot(index) {
 }
 function fastIsSameWindow(window, board) {
     // console.log(board, workerGame.fastDots)
-    var isSame = window.every(wDot => workerGame.fastDots[wDot] == board[wDot])
+    let isSame = window.every(wDot => workerGame.fastDots[wDot] == board[wDot])
     // console.log(board, "\n" + workerGame.fastDots)
     // console.log(board[window[0]], board[window[1]], board[window[2]])
     // console.log(workerGame.fastDots[window[0]], workerGame.fastDots[window[1]], workerGame.fastDots[window[2]])
     // console.log(isSame)
     return isSame
 }
+function isNewMill(board, window, player) {
+    let windowStr = windowToStr(board, window)
+    let playerMill = player.char + player.char + player.char
+
+    //New mill
+    if (windowStr == playerMill) {
+        //Getting the non deepCopied player
+        let workerGamePlayer = player.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
+        let clonePlayerMill = player.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        let workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
+        if (!clonePlayerMill) console.log(clonePlayerMill, "shouldnt happen", player.mills)
+        //First checking if this mill is in the workerGame.dots board, if it isnt, then its a new mill
+
+        //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
+        //This has to be checked with unique number given to every mill formed in the workerGame
+        //So that two mills that are in same place but formed at different times can be differentiated
+        if ((clonePlayerMill && !fastIsSameWindow(window, board)) || (workerGamerMill && clonePlayerMill.fastUniqId != workerGamerMill.fastUniqId)) {
+            return true
+        }
+    }
+    return false
+}
 function getCalcedValue(board, player, oppPlayer) {
-    var boardStr = addInfo(board, player, oppPlayer)
-    var calcedValue = checkedBoards.get(boardStr)
+    let boardStr = addInfo(board, player, oppPlayer)
+    let calcedValue = checkedBoards.get(boardStr)
     //Returning already calculated value for the board
     if (calcedValue != undefined) {
-        let newMillCount = player.mills.filter(m => m.new).length || 0
-        calcedValue += 3500 * newMillCount
-
-        newMillCount = oppPlayer.mills.filter(m => m.new).length || 0
-        calcedValue -= 4000 * newMillCount
+        // calcedValue += 3500 * player.mills.filter(m => m.new).length
+        // calcedValue -= 4000 * oppPlayer.mills.filter(m => m.new).length
+        for (let window of millWindows) {
+            if (isNewMill(board, window, player)) calcedValue += 3500
+            else if (isNewMill(board, window, oppPlayer)) calcedValue -= 4000
+        }
     }
+    // const testValue = fastNewEvaluateBoard(board, player, oppPlayer)
+    // if (calcedValue !== undefined && calcedValue != testValue) {
+    //     console.error("Error getting board value from map", calcedValue, testValue)
+    // }
     return calcedValue
 }
 function addInfo(board, player, oppPlayer) {
-    var str = getStage(player) + player.char + getStage(oppPlayer) + oppPlayer.char + board
+    let str = getStage(player) + player.char + getStage(oppPlayer) + oppPlayer.char + board
     return str
 }
 function getStage(player) {
@@ -704,9 +734,9 @@ function getStage(player) {
     }
 }
 function stringify(board) {
-    var str = ""
-    for (var layer of board) {
-        for (var dot of layer) {
+    let str = ""
+    for (let layer of board) {
+        for (let dot of layer) {
             if (!dot.player) str += '0'
             else if (dot.player.name == workerGame.playerDark.name) str += 'D'
             else if (dot.player.name == workerGame.playerLight.name) str += 'L'
@@ -716,15 +746,15 @@ function stringify(board) {
 }
 function getBoardDotsFromWindow(board, window, char) {
     //Returns the dots where board[windowIndex] matches char
-    var dots = []
-    for (var i of window) {
+    let dots = []
+    for (let i of window) {
         if (board[i] == char)
             dots.push(i)
     }
     return dots
 }
 function scaleValue(value, from = [-10000, 10000], to = [-100, 100]) {
-    var scale = (to[1] - to[0]) / (from[1] - from[0]);
-    var capped = Math.min(from[1], Math.max(from[0], value)) - from[0];
+    let scale = (to[1] - to[0]) / (from[1] - from[0]);
+    let capped = Math.min(from[1], Math.max(from[0], value)) - from[0];
     return capped * scale + to[0]
 }
