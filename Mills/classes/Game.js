@@ -96,9 +96,9 @@ class Game {
             DEBUG: DEBUG,
             NODELAY: NODELAY
         }
-        //If player manually playing but wants a suggestion, options are defaulted to minmax 4
+        //If player manually playing but wants a suggestion, options are defaulted to iterative 3s
         if (!data.options.autoPlay && cmd == "suggestion") {
-            data.options = OPTIONS[6]
+            data.options = OPTIONS[7]
             console.log("Settings options to", data.options.text)
         }
         this.worker.postMessage(deepClone(data))
@@ -396,7 +396,7 @@ class Game {
             this.eatMode = true
             if (this.turn.options.autoPlay)
                 this.findBestMove("findMove")
-            //Mills are made not new in eatChip method as soon as player has eaten a chip
+            //Mills are made "not new" in eatChip method as soon as player has eaten a chip
             return
         }
         //Adding turn to player after checking for eatmode to not add 2 turns whenever player eats

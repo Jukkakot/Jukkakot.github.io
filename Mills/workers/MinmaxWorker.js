@@ -1,3 +1,4 @@
+let iterativeMoveScores = {}
 function fastFindBestMove(options) {
     if (workerGame.winner) {
         console.log(this.winner.name, "won the workerGame")
@@ -60,20 +61,21 @@ function fastFindBestMove(options) {
         }
 
     } else if (options.iterative) {
-        //Iterative
         iterativeEndTime = new Date().getTime() + options.time
+
+        let startMoveObj = fastGetMoves(board, player, oppPlayer, workerGame.eatMode)
+        prevBestMoves = startMoveObj.moves
+        startMoveType = startMoveObj.type
+        // console.log("starting moves", prevBestMoves)
         for (let depth = 1; depth <= MAXDEPTH; depth++) {
             //Resetting counters to not make them cumulative 
             // pruneCount = 0
             // nodeCount = 0
             // skipCount = 0
+            iterativeMoveScores = {}
+            startDepthNum = depth
+            result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
 
-
-            highDepthNum = depth
-            result = fastMinimax(board,
-                JSON.parse(JSON.stringify(player)),
-                JSON.parse(JSON.stringify(oppPlayer)),
-                depth, -Infinity, Infinity, workerGame.eatMode, true)
             if (new Date().getTime() >= iterativeEndTime) {
                 console.log("Ran out of time at depth", depthCount.pop())
                 break
@@ -86,15 +88,24 @@ function fastFindBestMove(options) {
                     move: move,
                     type: type
                 }
-                // console.log("depth", depth, "node count", nodeCount, "score", score, "boards", checkedBoards.size, "pruned", pruneCount, "skipped", skipCount)
                 if (score >= WIN) {
                     console.log("found win!")
                     break
                 }
+                let sortedMoves = []
+
+                Object.entries(iterativeMoveScores)
+                    .sort(([, a], [, b]) => b - a)
+                    .forEach(([a,]) => sortedMoves.push(JSON.parse(a)))
+
+                prevBestMoves = sortedMoves
+                startMoveType = type
+
             }
         }
+        console.log(type, "start moves", startMoveObj.moves, "sorted moves", prevBestMoves)
     } else if (options.mcts) {
-        let mctsResult = MCTSFindBestMove(board, player, oppPlayer, workerGame.eatMode)
+        let mctsResult = MCTSFindBestMove(board, player, oppPlayer, workerGame.eatMode, options.args)
         result = mctsResult.result
         let mctsData = mctsResult.data
 
@@ -126,8 +137,8 @@ function fastFindBestMove(options) {
         console.log("Time finding a move", moveEndTime - startTime)
         return
     }
-
     if (!options.random && !options.mcts) {
+
         console.log(workerGame.turn.name, type, move, options.text,
             "score", score,
             "depth", depthCount.length - 1,
@@ -204,7 +215,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     if (isMaximizing) {
         let bestScore = -Infinity
         let bestMove
-        let movesObject = fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing)
+        let movesObject = fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing, depth)
         let moves = movesObject.moves
         let type = movesObject.type
 
@@ -240,6 +251,19 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
             } else {
                 score = fastMinimax(cBoard, cPlayer, cOppPlayer, eatMode ? depth : depth - 1, alpha, beta, eatMode, eatMode)[1]
             }
+            //Iterative searching thing
+            //Saves the score of the move to a object
+            //"move" : "score"
+            //For example: { 12: 400,
+            //     13: 500,
+            //     15: -200
+            //  }
+            // if(type != startMoveType) console.log(type,move,depth,startDepthNum)
+            if (startDepthNum === depth && type === startMoveType) {
+                iterativeMoveScores[JSON.stringify(move)] = score
+                // console.log(Object.keys(iterativeMoveScores).length)
+            }
+
             if (score > bestScore || (RANDOMMOVES && score == bestScore && Math.random() < 1 / moves.length)) {
                 bestScore = score
                 bestMove = move
@@ -255,7 +279,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
     } else {
         let bestScore = Infinity;
         let bestMove
-        let movesObject = fastGetMoves(board, oppPlayer, player, eatMode, isMaximizing)
+        let movesObject = fastGetMoves(board, oppPlayer, player, eatMode, isMaximizing, depth)
         let moves = movesObject.moves
         let type = movesObject.type
 
@@ -334,11 +358,14 @@ function fastNewEvaluateBoard(board, player, oppPlayer) {
 
     if (DEBUG) {
         //This is helpful when looking at where the score comes from for a board
-        console.log("Player")
+        console.log("\n@@@@@@@@@@")
+        console.log(player.name)
         printScoreObject(playerEval.scoreObject)
-        console.log("OppPlayer")
+        console.log(oppPlayer.name)
         printScoreObject(oppEval.scoreObject)
 
+        console.log("Value:"+boardValue)
+        console.log("@@@@@@@@@@")
     }
 
     return boardValue
@@ -367,7 +394,7 @@ function fastEvaluateBoard(board, player, oppPlayer) {
     }
 
     if (getStage(player) !== 1) {
-        // 300 points for each players chip when on stage 2 or 3
+        // 100 points for each players chip over opponents chips on stage 2 or 3
         boardValue += (player.chipCount - oppPlayer.chipCount) * 100
     }
 
@@ -425,7 +452,7 @@ function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
     let oppCount = oppDots.length
     let emptyCount = emptyDots.length
 
-    if (pieceCount + oppCount + emptyCount !== 3) console.error("Error calcing dot counts")
+    if (pieceCount + oppCount + emptyCount !== 3) console.error("Error calcing dot counts", board)
 
     //blocking opp mill stage 1
     if (oppStage === 1 && oppCount === 2 && pieceCount === 1) {

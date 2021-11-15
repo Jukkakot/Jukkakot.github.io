@@ -2,16 +2,19 @@ importScripts("MinmaxWorker.js", "MCTSWorker.js")
 let workerGame
 let DEBUG = false
 let checkedBoards = new Map()
-let skipCount, depthCount, nodeCount, highDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
+let skipCount, depthCount, nodeCount, startDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
 
 let iterativeEndTime
 let prevBestMove
+let prevBestMoves
+let startMoveType
+const TOPX = 5
+
 const WIN = 100000000
 const LOST = -100000000
 const EMPTYDOT = '0'
 //Max depth for iterating (Very high depth because I dont want to do infinite while loop)
 const MAXDEPTH = 15
-const TOPX = 5
 //Turns on a random chance for minmax to choose new bestmove if found move has same score as current best move has
 //This basically removes all repeating patterns in the game when doing simulations with autoplay ON
 const RANDOMMOVES = true
@@ -206,6 +209,14 @@ function fastGetPlayerDots(board, player) {
 function fastGetUnOrderedMoves(board, player, oppPlayer, eatMode, isMaximizing = false, depth = 1) {
     player.chipCount = fastGetPlayerDots(board, player).length
     oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
+
+    //Iterative search thing
+    //Returning the moves sorted by previous round scores
+    if (isMaximizing && startDepthNum === depth && prevBestMoves !== undefined && startMoveType !== undefined && eatMode === workerGame.eatMode) {
+        // console.log(depth,"unordered", prevBestMoves)
+        return { moves: prevBestMoves, type: startMoveType }
+    }
+
     let stage = eatMode ? 4 : getStage(player)
     let result = { moves: [], type: "" }
     switch (stage) {
@@ -238,31 +249,19 @@ function fastGetUnOrderedMoves(board, player, oppPlayer, eatMode, isMaximizing =
             console.error("Problem?", stage)
             break
     }
-    if (board.length > 24) {
-        debugger
-        console.error("invalid board", board)
-    }
-    //Adding previously best move to front of moves array (Iterative search thing)
-    if (isMaximizing && depth - highDepthNum === 1) {
-        // let prevBestMove = prevBestMoves[depth]
-        if (prevBestMove != undefined && prevBestMove.type == result.type) {
-            let index = result.moves.indexOf(prevBestMove.move)
-            if (index >= 0) {
-                index <= TOPX ? topCount++ : elseCount++
-                //Deletes duplicated move when its "placing" or "eating" type
-                result.moves.splice(index, 1);
-            }
-            result.moves.unshift(prevBestMove.move)
-            // TODO: implement deleting duplicated move when type is "moving" 
-
-        }
-    }
-
     return result
 }
 function fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing = false, depth = 1) {
     player.chipCount = fastGetPlayerDots(board, player).length
-    // oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
+    oppPlayer.chipCount = fastGetPlayerDots(board, oppPlayer).length
+
+    //Iterative search thing
+    //Returning the moves sorted by previous round scores
+    if (isMaximizing && startDepthNum === depth && prevBestMoves !== undefined && startMoveType !== undefined && eatMode === workerGame.eatMode) {
+        // console.log(depth,"ordered", prevBestMoves)
+        return { moves: prevBestMoves, type: startMoveType }
+    }
+
     let stage = eatMode ? 4 : getStage(player)
     let result = { moves: [], type: "" }
     switch (stage) {
@@ -300,21 +299,21 @@ function fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing = false, d
         console.error("invalid board", board)
 
     }
-    //Adding previously best move to front of moves array (Iterative search thing)
-    if (isMaximizing && depth - highDepthNum === 1) {
-        // let prevBestMove = prevBestMoves[depth]
-        if (prevBestMove != undefined && prevBestMove.type == result.type) {
-            let index = result.moves.indexOf(prevBestMove.move)
-            if (index >= 0) {
-                index <= TOPX ? topCount++ : elseCount++
-                //Deletes duplicated move when its "placing" or "eating" type
-                result.moves.splice(index, 1);
-            }
-            result.moves.unshift(prevBestMove.move)
-            // TODO: implement deleting duplicated move when type is "moving" 
+    // //Adding previously best move to front of moves array (Iterative search)
+    // if (isMaximizing && startDepthNum - depth === 1) {
 
-        }
-    }
+    //     if (prevBestMove != undefined && prevBestMove.type == result.type) {
+    //         let index = result.moves.indexOf(prevBestMove.move)
+    //         if (index >= 0) {
+    //             index <= TOPX ? topCount++ : elseCount++
+    //             //Deletes duplicated move when its "placing" or "eating" type
+    //             result.moves.splice(index, 1);
+    //         }
+    //         result.moves.unshift(prevBestMove.move)
+    //         // TODO: implement deleting duplicated move when type is "moving" 
+
+    //     }
+    // } 
 
     return result
 }
@@ -338,7 +337,7 @@ function fastGetS1Moves(board, player, oppPlayer) {
         let pieceCount = playerDots.length
         let oppCount = oppDots.length
         let emptyCount = emptyDots.length
-
+        if (pieceCount + oppCount + emptyCount !== 3) console.error("error calcing pieces")
         // Making mill stage 1
         if (oppStage === 1 && pieceCount === 2 && emptyCount === 1) {
             if (!moves.includes(emptyDots[0]))
@@ -385,6 +384,7 @@ function fastGetS2Moves(board, player, oppPlayer) {
         let pieceCount = playerDots.length
         let oppCount = oppDots.length
         let emptyCount = emptyDots.length
+        if (pieceCount + oppCount + emptyCount !== 3) console.error("error calcing pieces")
         // Making mill
         if (pieceCount === 2 && emptyCount === 1) {
             let fromDot = getNeighboursIndexes(emptyDots[0]).find(dot => board[dot] == player.char)
@@ -439,6 +439,7 @@ function fastGetS3Moves(board, player, oppPlayer) {
         let pieceCount = playerDots.length
         let oppCount = oppDots.length
         let emptyCount = emptyDots.length
+        if (pieceCount + oppCount + emptyCount !== 3) console.error("error calcing pieces")
         // Making mill
         if (pieceCount === 2 && emptyCount === 1) {
             let fromDot = fromDots.find(dot => !playerDots.includes(dot))
@@ -462,7 +463,7 @@ function fastGetS3Moves(board, player, oppPlayer) {
     //Adding the rest of the moves
     for (let fromDot of fromDots) {
         for (let toDot of toDots) {
-            if (fromDot == undefined) debugger
+            if (fromDot == undefined || toDot == undefined) console.error("Error generating s3 moves", fromDot, toDot)
             if (!fastIsArrayInArray(moves, [fromDot, toDot]))
                 moves.push([fromDot, toDot])
         }
@@ -563,7 +564,7 @@ function fastMovePlayerTo(args) {
     let player = args.player
     if (toDot == undefined || fromDot == undefined ||
         board[toDot] != EMPTYDOT || board[fromDot] != player.char) {
-        debugger
+        console.error("Error moving chip", toDot, fromDot, board[toDot], board[fromDot])
     }
     board = setCharAt(board, toDot, player.char)
     board = setCharAt(board, fromDot, EMPTYDOT)
@@ -576,7 +577,9 @@ function fastPlaceChip(args) {
 
     player.chipsToAdd--
     player.chipCount++
-    if (player.chipsToAdd < 0 || board[dot] != EMPTYDOT) debugger
+    if (player.chipsToAdd < 0 || board[dot] != EMPTYDOT || board.length != 24) {
+        console.error("Error plaching chip", board, args.type, args.move, player.chipsToAdd, board[dot], board.length)
+    }
 
     board = setCharAt(board, dot, player.char)
     return board
@@ -628,7 +631,7 @@ function fastPlayRound(args) {
             result.eatMode = fastHasNewMills(result.board, player)
             break;
         case "eating":
-            if (player.mills.find(m => m.new) == undefined) console.error("Player has no mill")
+            // if (!player.mills.some(m => m.new)) console.error("Player has no new mill")
             //Player wins because opponent was on flying stage when eating
             //Have to check this before actually eating
             if (getStage(oppPlayer) === 3) {
@@ -652,10 +655,9 @@ function fastPlayRound(args) {
     }
     return result
 }
-function setCharAt(str, index, chr) {
-    if (index < 0) console.error("invalid index", str, index, chr)
-    if (index > str.length - 1) return str;
-    return str.substring(0, index) + chr + str.substring(index + 1);
+//https://stackoverflow.com/questions/1431094/how-do-i-replace-a-character-at-a-particular-index-in-javascript
+function setCharAt(str, index, ch) {
+    return str.replace(/./g, (c, i) => i == index ? ch : c);
 }
 function windowToStr(board, window) {
     return window.reduce((a, b) => a + board[b], "")
@@ -670,13 +672,7 @@ function indexToDot(index) {
     }
 }
 function fastIsSameWindow(window, board) {
-    // console.log(board, workerGame.fastDots)
-    let isSame = window.every(wDot => workerGame.fastDots[wDot] == board[wDot])
-    // console.log(board, "\n" + workerGame.fastDots)
-    // console.log(board[window[0]], board[window[1]], board[window[2]])
-    // console.log(workerGame.fastDots[window[0]], workerGame.fastDots[window[1]], workerGame.fastDots[window[2]])
-    // console.log(isSame)
-    return isSame
+    return window.every(wDot => workerGame.fastDots[wDot] == board[wDot])
 }
 function isNewMill(board, window, player) {
     let windowStr = windowToStr(board, window)
@@ -727,7 +723,7 @@ function getStage(player) {
         return 1
     } else if (player.chipCount + player.chipsToAdd === 3) {
         return 3
-    } else if (player.chipsToAdd === 0) {
+    } else if (player.chipsToAdd === 0) { //  && player.chipCount > 3
         return 2
     } else {
         console.error("returning 0 stage", player)

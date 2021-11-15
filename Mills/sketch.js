@@ -80,6 +80,7 @@ const OPTIONS = [
 	{
 		...defaultOption,
 		text: "MCTS",
+		args: "visits",
 		mcts: true,
 	},
 ]
@@ -120,7 +121,7 @@ function preload() {
 }
 function playAudio(key) {
 	//Not playing audio if muted
-	if(!audioIsOn) return
+	if (!audioIsOn) return
 
 	switch (key) {
 		case "placing":

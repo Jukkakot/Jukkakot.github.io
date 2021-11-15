@@ -68,7 +68,7 @@ class Node {
     //     return getWinner() != undefined || moves.length == 0
     // }
 }
-function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
+function MCTSFindBestMove(board, player, oppPlayer, eatMode, args = "visits") {
     maxPlayer = player
     minPlayer = oppPlayer
     // MCTSCheckedBoards = new Map()
@@ -113,7 +113,7 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
         }
         let maxWins = -Infinity
         for (let child of root.children) {
-            if (child.wins >= maxWins) {
+            if (child[args] >= maxWins) {
                 maxWins = child.wins
                 bestNode = child
             }
@@ -122,7 +122,7 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode) {
 
     }
     else {
-        console.log("returning only move available")
+        console.log("Returning only move available")
         bestNode = root
         result = [moves[0], type]
     }
