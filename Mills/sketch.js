@@ -13,70 +13,100 @@ let AUTOPLAY = false
 let NODELAY = false
 let SENDDATA = false
 let audioIsOn = true
+let autoMultiLookups = false
+let lastMultiIndices = []
 const defaultOption = {
 	autoPlay: true,
 	delay: true,
-	autoPlay: true,
 	random: false,
 	iterative: false,
 	mcts: false,
+	maxDepth: 15,
+
 }
 const OPTIONS = [
+	//0
 	{
 		...defaultOption,
 		text: "Manual",
 		autoPlay: false
 	},
+	//1
 	{
 		...defaultOption,
 		text: "Random",
 		random: true,
 	},
+	//2
 	{
 		...defaultOption,
 		text: "Minmax 1",
 		difficulty: 1,
 	},
+	//3
 	{
 		...defaultOption,
 		text: "Minmax 4",
 		difficulty: 4,
 	},
+	//4
 	{
 		...defaultOption,
 		text: "Minmax 6",
 		difficulty: 6,
 	},
+	//5
 	{
 		...defaultOption,
 		text: "Iterative 0.5s",
 		iterative: true,
 		time: 500,
 	},
+	//6
 	{
 		...defaultOption,
 		text: "Iterative 1s",
 		iterative: true,
 		time: 1000,
 	},
+	//7
 	{
 		...defaultOption,
 		text: "Iterative 3s",
 		iterative: true,
 		time: 3000,
 	},
+	//8
 	{
 		...defaultOption,
 		text: "Iterative 5s",
 		iterative: true,
 		time: 5000,
 	},
+	//9
 	{
 		...defaultOption,
 		text: "Iterative 10s",
 		iterative: true,
 		time: 10000,
 	},
+	//10
+	{
+		...defaultOption,
+		text: "Iterative D 4",
+		iterative: true,
+		time: 60000,
+		maxDepth: 4,
+	},
+	//11
+	{
+		...defaultOption,
+		text: "Iterative D 6",
+		iterative: true,
+		time: 60000,
+		maxDepth: 6,
+	},
+	//12
 	{
 		...defaultOption,
 		text: "MCTS",
@@ -88,7 +118,7 @@ let gameSettings = {
 	lightOption: 7,
 	darkOption: 0,
 }
-
+let buttonIds = []
 let outBoxSize, circleSize, distance
 let cnv
 let scaledWidth, scaledHeight
@@ -98,7 +128,7 @@ let fps
 let locked
 let movableDot
 let darkDot, lightDot, backgroundImg, cursorImg, bAndwDotImg, loadingGif, spinnerGif, darkButton, audioOffImg, audioOnImg
-let restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton, audioButton
+let restartButton, suggestionButton, pDarkButton, pLightButton, autoPlayButton, audioButton, randomStateButton
 let chipPlacingSound, chipEatingSound, chipMovingSound
 
 function preload() {
@@ -141,6 +171,7 @@ function playAudio(key) {
 function setupButton(txt, id, func) {
 	let btn = createButton(txt)
 	btn.id(id)
+	buttonIds.push(id)
 	btn.mousePressed(() => func())
 	return btn
 }
@@ -153,6 +184,7 @@ function setup() {
 	pDarkButton = setupButton(" ", "pDarkButton", togglePlayerDark)
 	pLightButton = setupButton(" ", "pLightButton", togglePlayerLight)
 	audioButton = setupButton(" ", "audioButton", toggleAudio)
+	randomStateButton = setupButton("Generate gamestate", "randomStateButton", randomStatebuttonPress)
 	start()
 	windowResized()
 }
@@ -191,13 +223,28 @@ function keyPressed(e) {
 			"s: suggestion\n",
 			"d: debug\n",
 			"m: mute audio\n",
+			"a: toggle autoplay\n",
+			"p: get random game state\n",
+			"o: toggle auto multilookup mode\n",
 			"1: toggle light player button\n",
 			"2: toggle dark player button\n",
 			"h: help"
 		)
 	} else if (e.key === "m") {
 		toggleAudio()
+	} else if (e.key === "a") {
+		autoPlayButtonPress()
+	} else if (e.key === "p") {
+		randomStatebuttonPress()
+	} else if (e.key === "o") {
+		autoMultiLookups = !autoMultiLookups
+		if (!autoMultiLookups) lastMultiIndices = []
+		console.log("Auto multilookups:", autoMultiLookups)
 	}
+}
+function randomStatebuttonPress() {
+	start(true)
+	game.getRandGameState()
 }
 function suggestionPress() {
 	// game.findBestMove("findMove").then(function (value) {
@@ -242,7 +289,7 @@ function togglePlayerDark() {
 function toggleAudio() {
 	audioIsOn = !audioIsOn
 }
-function start() {
+function start(skipAutoPlay) {
 	if (game && game.worker) {
 		game.initWorker()
 		gameSettings = {
@@ -260,7 +307,7 @@ function start() {
 	// difficultyButton.style("visibility", "visible")
 	//This is to auto play the first move for light wood player when loading the site
 	// && game.turn === game.playerLight
-	if (game.turn.options.autoPlay) {
+	if (!skipAutoPlay && game.turn.options.autoPlay) {
 		game.findBestMove("findMove")
 	}
 }
@@ -304,12 +351,13 @@ function windowResized() {
 	audioButton.size(buttonHeight * 0.8, buttonHeight * 0.8)
 	audioButton.style('font-size', circleSize * 1 + "px")
 
+	randomStateButton.position(cnv.position().x + cnv.width - buttonWidth, cnv.position().y + cnv.height - buttonHeight)
+	randomStateButton.size(buttonWidth, buttonHeight)
+	randomStateButton.style('font-size', circleSize * 0.8 + "px")
+
 }
 function touchStarted(e) {
-	if (e.target.id !== "restartButton" &&
-		e.target.id !== "suggestionButton" &&
-		e.target.id !== "pDarkButton" &&
-		e.target.id !== "pLightButton") {
+	if(buttonIds.includes(e.target.id)) {
 		//Disables double clicking issues when placing chips
 		//And other unwanted actions on mobile like selecting text on buttons
 		e.preventDefault()

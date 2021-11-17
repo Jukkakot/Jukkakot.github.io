@@ -1,20 +1,28 @@
 class Mill {
-    constructor(d1, d2, d3) {
+    constructor(d1, d2, d3, args = {
+        fastDots: undefined,
+        fastId: undefined,
+        new: undefined,
+    }
+    ) {
         this.dots = [d1, d2, d3]
-        this.fastDots = [toFastDot(d1), toFastDot(d2), toFastDot(d3)]
-        this.fastId = this.fastDots.reduce((a, b) => a.toString() + b.toString())
+        this.fastDots = args.fastDots || [toFastDot(d1), toFastDot(d2), toFastDot(d3)]
+        this.fastId = args.fastId || this.fastDots.reduce((a, b) => a.toString() + b.toString())
+        this.new = args.new !== undefined ? args.new : true
+
+        //These attributes are generated from above attributes
         this.player = d1.player
         this.id = d1.l.toString() + d1.d.toString() +
             d2.l.toString() + d2.d.toString() +
             d3.l.toString() + d3.d.toString()
         this.uniqNum = this.player.turns
-
         this.uniqId = this.id + this.uniqNum.toString()
         this.fastUniqId = this.fastId + this.uniqNum.toString()
-        this.new = true
+
     }
     toFastMill() {
         return {
+            player: this.player.char,
             fastDots: this.fastDots,
             fastId: this.fastId,
             uniqNum: this.uniqNum,

@@ -45,6 +45,46 @@ class Game {
         }
         return str
     }
+    setDots(board, player, oppPlayer) {
+        this.dots = this.initDots()
+        for (var i = 0; i < board.length; i++) {
+            if (board[i] != EMPTYDOT) {
+                let dot = indexToDot(i)
+                this.dots[dot.l][dot.d].player = board[i] === player.char ? player : oppPlayer
+            }
+        }
+    }
+    setState(state) {
+        console.log(state)
+
+        let board = state.board
+        let player = this.playerDark.char === state.player.char ? this.playerDark : this.playerLight
+        let oppPlayer = this.playerDark.char === state.player.char ? this.playerLight : this.playerDark
+
+        this.setDots(board, player, oppPlayer)
+
+        this.eatMode = state.eatMode
+        this.turn = state.isPlayerTurn ? player : oppPlayer
+
+        player.setState(state.player)
+        oppPlayer.setState(state.oppPlayer)
+
+        this.turnNum = player.turns + oppPlayer.turns
+
+        if (state.winner) {
+            let winner = state.winner.char === player.char ? player : oppPlayer
+            this.setWinner(winner)
+        } else {
+            this.winner = undefined
+        }
+        if (this.turn.options.autoPlay) {
+            this.findBestMove("findMove")
+        }
+        if(autoMultiLookups && lastMultiIndices && lastMultiIndices.length !== 0) {
+            this.getBestMoves(lastMultiIndices)
+        }
+        console.log(this)
+    }
     getEmptyDots(board = this.dots) {
         let dots = []
         for (let layer of board) {
@@ -80,19 +120,92 @@ class Game {
                     loadingGif.hide()
                     game.setSuggestion(data.move)
                     break;
+                case "randomGameStage":
+                    LOADING = false
+                    loadingGif.hide()
+                    game.setState(data.state)
+                    break;
+                case "multiLookup":
+                    LOADING = false
+                    loadingGif.hide()
+                    game.handleMultiLookupResult(data)
             };
         }
     }
-    findBestMove(cmd) {
+    handleMultiLookupResult(data) {
+        console.log(data.cmd,data.name)
+        if (SENDDATA) {
+            const gameData = {
+                data: data,
+                players: {
+                    winner: this.winner.getData(),
+                    oppPlayer: oppPlayer.getData(),
+                },
+                game: {
+                    gameTime: gameTime,
+                    averageTurnTime: Number(avgTurnTime),
+                    totalTurns: totalTurns,
+                    autoPlay: AUTOPLAY,
+                    maxChipCount: MAXCHIPCOUNT,
+                    gameSettings: this.settings,
+                    board: this.stringify(),
+                    startDate: this.startDate,
+                    endDate: Date()
+                },
+            }
+            sendData(gameData, "multiLookup")
+        }
+        if(autoMultiLookups) {
+            start()
+            this.getRandGameState()
+        }
+    }
+    getRandGameState() {
         if (LOADING) return
         LOADING = true
-        // if(!AUTOPLAY)cursor(WAIT)
         loadingGif.show()
+
+        let player = this.turn
+        let oppPlayer = this.turn.char === "D" ? this.playerLight : this.playerDark
+        let data = {
+            player: deepClone(player),
+            oppPlayer: deepClone(oppPlayer),
+            board: this.stringify(),
+            eatmode: this.eatmode,
+            rounds: floor(random(0, 150)),
+            cmd: "randomGameStage"
+        }
+        console.log("rounds:", data.rounds)
+        this.worker.postMessage(deepClone(data))
+    }
+    getBestMoves(aiIndices) {
+        if (LOADING) return
+        LOADING = true
+        loadingGif.show()
+        if(aiIndices.length === 0) return
+
+        let data = {
+            game: deepClone(this),
+            board: this.stringify(),
+            cmd: "multiLookup",
+            allOptions: OPTIONS,
+            indices: aiIndices,
+            DEBUG: DEBUG,
+            NODELAY: true
+        }
+        lastMultiIndices = aiIndices
+        this.worker.postMessage(deepClone(data))
+    }
+    findBestMove(cmd, options) {
+        if (LOADING) return
+        LOADING = true
+        loadingGif.show()
+
         let data = {
             game: deepClone(this),
             board: this.stringify(),
             cmd: cmd,
-            options: game.turn.options,
+            options: options || game.turn.options,
             DEBUG: DEBUG,
             NODELAY: NODELAY
         }
@@ -120,10 +233,10 @@ class Game {
         textSize(circleSize * 0.8)
         noStroke()
         // fill(0)
-        if (getStage(this.turn) !== 1) {
-            text(this.turn.name + " turn", 0, circleSize * 3)
-        } else if (this.eatMode) {
+        if (this.eatMode) {
             text("Mill!", 0, circleSize * 3)
+        } else if (getStage(this.turn) !== 1) {
+            text(this.turn.name + " turn", 0, circleSize * 3)
         } else {
             text("Place a chip", 0, circleSize * 3)
         }
@@ -241,12 +354,12 @@ class Game {
 
             //Eaten chips
             dot = new Dot(-1.4 + i / 10, 1.7, -1, -1, true)
-            dot.player = this.playerLight
+            dot.player = this.playerDark
             dot.visible = false
             this.playerLight.eatenChips.push(dot)
 
             dot = new Dot(1.4 - i / 10, 1.7, -1, -1, true)
-            dot.player = this.playerDark
+            dot.player = this.playerLight
             dot.visible = false
             this.playerDark.eatenChips.push(dot)
         }
@@ -587,5 +700,14 @@ function getStage(player) {
     } else {
         console.log("returning 0 stage", player)
         return 0
+    }
+}
+function getLayer(i) {
+    return floor(i / 8)
+}
+function indexToDot(index) {
+    return {
+        l: getLayer(index),
+        d: index - getLayer(index) * 8
     }
 }
