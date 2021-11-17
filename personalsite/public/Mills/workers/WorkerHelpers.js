@@ -2,19 +2,19 @@ importScripts("MinmaxWorker.js", "MCTSWorker.js")
 let workerGame
 let DEBUG = false
 let checkedBoards = new Map()
-let skipCount, depthCount, nodeCount, startDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
+let skipCount, depthCount, leafNodeCount, startDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
 
 let iterativeEndTime
 let prevBestMove
 let prevBestMoves
 let startMoveType
+const TOPX = 5
 
 const WIN = 100000000
 const LOST = -100000000
 const EMPTYDOT = '0'
 //Max depth for iterating (Very high depth because I dont want to do infinite while loop)
-const MAXDEPTH = 15
-const TOPX = 5
+let MAXDEPTH = 15
 //Turns on a random chance for minmax to choose new bestmove if found move has same score as current best move has
 //This basically removes all repeating patterns in the game when doing simulations with autoplay ON
 const RANDOMMOVES = true
@@ -33,11 +33,21 @@ self.addEventListener("message", function handleMessageFromGame(e) {
         case "close":
             self.close()
             break;
+        case "randomGameStage":
+            let resultData = {
+                cmd: data.cmd,
+                state: getRandomGameState(data)
+            }
+            self.postMessage(resultData)
+            break;
         case "findMove":
             handleGetMove(data)
             break;
         case "suggestion":
             handleGetMove(data)
+            break;
+        case "multiLookup":
+            handleMultiLookup(data)
             break;
         case "debug":
             workerGame = data.game
@@ -46,15 +56,54 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             workerGame.fastDots = data.board
             DEBUG = data.DEBUG
             // workeridNumber = data.idNumber
-            console.log("stages", workerGame.playerDark.char, getStage(workerGame.playerDark), workerGame.playerLight.char, getStage(workerGame.playerLight))
-            fastNewEvaluateBoard(workerGame.fastDots, workerGame.playerLight, workerGame.playerDark, -1)
-            fastNewEvaluateBoard(workerGame.fastDots, workerGame.playerDark, workerGame.playerLight, -1)
+            let workerPlayer = workerGame.turn
+            let workerOppPlayer = workerGame.turn.char == workerGame.playerDark.char ? workerGame.playerLight : workerGame.playerDark
+
+            console.log("stages", workerPlayer.char, getStage(workerPlayer), workerOppPlayer.char, getStage(workerOppPlayer))
+           
+            fastNewEvaluateBoard(workerGame.fastDots, workerPlayer, workerOppPlayer, -1)
+            fastNewEvaluateBoard(workerGame.fastDots, workerOppPlayer, workerPlayer, -1)
             self.close()
             break;
     };
 })
+function handleMultiLookup(data) {
+    let results = []
+    let name = ""
+    let seperator = " vs "
+    for (let index of data.indices) {
+        let options = data.allOptions[index]
+        name += options.text + seperator
+        MAXDEPTH = options.maxDepth || 15
+        workerGame = data.game
+        workerGame.playerDark.mills = toFastMills(workerGame.playerDark)
+        workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
+        workerGame.fastDots = stringify(workerGame.dots)
+        DEBUG = data.DEBUG
+        NODELAY = data.NODELAY
 
+        const bestMoveResult = fastFindBestMove(options)
+        let resultData = {
+            options: options,
+            move: bestMoveResult.move,
+            moveData: bestMoveResult.moveData
+        }
+        results.push(resultData)
+    }
+    
+    name = name.substring(0, name.length - seperator.length);
+    self.postMessage(
+        {
+            cmd: data.cmd,
+            results: results,
+            name: name,
+            indices: data.indices
+        }
+    )
+}
 function handleGetMove(data) {
+
+    MAXDEPTH = data.options.maxDepth || 15
     workerGame = data.game
     workerGame.playerDark.mills = toFastMills(workerGame.playerDark)
     workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
@@ -78,8 +127,10 @@ function handleGetMove(data) {
     }
 }
 function toFastMills(player) {
+    if (!player.mills || player.mills.length == 0) return []
     let mills = player.mills.map(m => {
         return {
+            player: player.char,
             fastDots: m.fastDots,
             fastId: m.fastId,
             uniqNum: m.uniqNum,
@@ -595,6 +646,7 @@ function fastEatChip(args) {
     board = setCharAt(board, dot, EMPTYDOT)
     //Checking mills again incase ate from a mill
     oppPlayer.mills = fastGetUpdatedMills(board, oppPlayer)
+
     //Making players mills not new
     player.mills.forEach(m => m.new = false)
     if (board.length > 24) {
@@ -607,52 +659,52 @@ function fastPlayRound(args) {
     let result = {
         eatMode: false,
         board: args.board,
-        winLose: undefined
+        // winLose: undefined
     }
-    let move = args.move
-    let type = args.type
-    let oppPlayer = args.oppPlayer
     let player = args.player
-    let isMaximizing = args.isMaximizing
-    let depth = args.depth
-
     player.turns++
     if (getStage(player) === 3) {
         player.stage3Turns++
     }
-
     switch (args.type) {
         case "moving":
             result.board = fastMovePlayerTo(args)
             result.eatMode = fastHasNewMills(result.board, player)
-            break;
+            break
         case "placing":
             result.board = fastPlaceChip(args)
             result.eatMode = fastHasNewMills(result.board, player)
-            break;
+            break
         case "eating":
             // if (!player.mills.some(m => m.new)) console.error("Player has no new mill")
             //Player wins because opponent was on flying stage when eating
             //Have to check this before actually eating
-            if (getStage(oppPlayer) === 3) {
-                result.winLose = isMaximizing ? [move, WIN * depth, type] : [move, LOST * depth, type]
-            }
+            // if (getStage(oppPlayer) === 3) {
+            //     result.winLose = isMaximizing ? [move, WIN * depth, type] : [move, LOST * depth, type]
+            // }
             result.board = fastEatChip(args)
             break
         default:
             console.error("Invalid move", args)
             break
     }
-    if (result.board.length > 24) console.error("invalid board", result.board)
+
     // if (result.eatMode) {
     //     //Making players mills not new since player is going to "use them" next
     //     player.mills.forEach(m => m.new = false)
     //     //TODO: EAT NOW BEFORE SCORING THE BOARD
     // }
-    if (result.winLose == undefined && (oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !fastCheckIfCanMove(result.board, oppPlayer))) {
-        //Player wins because opponent can't move
-        result.winLose = isMaximizing ? [move, WIN * depth, type] : [move, LOST * depth, type]
-    }
+    // if (result.winLose == undefined) {
+    //     let winlose = fastCheckWin(result.board, player, oppPlayer, depth, result.eatMode)
+    //     if(winlose) {
+    //         result.winLose = [move, winlose, type]
+    //     }
+
+    // }
+    // if ((oppPlayer.chipCount + oppPlayer.chipsToAdd < 3 || !fastCheckIfCanMove(result.board, oppPlayer))) {
+    //     //Player wins because opponent can't move
+    //     result.winLose = isMaximizing ? [move, WIN * depth, type] : [move, LOST * depth, type]
+    // }
     return result
 }
 //https://stackoverflow.com/questions/1431094/how-do-i-replace-a-character-at-a-particular-index-in-javascript
@@ -684,7 +736,7 @@ function isNewMill(board, window, player) {
         let workerGamePlayer = player.name == workerGame.playerLight.name ? workerGame.playerLight : workerGame.playerDark
         let clonePlayerMill = player.mills.find(m => m.fastId == fastGetWindowFastId(window))
         let workerGamerMill = workerGamePlayer.mills.find(m => m.fastId == fastGetWindowFastId(window))
-        if (!clonePlayerMill) console.log(clonePlayerMill, "shouldnt happen", player.mills)
+        if (!clonePlayerMill) console.error(clonePlayerMill, "shouldnt happen", player.mills)
         //First checking if this mill is in the workerGame.dots board, if it isnt, then its a new mill
 
         //Second check is to check if the mill is in the workerGame.dots board but it has been formed another time
@@ -704,8 +756,8 @@ function getCalcedValue(board, player, oppPlayer) {
         // calcedValue += 3500 * player.mills.filter(m => m.new).length
         // calcedValue -= 4000 * oppPlayer.mills.filter(m => m.new).length
         for (let window of millWindows) {
-            if (isNewMill(board, window, player)) calcedValue += 3500
-            else if (isNewMill(board, window, oppPlayer)) calcedValue -= 4000
+            if (isNewMill(board, window, player)) calcedValue += 3000
+            else if (isNewMill(board, window, oppPlayer)) calcedValue -= 4500
         }
     }
     // const testValue = fastNewEvaluateBoard(board, player, oppPlayer)

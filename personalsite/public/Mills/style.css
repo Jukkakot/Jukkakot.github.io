@@ -20,7 +20,7 @@ html, body{
   button:hover {
     filter: brightness(70%);
   }
-  #restartButton,#difficultyButton{
+  #restartButton,#randomStateButton{
     background: transparent  url("./resources/img/woodenButton.png") no-repeat center top;
     background-size: cover;
   }

@@ -9,7 +9,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(cors())
 app.listen(3001)
 
-const db = new LowSync(new JSONFileSync("JSON/db.json"))
+const db = new LowSync(new JSONFileSync("JSON/db_random.json"))
 
 db.read()
 

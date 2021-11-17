@@ -68,7 +68,40 @@ class Node {
     //     return getWinner() != undefined || moves.length == 0
     // }
 }
+function getRandomGameState(args) {
+    let player = {
+        name: args.player.name,
+        char: args.player.char,
+        chipCount: args.player.chipCount,
+        chipsToAdd: args.player.chipsToAdd,
+        mills: toFastMills(args.player.mills),
+        turns: args.player.turns,
+        stage3Turns: args.player.stage3Turns,
+    }
+    let oppPlayer = {
+        name: args.oppPlayer.name,
+        char: args.oppPlayer.char,
+        chipCount: args.oppPlayer.chipCount,
+        chipsToAdd: args.oppPlayer.chipsToAdd,
+        mills: toFastMills(args.oppPlayer.mills),
+        turns: args.oppPlayer.turns,
+        stage3Turns: args.oppPlayer.stage3Turns,
+    }
+    const originalState = {
+        board: args.board,
+        player: player,
+        oppPlayer: oppPlayer,
+        eatMode: args.eatMode,
+        isPlayerTurn: true,
+        winner: undefined,
+    }
+
+    const root = new Node(originalState)
+
+    return generateRandomState(root, args.rounds)
+}
 function MCTSFindBestMove(board, player, oppPlayer, eatMode, args = "visits") {
+    console.log(player)
     maxPlayer = player
     minPlayer = oppPlayer
     // MCTSCheckedBoards = new Map()
@@ -204,7 +237,19 @@ function expandNode(node) {
 
     return newNode
 }
-
+function generateRandomState(root, rounds) {
+    while (rounds-- > 0) {
+        let oldState = JSON.parse(JSON.stringify(root.state))
+        let newState = playMove(root)
+        //Returning the state right before winning the game
+        if (newState.winner != undefined)
+            return oldState
+            
+        root.setState(newState)
+    }
+    console.log(rounds)
+    return root.state
+}
 function playout(node) {
     let winner
     const clonedState = JSON.parse(JSON.stringify(node.state))
@@ -228,7 +273,7 @@ function backprop(node, reward) {
         let winner = node.getWinner()
         if (winner && winner.char == maxPlayer.char) {
             node.wins = Infinity
-            if(node.parent) {
+            if (node.parent) {
                 node.parent.wins = Infinity
             } else {
                 console.log("first move is win?")
@@ -267,7 +312,6 @@ function playMove(node, index) {
         return node.state
     }
     if (moves[index] == undefined) {
-        debugger
         console.error("invalid move", moves.length, index)
     }
 
@@ -282,18 +326,20 @@ function playMove(node, index) {
     }
     let result = fastPlayRound(args)
 
-    if (result.winLose != undefined) {
-        let value = result.winLose[1]
-        node.state.winner = value == WIN ? node.state.player : node.state.oppPlayer
-    }
+    // if (result.winLose != undefined) {
+    //     let value = result.winLose[1]
+    //     node.state.winner = value == WIN ? node.state.player : node.state.oppPlayer
+    // }
 
     let newState = {
         player: node.state.player,
         oppPlayer: node.state.oppPlayer,
+        // player: args.player,
+        // oppPlayer: args.oppPlayer,
         board: result.board,
         eatMode: result.eatMode,
         //Only switching turn if eatmode is false
-        isPlayerTurn: result.eatMode ? node.state.isPlayerTurn : !node.state.isPlayerTurn,
+        isPlayerTurn: result.eatMode === true ? node.state.isPlayerTurn : !node.state.isPlayerTurn,
         winner: node.state.winner
     }
     newState.winner = node.getWinner(newState)

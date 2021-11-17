@@ -35,6 +35,49 @@ class Player {
         this.stage3Turns = 0
         this.turnData = []
     }
+    setState(state) {
+        // let player = {
+        //     name: args.player.name,
+        //     char: args.player.char,
+        //     chipCount: args.player.chipCount,
+        //     chipsToAdd: args.player.chipsToAdd,
+        //     mills: args.player.mills,
+        //     turns: args.player.turns,
+        //     stage3Turns: args.player.stage3Turns,
+        // }
+
+        this.chipCount = state.chipCount
+        this.chipsToAdd = state.chipsToAdd
+
+        this.startChips = this.startChips.slice(0, this.chipsToAdd)
+
+        this.eatenChipsCount = (MAXCHIPCOUNT / 2) - (this.chipsToAdd + this.chipCount) 
+        // let oppPlayer = this.char === game.playerLight.char ? game.playerDark : game.playerLight
+        for(let i = 0; i < this.eatenChipsCount; i++) {
+            this.eatenChips[i].visible = true
+        }
+        this.turns = state.turns
+        this.stage3Turns = state.stage3Turns
+        let mills = []
+        for (let mill of state.mills) {
+            //fastMill = {
+            //     player: player.char,
+            //     fastDots: m.fastDots,
+            //     fastId: m.fastId,
+            //     uniqNum: m.uniqNum,
+            //     fastUniqId: m.fastUniqId,
+            //     new: m.new
+            // }
+            let dots = []
+            mill.fastDots.forEach(d => {
+                let dot = indexToDot(d)
+                dots.push(game.dots[dot.l][dot.d])
+            })
+            mill.player = this
+            mills.push(new Mill(dots[0], dots[1], dots[2], mill))
+        }
+        this.mills = mills
+    }
     getData() {
         const totalTurnTime = this.turnData.reduce((a, b) => a + b.time, 0)
         const avgTurnTime = totalTurnTime / this.turnData.length
