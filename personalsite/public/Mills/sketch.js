@@ -357,7 +357,7 @@ function windowResized() {
 
 }
 function touchStarted(e) {
-	if(buttonIds.includes(e.target.id)) {
+	if(!buttonIds.includes(e.target.id)) {
 		//Disables double clicking issues when placing chips
 		//And other unwanted actions on mobile like selecting text on buttons
 		e.preventDefault()
