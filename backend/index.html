@@ -29,6 +29,10 @@
 					drawLineChart(gameData, 0, avg)
 					drawLineChart(gameData, 1, avg)
 					drawLineChart(gameData, 2, avg)
+				} else if (gameData.type == "multibar") {
+					drawBarChart(gameData, 0)
+					drawBarChart(gameData, 1)
+					drawBarChart(gameData, 2)
 				}
 			})
 		}
@@ -36,28 +40,39 @@
 			let gameData = data
 			const dataPoints = gameData.data.map(game => {
 				let defaultOptions = {
-					type: avg ? "spline" : "line",
+					type: avg || data.isLookupData ? "spline" : "line",
 					// axisYType: "secondary",
 					showInLegend: true,
 					markerSize: 5,
 					// yValueFormatString: "#####Ms",
 				}
-				const darkValues = game.darkValues.constructor != Array ? game.darkValues[id + 1] : game.darkValues
-				const lightValues = game.lightValues.constructor != Array ? game.lightValues[id + 1] : game.lightValues
-				return [{
-					...defaultOptions,
-					name: game.darkText,
-					dataPoints: darkValues.map(move => {
-						return { y: move.value, x: move.turnNumber }
-					})
-				},
-				{
-					...defaultOptions,
-					name: game.lightText,
-					dataPoints: lightValues.map(move => {
-						return { y: move.value, x: move.turnNumber }
-					})
-				}]
+				if (data.isLookupData) {
+					return [{
+						...defaultOptions,
+						name: game.label,
+						dataPoints: game.values[id+1].map(lookup => {
+							return { y: lookup.value, x: lookup.turnNumber }
+						})
+					}]
+				} else {
+					const darkValues = data.type === "multiline" ? game.darkValues[id + 1] : game.darkValues
+					const lightValues = data.type === "multiline" ? game.lightValues[id + 1] : game.lightValues
+					return [{
+						...defaultOptions,
+						name: game.darkText,
+						dataPoints: darkValues.map(move => {
+							return { y: move.value, x: move.turnNumber }
+						})
+					},
+					{
+						...defaultOptions,
+						name: game.lightText,
+						dataPoints: lightValues.map(move => {
+							return { y: move.value, x: move.turnNumber }
+						})
+					}]
+				}
+
 			})
 
 			var chart = new CanvasJS.Chart("chartContainer" + id, {
@@ -117,12 +132,20 @@
 					title: gameData.yTitle
 				},
 				title: {
-					text: gameData.title
+					text: data.type !== "multibar" ? gameData.title : "Stage " + Number(id + 1) + " " + gameData.title
 				},
 				data: [{
 					type: "column",
 					dataPoints: gameData.data.map((game, index) => {
-						return { y: game.value, label: game.label + " " + game.gameCount + " games", color: game.color }
+						if (data.type === "multibar") {
+
+							game = game[id + 1]
+
+							return { y: game.value, label: game.label + " " + game.gameCount + " count", color: game.color }
+						} else {
+							return { y: game.value, label: game.label + " " + game.gameCount + " count", color: game.color }
+						}
+
 					})
 				}]
 			});
@@ -152,6 +175,9 @@
 	<button onClick="getData('chipcountPerStage',true)">Avg Chip counts per stage</button>
 	<button onClick="getData('gameLength')">Game lengths</button>
 	<button onClick="getData('winlose')">Win lose ratios</button>
+	<button onClick="getData('avglookuptimes')">Avg lookup times</button>
+	<button onClick="getData('avglookuptimesperstage')">Avg lookup times per stage</button>
+	<button onClick="getData('avglookuptimeperturnperstage')">Avg lookup times per turn per stage</button>
 </body>
 
 </html>

@@ -77,11 +77,11 @@ class Game {
         } else {
             this.winner = undefined
         }
-        if (this.turn.options.autoPlay) {
-            this.findBestMove("findMove")
-        }
-        if(autoMultiLookups && lastMultiIndices && lastMultiIndices.length !== 0) {
+        
+        if (autoMultiLookups && lastMultiIndices && lastMultiIndices.length !== 0) {
             this.getBestMoves(lastMultiIndices)
+        } else if (this.turn.options.autoPlay) {
+            this.findBestMove("findMove")
         }
         console.log(this)
     }
@@ -133,18 +133,16 @@ class Game {
         }
     }
     handleMultiLookupResult(data) {
-        console.log(data.cmd,data.name)
+        console.log(data.cmd, data.name)
         if (SENDDATA) {
             const gameData = {
                 data: data,
                 players: {
-                    winner: this.winner.getData(),
-                    oppPlayer: oppPlayer.getData(),
+                    playerLight: this.playerLight.getData(),
+                    playerDark: this.playerDark.getData(),
                 },
                 game: {
-                    gameTime: gameTime,
-                    averageTurnTime: Number(avgTurnTime),
-                    totalTurns: totalTurns,
+                    totalTurns: this.turnNum,
                     autoPlay: AUTOPLAY,
                     maxChipCount: MAXCHIPCOUNT,
                     gameSettings: this.settings,
@@ -155,9 +153,8 @@ class Game {
             }
             sendData(gameData, "multiLookup")
         }
-        if(autoMultiLookups) {
-            start()
-            this.getRandGameState()
+        if (autoMultiLookups) {
+           randomStatebuttonPress()
         }
     }
     getRandGameState() {
@@ -182,7 +179,7 @@ class Game {
         if (LOADING) return
         LOADING = true
         loadingGif.show()
-        if(aiIndices.length === 0) return
+        if (aiIndices.length === 0) return
 
         let data = {
             game: deepClone(this),

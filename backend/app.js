@@ -2,14 +2,14 @@ import express from "express"
 import cors from "cors"
 import path from 'path'
 import { LowSync, JSONFileSync } from 'lowdb'
-const AVGTHRESHOLD = 0.01
+const AVGTHRESHOLD = 0
 const app = express()
 
 app.use(express.json({ limit: '50mb' }));
 app.use(cors())
 app.listen(3001)
 
-const db = new LowSync(new JSONFileSync("JSON/db_random.json"))
+const db = new LowSync(new JSONFileSync("JSON/db_multilookup.json"))
 
 db.read()
 
@@ -39,7 +39,156 @@ app.post("/api", function (req, res) {
   res.send("New " + body.type + " added")
 
 })
+app.get('/api/avglookuptimes', function (req, res) {
+  let data = {
+    type: "bar",
+    title: "Avg move lookup time",
+    xTitle: "Algorithm",
+    yTitle: "Lookup time",
+    yInterval: undefined,
+    data: []
+  }
+  if (!db.data.multiLookup) {
+    res.send("no multiLookups available")
+    return
+  }
+  for (let lookup of db.data.multiLookup) {
+    for (let result of lookup.data.data.results) {
+      // console.log(result)
+      let moveData = result.moveData
+      let lookupData = {
+        label: moveData.options.text,
+        value: moveData.time,
+        rounds: moveData.uniqTurnNumber,
+        stage: Math.max(getStage(moveData.player), getStage(moveData.oppPlayer))
+      }
+      data.data.push(lookupData)
+    }
+  }
+  let result = getAvgBarValueByKeyObj(groupBy(data.data, "label"), "value")
 
+  result.sort((a, b) => a.value - b.value)
+  data.data = result
+  res.send(data)
+})
+app.get('/api/avglookuptimesperstage', function (req, res) {
+  let data = {
+    type: "multibar",
+    title: "Avg move lookup time",
+    xTitle: "Algorithm",
+    yTitle: "Lookup time",
+    yInterval: undefined,
+    data: []
+  }
+  if (!db.data.multiLookup) {
+    res.send("no multiLookups available")
+    return
+  }
+  for (let lookup of db.data.multiLookup) {
+    for (let result of lookup.data.data.results) {
+      // console.log(result)
+      let moveData = result.moveData
+      let lookupData = {
+        label: moveData.options.text,
+        value: moveData.time,
+        turnNumber: moveData.uniqTurnNumber,
+        stage: Math.max(getStage(moveData.player), getStage(moveData.oppPlayer))
+      }
+      data.data.push(lookupData)
+    }
+  }
+
+  // let result = getAvgBarValueByKey(groupBy(data.data, "label"), "value")
+  let result = []
+  let groupedLookups = groupBy(data.data, "label")
+  for (let groupStage in groupedLookups) {
+    let groupData = {}
+    let groupByStageAndLabel = groupBy(groupedLookups[groupStage], "stage")
+    for (let stageNum in groupByStageAndLabel) {
+      groupData[stageNum] = getAvgBarValueByKeyArr(groupByStageAndLabel[stageNum], "value")
+    }
+    result.push(groupData)
+  }
+  result.sort((a, b) => a.value - b.value)
+  data.data = result
+  res.send(data)
+})
+app.get('/api/avglookuptimeperturnperstage', function (req, res) {
+  let data = {
+    type: "multiline",
+    isLookupData: true,
+    title: "Avg lookup time per stage",
+    xTitle: "Turns",
+    yTitle: "Lookup time",
+    data: []
+  }
+  if (!db.data.multiLookup) {
+    res.send("no multiLookups available")
+    return
+  }
+  for (let lookup of db.data.multiLookup) {
+    for (let result of lookup.data.data.results) {
+      // console.log(result)
+      let moveData = result.moveData
+      let lookupData = {
+        label: moveData.options.text,
+        value: moveData.time,
+        turnNumber: moveData.uniqTurnNumber,
+        stage: Math.max(getStage(moveData.player), getStage(moveData.oppPlayer))
+      }
+      data.data.push(lookupData)
+    }
+  }
+
+  let groupedLookups = groupBy(data.data, "label")
+  let result = []
+
+  for (let groupKey in groupedLookups) {
+    let aiObject = {
+      values: {},
+      label: groupKey,
+    }
+    let groupedByStage = groupBy(groupedLookups[groupKey], "stage")
+    for (let aiPerStageKey in groupedByStage) {
+      aiObject.values[aiPerStageKey] = avgValuesByKey(groupedByStage[aiPerStageKey], "value", "turnNumber")
+    }
+    result.push(aiObject)
+  }
+  data.data = result
+  res.send(data)
+})
+
+function getAvgBarValueByKeyArr(arr, key) {
+  let totalValue = 0
+  for (let obj of arr) {
+    totalValue += obj[key]
+  }
+  let obj = arr[0]
+  let result = {
+    label: obj.label,
+    value: totalValue / arr.length,
+    gameCount: arr.length
+  }
+  return result
+}
+function getAvgBarValueByKeyObj(obj, key) {
+  let result = []
+  for (let groupKey in obj) {
+    let group = obj[groupKey]
+    let totalValue = 0
+    for (let column of group) {
+      totalValue += column[key]
+    }
+
+    let avgGroupObj = {
+      label: groupKey,
+      value: totalValue / group.length,
+      gameCount: group.length
+    }
+    result.push(avgGroupObj)
+  }
+  return result
+}
 app.get('/api/chipcount', function (req, res) {
   let data = {
     type: "line",
@@ -72,6 +221,7 @@ app.get('/api/chipcount', function (req, res) {
   }
   res.send(data)
 })
+
 app.get('/api/chipcountPerStage', function (req, res) {
   let data = {
     type: "multiline",
@@ -522,6 +672,7 @@ function groupBy(arr, key) {
     return rv;
   }, {});
 };
+
 function avgValuesByKey(arr, val, key) {
   let holder = {}
   let counts = {}
@@ -576,6 +727,7 @@ function getAvgValuePerStageByKey(groupedData, val, key) {
   }
   return result
 }
+
 function getAvgValueByKey(groupedData, val, key) {
   let result = []
   for (let groupKey in groupedData) {

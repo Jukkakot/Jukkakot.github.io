@@ -66,6 +66,7 @@ self.addEventListener("message", function handleMessageFromGame(e) {
             self.close()
             break;
     };
+    
 })
 function handleMultiLookup(data) {
     let results = []
