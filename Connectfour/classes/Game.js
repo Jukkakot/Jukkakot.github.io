@@ -386,11 +386,11 @@ function minimax(board, depth, alpha, beta, isMaximizing) {
     let redCheck = game.checkWin(game.playerRed, board, false)
     if (yellowCheck !== undefined || redCheck !== undefined) {
         if (yellowCheck) {
-            checkedBoards[strBoard] = 100000000
+            checkedBoards[strBoard] = 100000000 * (depth + 1)
             return [undefined, 100000000 * (depth + 1)]
         } else if (redCheck) {
-            checkedBoards[strBoard] = -100000000
-            return [undefined, -100000000 / (depth + 1)]
+            checkedBoards[strBoard] = -100000000 * (depth + 1)
+            return [undefined, -100000000 * (depth + 1)]
         } else if (yellowCheck === "tie" || redCheck === "tie") {
             checkedBoards[strBoard] = 0
             return [undefined, 0]
