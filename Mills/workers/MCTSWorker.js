@@ -136,7 +136,7 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode, args = "visits") {
 
             let expandedNode = expandNode(selectedNode)
             let won = playout(expandedNode)
-            let reward = won ? 1 : -1
+            let reward = won ? 1 : 0
             backprop(expandedNode, reward)
             // if (i == iterations - 1) {
             //     roundCount++
