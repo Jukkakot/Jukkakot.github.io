@@ -2,14 +2,14 @@ import express from "express"
 import cors from "cors"
 import path from 'path'
 import { LowSync, JSONFileSync } from 'lowdb'
-const AVGTHRESHOLD = 0
+const AVGTHRESHOLD = 0.01
 const app = express()
 
 app.use(express.json({ limit: '50mb' }));
 app.use(cors())
 app.listen(3001)
 
-const db = new LowSync(new JSONFileSync("JSON/db_multilookup.json"))
+const db = new LowSync(new JSONFileSync("JSON/db_mcts_minmax4.json"))
 
 db.read()
 
@@ -56,6 +56,8 @@ app.get('/api/avglookuptimes', function (req, res) {
     for (let result of lookup.data.data.results) {
       // console.log(result)
       let moveData = result.moveData
+      if (moveData.time <= 1) continue
+
       let lookupData = {
         label: moveData.options.text,
         value: moveData.time,
@@ -88,6 +90,8 @@ app.get('/api/avglookuptimesperstage', function (req, res) {
     for (let result of lookup.data.data.results) {
       // console.log(result)
       let moveData = result.moveData
+      if (moveData.time <= 1) continue
+
       let lookupData = {
         label: moveData.options.text,
         value: moveData.time,
@@ -130,6 +134,8 @@ app.get('/api/avglookuptimeperturnperstage', function (req, res) {
     for (let result of lookup.data.data.results) {
       // console.log(result)
       let moveData = result.moveData
+      if (moveData.time <= 1) continue
+
       let lookupData = {
         label: moveData.options.text,
         value: moveData.time,
@@ -139,7 +145,6 @@ app.get('/api/avglookuptimeperturnperstage', function (req, res) {
       data.data.push(lookupData)
     }
   }
-
   let groupedLookups = groupBy(data.data, "label")
   let result = []
 
@@ -150,7 +155,8 @@ app.get('/api/avglookuptimeperturnperstage', function (req, res) {
     }
     let groupedByStage = groupBy(groupedLookups[groupKey], "stage")
     for (let aiPerStageKey in groupedByStage) {
-      aiObject.values[aiPerStageKey] = avgValuesByKey(groupedByStage[aiPerStageKey], "value", "turnNumber")
+      aiObject.values[aiPerStageKey] = avgValuesByKey(groupedByStage[aiPerStageKey],"value", "turnNumber")
+      // aiObject.values[aiPerStageKey].count = groupedByStage[aiPerStageKey].length
     }
     result.push(aiObject)
   }
@@ -158,6 +164,52 @@ app.get('/api/avglookuptimeperturnperstage', function (req, res) {
   res.send(data)
 })
 
+app.get('/api/lookupCountPerTurnNumPerStage', function (req, res) {
+  let data = {
+    type: "multiline",
+    isLookupData: true,
+    title: "Lookup count per turn number stage",
+    xTitle: "Turns",
+    yTitle: "Lookup time",
+    data: []
+  }
+  if (!db.data.multiLookup) {
+    res.send("no multiLookups available")
+    return
+  }
+  for (let lookup of db.data.multiLookup) {
+    for (let result of lookup.data.data.results) {
+      // console.log(result)
+      let moveData = result.moveData
+      if (moveData.time <= 1) continue
+
+      let lookupData = {
+        label: moveData.options.text,
+        value: moveData.time,
+        turnNumber: moveData.uniqTurnNumber,
+        stage: Math.max(getStage(moveData.player), getStage(moveData.oppPlayer))
+      }
+      data.data.push(lookupData)
+    }
+  }
+  let groupedLookups = groupBy(data.data, "label")
+  let result = []
+
+  for (let groupKey in groupedLookups) {
+    let aiObject = {
+      values: {},
+      label: groupKey,
+    }
+    let groupedByStage = groupBy(groupedLookups[groupKey], "stage")
+    for (let aiPerStageKey in groupedByStage) {
+      aiObject.values[aiPerStageKey] = getCountsByKey(groupedByStage[aiPerStageKey], "turnNumber")
+      // aiObject.values[aiPerStageKey].count = groupedByStage[aiPerStageKey].length
+    }
+    result.push(aiObject)
+  }
+  data.data = result
+  res.send(data)
+})
 function getAvgBarValueByKeyArr(arr, key) {
   let totalValue = 0
   for (let obj of arr) {
@@ -257,7 +309,7 @@ app.get('/api/chipcountPerStage', function (req, res) {
 app.get('/api/turntimesPerStage', function (req, res) {
   let data = {
     type: "multiline",
-    title: "Mill turn times nonCumulative per stage",
+    title: "Mill turn times",
     xTitle: "Turns",
     yTitle: "Turn time",
     data: []
@@ -289,7 +341,7 @@ app.get('/api/turntimesPerStage', function (req, res) {
 app.get('/api/turntimes', function (req, res) {
   let data = {
     type: "line",
-    title: "Mill turn times nonCumulative",
+    title: "Mill turn times",
     xTitle: "Turns",
     yTitle: "Turn time",
     data: []
@@ -673,6 +725,31 @@ function groupBy(arr, key) {
   }, {});
 };
 
+function getCountsByKey(arr, key) {
+ 
+  let holder = {}
+  let counts = {}
+  arr.forEach(t => {
+    if (holder.hasOwnProperty(t[key])) {
+     
+      counts[t[key]]++
+    } else {
+      holder[t[key]] = t
+      counts[t[key]] = 1
+    }
+  })
+  var result = [];
+
+  for (var prop in holder) {
+    let res = {
+      ...holder[prop]
+    }
+    res[key] = Number(prop)
+    res.value = counts[prop]
+    result.push(res)
+  }
+  return result
+}
 function avgValuesByKey(arr, val, key) {
   let holder = {}
   let counts = {}
@@ -691,7 +768,7 @@ function avgValuesByKey(arr, val, key) {
     let res = {}
     res[key] = Number(prop)
     res[val] = holder[prop] / counts[prop]
-
+    res.count = counts[prop]
     //Not adding too rare occurrences of turnNUmbers (key)
     if (counts[prop] / arr.length >= AVGTHRESHOLD) {
       result.push(res)

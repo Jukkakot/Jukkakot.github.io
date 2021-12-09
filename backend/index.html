@@ -50,7 +50,7 @@
 					return [{
 						...defaultOptions,
 						name: game.label,
-						dataPoints: game.values[id+1].map(lookup => {
+						dataPoints: game.values[id + 1].map(lookup => {
 							return { y: lookup.value, x: lookup.turnNumber }
 						})
 					}]
@@ -84,7 +84,8 @@
 					// shared: true
 				},
 				title: {
-					text: gameData.title + " " + Number(id + 1)
+					
+					text: data.type !== "multiline" ? gameData.title : "Stage " + Number(id + 1) + " " + gameData.title
 				},
 				axisX: {
 					title: gameData.xTitle,
@@ -138,12 +139,10 @@
 					type: "column",
 					dataPoints: gameData.data.map((game, index) => {
 						if (data.type === "multibar") {
-
 							game = game[id + 1]
-
-							return { y: game.value, label: game.label + " " + game.gameCount + " count", color: game.color }
+							return { y: game.value, label: game.label + " count: " + game.gameCount, color: game.color }
 						} else {
-							return { y: game.value, label: game.label + " " + game.gameCount + " count", color: game.color }
+							return { y: game.value, label: game.label + " count: " + game.gameCount, color: game.color }
 						}
 
 					})
@@ -178,6 +177,8 @@
 	<button onClick="getData('avglookuptimes')">Avg lookup times</button>
 	<button onClick="getData('avglookuptimesperstage')">Avg lookup times per stage</button>
 	<button onClick="getData('avglookuptimeperturnperstage')">Avg lookup times per turn per stage</button>
+	<button onClick="getData('lookupCountPerTurnNumPerStage')">Lookup counts per turn number per stage</button>
+	
 </body>
 
 </html>
