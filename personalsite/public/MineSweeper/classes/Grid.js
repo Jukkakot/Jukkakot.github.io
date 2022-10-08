@@ -42,6 +42,12 @@ class Grid {
         this.getBlock(mX, mY).rightClick()
       }
     }
+    this.centerClick = (doClick) => {
+        this.resetShown()
+         if (wasInGrid()) {
+            this.getBlock(mX, mY).centerClick(doClick)
+        }
+    }
     //Flags any 100% certain mines it can find according to the open block values
     this.getHint = (isAutoPlay) => {
       for (var row of this.blocks) {
@@ -101,7 +107,17 @@ class Grid {
         }
       }
     }
+    this.resetShown = () => {
+      for (var row of this.blocks) {
+         for (var block of row) {
+          block.isShown = false
+         }
+       }
+    }
     this.draw = (drawMines) => {
+        if(!mouseIsPressed) {
+            grid.resetShown()
+        }
       for (var row of this.blocks) {
         for (var block of row) {
           block.draw(drawMines)

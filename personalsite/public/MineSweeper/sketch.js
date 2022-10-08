@@ -1,8 +1,8 @@
 const defaultBoxSize = 30
 const defaultCanvasSize = defaultBoxSize * 24
 var BOXSIZE = defaultBoxSize
-//                0         1         2           3                 4, "flag"
-const states = ["hidden", "open", "hiddenMine", "openMine"]
+//                0         1         2           3                 4,
+const states = ["hidden", "open", "hiddenMine", "openMine", "openNoValue"]
 const difficulties = [
   [9, 9, 10],
   [16, 16, 40],
@@ -125,10 +125,22 @@ function windowResized() {
 function touchStarted() {
   mousePressed()
 }
+function mouseReleased() {
+    if (mouseButton === CENTER) {
+       grid.centerClick(true)
+    }
+}
+function mouseDragged() {
+    if (mouseButton === CENTER) {
+       grid.centerClick(false)
+    }
+}
 function mousePressed() {
-  if (grid.gameWon()) return
-  if (mouseButton === RIGHT && !grid.gameOver) {
+  if (grid.gameWon() || grid.gameOver) return
+  if (mouseButton === RIGHT) {
     grid.rightClick()
+  } if (mouseButton === CENTER) {
+    grid.centerClick(false)
   }
 }
 function mouseClicked() {
