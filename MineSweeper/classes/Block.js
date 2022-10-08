@@ -7,6 +7,7 @@ class Block {
         this.isMine = false
         this.neighbours = []
         this.isFlag = false
+        this.isShown = false
         this.hover = () => {
             noFill()
             strokeWeight(5)
@@ -17,6 +18,16 @@ class Block {
         this.rightClick = () => {
             if (!this.isState(1)) this.isFlag = !this.isFlag
         }
+        this.centerClick = (doClick) => {
+            if(doClick === true && this.value > 0 && this.isState(1) && this.isValueAndFlagCountSame()) {
+                this.clickNeighbours()
+            } else if (!this.isHidden()) {
+                this.showNeighbours()
+            } else if(this.isHidden()) {
+                this.isShown = true
+            }
+        }
+
         this.draw = (drawMines) => {
             const x = this.x * BOXSIZE
             const y = this.y * BOXSIZE
@@ -30,14 +41,15 @@ class Block {
                 drawFlag(x, y)
                 return
             }
+            if (this.isShown) {
+                drawOpen(x,y,0)
+            }
             if (this.isState(1)) {
                 drawOpen(x, y, this.value)
             } else if (this.isState(2) && drawMines) {
                 drawMine(x, y)
             } else if (this.isState(3)) {
                 drawOpenMine(x, y)
-            } else if (this.isState(4)) {
-                drawFlag(x, y)
             }
         }
         this.click = () => {
@@ -56,9 +68,33 @@ class Block {
             }
             return true
         }
+        this.clickNeighbours = () => {
+            for(var block of this.neighbours) {
+                block.click()
+            }
+        }
+        this.showNeighbours = () => {
+            for(var block of this.neighbours) {
+                if(block.isHidden()) {
+                    block.isShown = true
+                }
+            }
+        }
         this.isState = (num) => {
             return this.state === states[num]
         }
+        this.isHidden = () => {
+            return this.isState(0) || this.isState(2)
+        }
+        this.isValueAndFlagCountSame = () => {
+            if(this.value === 0) return
+            var flagCount = 0
+            for (var block of this.neighbours) {
+                if (block.isFlag) flagCount++
+            }
+            return flagCount === this.value
+        }
+
     }
 }
 // //Default box
