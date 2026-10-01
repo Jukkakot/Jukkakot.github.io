@@ -278,6 +278,12 @@ function html(run, comparison) {
     }
     if (comparison) {
         if (comparison.differences.length) parts.push(`<p class="note">Setup differences with "${esc(comparison.name)}" (not compared): ${esc(comparison.differences.join('; '))}</p>`)
+        if (comparison.mode === 'strength') {
+            const g = comparison.games
+            parts.push(`<p class="note">Identical games with "${esc(comparison.name)}": ${g.identical}/${g.shared}` +
+                (g.skipped ? ` (${g.skipped} with a time-limited bot not compared)` : '') +
+                (g.differing.length ? `. First differing: ${esc(g.differing.map(d => `${d.pairing} seed ${d.seed} (${d.light} light): ${d.what.join(', ')}`).join('; '))}` : '') + '</p>')
+        }
         parts.push(comparison.mode === 'strength'
             ? section(`Compared with "${comparison.name}"`, 'Elo of the shared bots, before and after.', eloSlope(comparison))
             : section(`Compared with "${comparison.name}"`, 'Median time per move over all positions, before / after.', speedRatio(comparison)))

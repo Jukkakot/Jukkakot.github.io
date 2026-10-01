@@ -89,6 +89,36 @@ function setupDifferences(after, before) {
     return diffs
 }
 
+// Games both runs share, paired by (pairing, seed, sides): identical means the same winner,
+// ending, plies and searched leaves of each bot. Games with a time-limited bot are skipped.
+const SHOW_DIFFERING = 5
+
+function identicalGames(after, before) {
+    const key = g => `${g.pairing.join(' vs ')}|${g.seed}|${g.swapped}`
+    const old = new Map(before.games.map(g => [key(g), g]))
+    const timed = new Set([...(after.setup.timeLimited || []), ...(before.setup.timeLimited || [])])
+    const result = { shared: 0, identical: 0, skipped: 0, differing: [] }
+    for (const g of after.games) {
+        const h = old.get(key(g))
+        if (!h) continue
+        if (timed.has(g.light) || timed.has(g.dark)) { result.skipped++; continue }
+        result.shared++
+        const what = []
+        if (g.winner !== h.winner) what.push(`winner ${h.winner ?? 'none'} → ${g.winner ?? 'none'}`)
+        if (g.reason !== h.reason) what.push(`ending ${h.reason} → ${g.reason}`)
+        if (g.plies !== h.plies) what.push(`plies ${h.plies} → ${g.plies}`)
+        for (const c of ['L', 'D']) {
+            if (g.stats[c].leaves !== h.stats[c].leaves) what.push(`${g.stats[c].bot} leaves ${h.stats[c].leaves} → ${g.stats[c].leaves}`)
+        }
+        if (!what.length) { result.identical++; continue }
+        if (result.differing.length < SHOW_DIFFERING) {
+            result.differing.push({ pairing: g.pairing.join(' vs '), seed: g.seed, light: g.light, dark: g.dark, what })
+        }
+    }
+    result.differingCount = result.shared - result.identical
+    return result
+}
+
 // after vs before (a saved run). Speed ratio > 1 = this run is faster.
 function compare(after, before) {
     if (after.mode !== before.mode) throw new Error(`Cannot compare a ${after.mode} run with a ${before.mode} run`)
@@ -101,6 +131,7 @@ function compare(after, before) {
             delta: a.perBot[bot].rating - b.perBot[bot].rating,
             msBefore: b.perBot[bot].median, msAfter: a.perBot[bot].median
         }))
+        result.games = identicalGames(after, before)
     } else {
         result.speed = shared.map(bot => ({
             bot,
@@ -113,4 +144,4 @@ function compare(after, before) {
     return result
 }
 
-module.exports = { analyze, compare, CLASSES }
+module.exports = { analyze, compare, identicalGames, CLASSES }

@@ -85,12 +85,23 @@ function speedMarkdown(run, a) {
     return out
 }
 
+// The identical-games check of a strength comparison, as Markdown lines.
+function identicalLines(g) {
+    const out = [`Identical games: ${g.identical}/${g.shared}` + (g.skipped ? ` (${g.skipped} with a time-limited bot not compared)` : '')]
+    if (g.differing.length) {
+        out.push('', `Differing games (first ${g.differing.length} of ${g.differingCount}):`, '')
+        for (const d of g.differing) out.push(`- ${d.pairing}, seed ${d.seed}, ${d.light} light / ${d.dark} dark: ${d.what.join('; ')}`)
+    }
+    return out
+}
+
 function compareMarkdown(c) {
     const out = ['', `## Compared with saved run "${c.name}"`, '']
     if (c.differences.length) out.push('Setup differences (not compared):', '', ...c.differences.map(d => `- ${d}`), '')
     if (c.mode === 'strength') {
         out.push(table(['Bot', 'Elo before', 'Elo after', 'Change', 'Median ms before', 'after'],
             c.elo.map(e => [e.bot, f0(e.before), f0(e.after), (e.delta >= 0 ? '+' : '') + f0(e.delta), ms(e.msBefore), ms(e.msAfter)])))
+        out.push('', ...identicalLines(c.games))
     } else {
         out.push('Speed ratio = median before / median after (above 1 = faster now).', '')
         out.push(table(['Bot', ...CLASSES, 'all'], c.speed.map(s => [s.bot, ...[...CLASSES, 'all'].map(cls => {
@@ -108,4 +119,4 @@ function markdown(run, comparison) {
     return out.join('\n') + '\n'
 }
 
-module.exports = { markdown }
+module.exports = { markdown, identicalLines }

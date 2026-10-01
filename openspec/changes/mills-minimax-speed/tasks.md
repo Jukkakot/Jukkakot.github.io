@@ -2,7 +2,7 @@
 
 ## 1. Identical-games check in the benchmark
 
-- [ ] 1.1 In `Mills/bench/analyze.js` `compare()` for strength runs, pair games by (pairing, seed, swapped) and report identical / differing / skipped (time-limited) games with up to 5 differing ones (design §3); show it in `report.js` and `html.js`; verify tests: identical runs → all identical, one changed `plies` → named as differing, a time-limited bot's games → skipped
+- [x] 1.1 In `Mills/bench/analyze.js` `compare()` for strength runs, pair games by (pairing, seed, swapped) and report identical / differing / skipped (time-limited) games with up to 5 differing ones (design §3); show it in `report.js` and `html.js`; verify tests: identical runs → all identical, one changed `plies` → named as differing, a time-limited bot's games → skipped
 
 ## 2. Safety net before touching the bot code
 

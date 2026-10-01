@@ -32,3 +32,9 @@ test('speed page: one chart per stage; compare adds one', async () => {
     const withCompare = html(run, compare(run, { ...run, name: 'baseline' }))
     assert.equal(svgCount(withCompare), 5)
 })
+
+test('strength compare page shows the identical-games line', async () => {
+    const run = await smallStrength()
+    const page = html(run, compare(run, { ...run, name: 'baseline' }))
+    assert.match(page, /Identical games with &quot;baseline&quot;: 2\/2|Identical games with "baseline": 2\/2/)
+})

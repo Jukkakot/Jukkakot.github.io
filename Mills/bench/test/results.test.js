@@ -79,3 +79,31 @@ test('compare: Elo change per shared bot', () => {
     assert.deepEqual(c.differences, [])
     assert.throws(() => compare(after, speedRun('2026-10-01T12:00:00.000Z', { random: 1 })), /Cannot compare/)
 })
+
+test('compare: identical games, a differing one named, time-limited games skipped', () => {
+    const game = (i, pairing, seed, swapped, plies = 30) => {
+        const [light, dark] = swapped ? [pairing[1], pairing[0]] : pairing
+        return { index: i, pairing, seed, swapped, light, dark, winner: 'L', reason: 'chips', plies,
+            stats: { L: { bot: light, times: [1], leaves: 5, errors: 0, illegal: null }, D: { bot: dark, times: [1], leaves: 7, errors: 0, illegal: null } } }
+    }
+    const bots = ['random', 'minimax@d1', 'iterative@500ms']
+    const setup = { mode: 'strength', bots, games: 2, firstSeed: 1, cap: 200, jobs: 1, started: '2026-10-01T12:00:00.000Z', seconds: 1, timeLimited: ['iterative@500ms'] }
+    const games = changed => [
+        game(0, ['random', 'minimax@d1'], 1, false),
+        game(1, ['random', 'minimax@d1'], 1, true, changed ? 31 : 30),
+        game(2, ['random', 'iterative@500ms'], 1, false, changed ? 99 : 30)
+    ]
+    const before = { mode: 'strength', setup, name: 'baseline', games: games(false) }
+    const same = compare({ mode: 'strength', setup, games: games(false) }, before)
+    assert.deepEqual([same.games.identical, same.games.shared, same.games.skipped], [2, 2, 1])
+    assert.equal(same.games.differing.length, 0)
+    const after = { mode: 'strength', setup, games: games(true) }
+    const c = compare(after, before)
+    assert.deepEqual([c.games.identical, c.games.shared, c.games.skipped], [1, 2, 1])
+    assert.equal(c.games.differing[0].pairing, 'random vs minimax@d1')
+    assert.equal(c.games.differing[0].seed, 1)
+    assert.match(c.games.differing[0].what.join(), /plies 30 → 31/)
+    const md = markdown(after, c)
+    assert.match(md, /Identical games: 1\/2 \(1 with a time-limited bot not compared\)/)
+    assert.match(md, /random vs minimax@d1, seed 1, minimax@d1 light \/ random dark: plies 30 → 31/)
+})
