@@ -1,0 +1,111 @@
+# Spec Delta
+
+## Purpose
+
+A headless benchmark that measures how strong and how fast the Mills bots are, with repeatable
+runs and a recorded baseline that every later bot change is compared against.
+
+## ADDED Requirements
+
+### Requirement: Same bot code as the game
+
+The benchmark SHALL run the bot code the game page loads, unchanged, without a browser. It SHALL
+NOT need a build step or third-party packages; Node 22 is enough. Running it SHALL NOT change any
+file the game page loads.
+
+#### Scenario: Bot code changes reach the benchmark
+- **WHEN** a bot's search or evaluation code is edited
+- **THEN** the next benchmark run measures the edited code without any change to the benchmark
+
+### Requirement: Bot names and budgets
+
+Bots SHALL be named by kind plus a budget, in the game kit's notation: `random`,
+`minimax@d<n>` (fixed depth n), `iterative@d<n>` (iterative deepening to depth n),
+`iterative@<n>ms` (iterative deepening with a time limit), `mcts@i<n>` (MCTS with n iterations).
+Each in-game bot option SHALL have a benchmark name: Random = `random`, Minmax 1/4/6 =
+`minimax@d1/d4/d6`, Iterative 0.5s/1s/3s/5s/10s = `iterative@500ms/1000ms/3000ms/5000ms/10000ms`,
+Iterative D 4/D 6 = `iterative@d4/d6`, MCTS = `mcts@i5000`. A budget the current code cannot
+honour (for example MCTS iterations other than 5000) SHALL be refused with a message, not
+silently changed.
+
+#### Scenario: Unknown or unsupported bot
+- **WHEN** a run names `mcts@i800` while MCTS only supports 5000 iterations
+- **THEN** the run stops before playing and says which bots and budgets are supported
+
+### Requirement: Referee follows the game's rules
+
+The benchmark SHALL play complete games with the game's rules: 9 chips each, placing, then
+moving to a neighbour, flying with 3 chips, removing a chip after a new mill (not from a mill
+unless all the opponent's chips are in mills), and a loss when a player has fewer than 3 chips
+or cannot move. Turn and mill bookkeeping SHALL match the game, so the bots see the same
+positions they would see in the browser. A move that is not legal SHALL lose the game for the
+bot that made it, and the report SHALL count such moves.
+
+#### Scenario: Win by reducing to two chips
+- **WHEN** a player removes a chip and the opponent is left with 2 chips
+- **THEN** the game ends and the remover wins
+
+#### Scenario: Win by blocking
+- **WHEN** after a move the player to move in the moving stage has no legal move
+- **THEN** the game ends and that player loses
+
+#### Scenario: Illegal move
+- **WHEN** a bot returns a move that is not legal in the position
+- **THEN** that bot loses the game and the report lists the illegal move
+
+### Requirement: Move cap
+
+A game SHALL end as "capped" when it reaches the move cap without a winner (default 200 turns
+per player, configurable). A capped game SHALL count as a draw in the standings, and the report
+SHALL show how many games were capped.
+
+#### Scenario: Endless shuffling
+- **WHEN** two bots move back and forth without either winning until the cap
+- **THEN** the game ends as capped and counts half a point to each
+
+### Requirement: Repeatable runs
+
+All randomness the bots and the benchmark use SHALL come from a seeded source. With the same
+seed, bots and depth or iteration budgets, a run SHALL give the same games and results on any
+machine and with any number of parallel jobs. Time-limited bots are not repeatable; a report
+that includes one SHALL say so.
+
+#### Scenario: Same seed twice
+- **WHEN** the same strength run with depth and iteration budgets is started twice, once with 1 job and once with 4
+- **THEN** both runs report identical games and standings
+
+### Requirement: Strength mode
+
+The strength mode SHALL play a round robin between the named bots: every two bots play the same
+even number of games, each seed once with each bot as Light (Light moves first, as in the game).
+The report SHALL show, per bot, its Elo rating (Bradley–Terry, draws as half points, `random`
+anchored at 1000 when it plays), and per pairing the score share with a 95 % interval, wins,
+losses, capped games and average game length. It SHALL also show the setup: bots, games per
+pairing, first seed, move cap, job count and code version (git commit).
+
+#### Scenario: Round robin report
+- **WHEN** a strength run is started for `random`, `minimax@d1` and `minimax@d4` with 20 games per pairing
+- **THEN** 60 games are played and the report lists three ratings and three pairings with their shares and intervals
+
+### Requirement: Speed mode
+
+The speed mode SHALL run each named bot once on every position of a fixed, committed set of test
+positions covering placing, moving, flying and eat-mode positions. The report SHALL show per bot
+and per stage: median, mean and maximum time per move, searched leaf positions per move, and for
+time-limited bots the depth reached. The positions SHALL stay fixed across runs so before/after
+numbers are comparable.
+
+#### Scenario: Speed report
+- **WHEN** a speed run is started for `minimax@d4` and `iterative@1000ms`
+- **THEN** the report shows for each stage the time and leaf counts of both bots, and the depth reached by `iterative@1000ms`
+
+### Requirement: Reports and recorded baseline
+
+Each run SHALL print a Markdown report and write a JSON file with every game or position result
+to a folder that git ignores. The baseline, the strength and speed reports of the bots as they
+were before any bot change, SHALL be committed with the exact commands that produced it, so
+later changes can re-run them and compare.
+
+#### Scenario: Comparing a bot change
+- **WHEN** a later change re-runs the baseline commands
+- **THEN** its reports can be put side by side with the recorded baseline (same bots, seeds, positions and budgets)
