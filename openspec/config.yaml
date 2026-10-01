@@ -1,0 +1,23 @@
+schema: spec-driven
+
+# Project context (shown to AI when creating artifacts)
+context: |
+  Repo: personal site (React, personalsite/) + small Node backend (backend/).
+  Current focus: the Mills game (Nine Men's Morris) in personalsite/public/Mills/.
+  Mills is plain browser JS with no build step: p5.js 0.9 for drawing/input, a Web Worker
+  (workers/WorkerHelpers.js + MinmaxWorker.js + MCTSWorker.js) for the bots.
+  Overview: personalsite/public/Mills/OVERVIEW.md.
+  Goal: improve the bots (minimax speed/strength, a working MCTS) and code quality,
+  measured against a recorded benchmark baseline.
+
+  HARD RULE: the Mills UI must not change visually in any way. Same layout, images,
+  colours, fonts, sizes, animations, sounds, button texts and on-screen texts. Internal
+  refactoring of UI code is allowed only if the rendered result is pixel-identical.
+  Mills logic is NOT extracted into a shared game kit.
+
+rules:
+  proposal:
+    - State explicitly that the change has no visual effect on the Mills UI (or why it touches UI code at all).
+    - Bot changes must name how they are measured against the benchmark baseline.
+  tasks:
+    - Include a benchmark run task for every change that affects bot behaviour or speed.
