@@ -24,5 +24,5 @@
 
 ## 5. Game check and docs
 
-- [ ] 5.1 Serve the repo with a static server, open `Mills/index.html`, let Light (Iterative 3s) play its first move; verify a chip appears on the board (DOM/state query) and the console shows no errors
+- [x] 5.1 Serve the repo with a static server, open `Mills/index.html`, let Light (Iterative 3s) play its first move; verify a chip appears on the board (DOM/state query) and the console shows no errors
 - [ ] 5.2 Update `Mills/OVERVIEW.md`: remove the "JSON clone is the biggest cost" weak spot, note the speed-up and where the numbers are (`reports/mills-minimax-speed/`), list the quirks left on purpose; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-minimax-speed --strict` is clean
