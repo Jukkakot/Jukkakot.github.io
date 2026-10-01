@@ -117,6 +117,24 @@ benchmark machine, under load from a parallel run):
 Order of work from this: 3.2 (duplicate checks first, then `setCharAt` and neighbours), 3.1,
 3.4, 3.3 (time checks matter only for the time-limited bots, not in this profile).
 
+Final profile after group 3 (same command, same load): 4.5 s in total (from 10.3 s).
+
+| Self time | Function |
+|---:|---|
+| 10.9 % | `fastEvaluateWindow` |
+| 10.8 % | garbage collector |
+| 8.1 % | `fastMinimax` |
+| 7.6 % | `fastEvaluateBoard` |
+| 7.0 % | `fastGetUpdatedMills` |
+| 6.0 % | `fastStage2Score` |
+| 5.7 % | `getCalcedValue` |
+| 4.5 % | `fastStage1Score` |
+
+Tried in 3.5 and dropped (no measurable gain): character checks instead of `windowToStr` in
+`fastGetUpdatedMills`, and neighbour indexes instead of the neighbour string in
+`fastGetMoveableDots`. What is left is spread over the evaluation itself; a further cut needs
+an incremental evaluation or a transposition table, both outside this change.
+
 ## Risks / Trade-offs
 
 - [A rewrite changes a tie-break or a cache key subtly] → golden fixture with random-call counts

@@ -4,7 +4,7 @@ function fastFindBestMove(options) {
         console.log(this.winner.name, "won the workerGame")
         return
     }
-    let startTime = new Date().getTime()
+    let startTime = Date.now()
     let moveEndTime
     //Resetting counters 
     leafNodeCount = 0
@@ -63,7 +63,7 @@ function fastFindBestMove(options) {
             type = movesObject.type
             move = moves[Math.floor(Math.random() * moves.length)]
 
-            moveEndTime = new Date().getTime()
+            moveEndTime = Date.now()
             moveData = {
                 ...moveData,
                 time: moveEndTime - startTime,
@@ -74,7 +74,7 @@ function fastFindBestMove(options) {
             }
 
         } else if (options.iterative) {
-            iterativeEndTime = new Date().getTime() + options.time
+            iterativeEndTime = Date.now() + options.time
 
             let startMoveObj = fastGetMoves(board, player, oppPlayer, workerGame.eatMode)
             prevBestMoves = startMoveObj.moves
@@ -90,7 +90,7 @@ function fastFindBestMove(options) {
                 startDepthNum = depth
                 result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
 
-                if (new Date().getTime() >= iterativeEndTime) {
+                if (Date.now() >= iterativeEndTime) {
                     console.log("Ran out of time at depth", depthCount.pop())
                     break
                 } else {
@@ -126,7 +126,7 @@ function fastFindBestMove(options) {
             move = result[0]
             type = result[1]
 
-            moveEndTime = new Date().getTime()
+            moveEndTime = Date.now()
             moveData = {
                 ...moveData,
                 time: moveEndTime - startTime,
@@ -149,7 +149,7 @@ function fastFindBestMove(options) {
 
     if (move === undefined || type === undefined) {
         console.error("Couldn't find a move", move, score, type, result)
-        moveEndTime = new Date().getTime()
+        moveEndTime = Date.now()
         console.log("Time finding a move", moveEndTime - startTime)
         return
     }
@@ -166,7 +166,7 @@ function fastFindBestMove(options) {
             // "top" + TOPX, topCount, "else", elseCount, "total", topCount + elseCount,
             "\nprevbestmove", prevBestMove
         )
-        moveEndTime = new Date().getTime()
+        moveEndTime = Date.now()
         moveData = {
             ...moveData,
             time: moveEndTime - startTime,
@@ -216,7 +216,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         return [undefined, winLoseValue]
     }
     //End node check
-    if (depth <= 0 || iterativeEndTime != undefined && new Date().getTime() >= iterativeEndTime) {
+    if (depth <= 0 || iterativeEndTime != undefined && Date.now() >= iterativeEndTime) {
         //Returning already calculated value for the board
         let calcedValue = getCalcedValue(board, player, oppPlayer)
         if (calcedValue != undefined) {
@@ -247,8 +247,8 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         for (let move of moves) {
             let cBoard = board
             //Cloning players 
-            let cPlayer = JSON.parse(JSON.stringify(player))
-            let cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
+            let cPlayer = clonePlayer(player)
+            let cOppPlayer = clonePlayer(oppPlayer)
             let args = {
                 move: move,
                 type: type,
@@ -307,8 +307,8 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         for (let move of moves) {
             let cBoard = board
             //Cloning players 
-            let cPlayer = JSON.parse(JSON.stringify(player))
-            let cOppPlayer = JSON.parse(JSON.stringify(oppPlayer))
+            let cPlayer = clonePlayer(player)
+            let cOppPlayer = clonePlayer(oppPlayer)
             let args = {
                 move: move,
                 type: type,
@@ -439,9 +439,7 @@ function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
     let value = 0
     let oppStage = getStage(oppPlayer)
 
-    let playerDots = getBoardDotsFromWindow(board, window, player.char)
-    let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-    let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+    let [playerDots, oppDots, emptyDots] = getWindowDots(board, window, player.char, oppPlayer.char)
 
     let pieceCount = playerDots.length
     let oppCount = oppDots.length
@@ -487,9 +485,7 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
     let value = 0
     let oppStage = getStage(oppPlayer)
 
-    let playerDots = getBoardDotsFromWindow(board, window, player.char)
-    let oppDots = getBoardDotsFromWindow(board, window, oppPlayer.char)
-    let emptyDots = getBoardDotsFromWindow(board, window, EMPTYDOT)
+    let [playerDots, oppDots, emptyDots] = getWindowDots(board, window, player.char, oppPlayer.char)
 
     let pieceCount = playerDots.length
     let oppCount = oppDots.length

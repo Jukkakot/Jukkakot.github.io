@@ -11,11 +11,11 @@
 
 ## 3. Behaviour-preserving speed-ups (golden test after each)
 
-- [ ] 3.1 Grep every player property the worker reads or writes, then replace the JSON clones in `fastMinimax` with `clonePlayer` (design §2); verify golden test passes
-- [ ] 3.2 `setCharAt` with `slice`; precomputed frozen neighbour table; `Set`-based duplicate checks in `fastGetS2Moves`/`fastGetS3Moves`; verify golden test passes
-- [ ] 3.3 `fastCheckWin` builds its key only on a win/loss; `Date.now()` time checks; verify golden test passes
-- [ ] 3.4 Evaluation: one-pass window counts, precomputed window ids and early exit in `isNewMill`; verify golden test passes and `d` debug output keys are unchanged (compare `scoreObject` keys for 5 positions before/after)
-- [ ] 3.5 Re-profile; continue with the next top item only while it is a clear win; record the final profile table in `design.md`; verify golden test passes
+- [x] 3.1 Grep every player property the worker reads or writes, then replace the JSON clones in `fastMinimax` with `clonePlayer` (design §2); verify golden test passes
+- [x] 3.2 `setCharAt` with `slice`; precomputed frozen neighbour table; `Set`-based duplicate checks in `fastGetS2Moves`/`fastGetS3Moves`; verify golden test passes
+- [x] 3.3 `fastCheckWin` builds its key only on a win/loss; `Date.now()` time checks; verify golden test passes
+- [x] 3.4 Evaluation: one-pass window counts, precomputed window ids and early exit in `isNewMill`; verify golden test passes and `d` debug output keys are unchanged (compare `scoreObject` keys for 5 positions before/after)
+- [x] 3.5 Re-profile; continue with the next top item only while it is a clear win; record the final profile table in `design.md`; verify golden test passes
 
 ## 4. Measurement against the baseline
 
