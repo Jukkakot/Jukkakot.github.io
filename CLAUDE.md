@@ -24,8 +24,7 @@
 - **Two phases.** Spec phase: write proposal, design, specs and tasks for one change, then stop
   for the user's review before the next; ask opinion questions with AskUserQuestion. Every change
   must be implementable without asking: decisions go into `design.md`, scope and non-goals are
-  explicit. **Autopilot** is **OFF** until the user says so ("autopilot päälle"; then note the
-  date here). When on: apply → verify → commit → archive → commit → push → next specced change,
+  explicit. **Autopilot** is **ON** (since 2026-10-01; the user turns it off with a word). When on: apply → verify → commit → archive → commit → push → next specced change,
   without review stops; stop only for money, anything irreversible outside the repo, a decision
   that forces rework, or failing checks you cannot fix.
 - **Push:** commit and push to `master` yourself (standing permission for this repo; overrides
