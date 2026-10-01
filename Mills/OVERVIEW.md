@@ -82,11 +82,13 @@ Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. 
 
 ## Known weak spots (at the time of writing, 2026-10)
 
-- **MCTS, uncommitted work:** `if (expandNode.visits === 0)` refers to the function, not
-  `expandedNode`, so the playout never runs and MCTS gets no real signal.
 - **MCTS:** wins are always counted for the bot, also at the opponent's nodes, so selection
   assumes the opponent helps the bot. Usually the result is flipped at every other level
   (negamax style).
+- **MCTS:** the final choice compares `child[args]` (visits) against `maxWins = child.wins`,
+  so the picked move is not reliably the most visited one.
+- A January 2025 rewrite attempt (single shared worker, MCTS rewrite) is kept in
+  `git stash` ("2025-01 AI experiments"). It is not part of the baseline, and its MCTS never ran playouts.
 - **MCTS:** a fixed 5000 iterations, not a time limit, so it is hard to compare fairly
   against the timed minimax bots.
 - Search state lives in globals (`startDepthNum`, `prevBestMoves`, …) shared by all bot
