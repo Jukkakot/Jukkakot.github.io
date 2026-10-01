@@ -18,14 +18,14 @@
 
 ## 4. Speed mode
 
-- [ ] 4.1 Add `Mills/bench/make-positions.js` and generate the committed `Mills/bench/positions.json` (40 positions, 10 per class: placing early, placing late, moving, flying; at least 2 per class in eat mode, design §6); verify a test that every position is undecided, has more than one legal move, and the class and eat-mode counts match
-- [ ] 4.2 Add the `speed` command (per bot × stage: median/mean/max ms, leaf positions per move, depth for `@ms` bots); verify `node Mills/bench/bench.js speed minimax@d1 iterative@500ms` prints the table with depth only for the `@ms` bot
+- [x] 4.1 Add `Mills/bench/make-positions.js` and generate the committed `Mills/bench/positions.json` (40 positions, 10 per class: placing early, placing late, moving, flying; at least 2 per class in eat mode, design §6); verify a test that every position is undecided, has more than one legal move, and the class and eat-mode counts match
+- [x] 4.2 Add the `speed` command (per bot × stage: median/mean/max ms, leaf positions per move, depth for `@ms` bots); verify `node Mills/bench/bench.js speed minimax@d1 iterative@500ms` prints the table with depth only for the `@ms` bot
 
 ## 5. Saved runs, comparison and visual report
 
-- [ ] 5.1 Results housekeeping (design §9): every run writes `<mode>-<timestamp>.{json,md,html}` to `Mills/bench/results/` and prunes it to the 10 newest runs; `--save <name>` writes `Mills/bench/reports/<name>/` with `COMMANDS.md`, refusing an existing name without `--force`; verify tests: 12 runs leave 10, a non-run file in `results/` survives, saving twice without `--force` fails
-- [ ] 5.2 `--compare <name>` (spec → Comparison with a saved run): Elo change per bot and speed ratio per bot × stage over the shared setup, differences in setup listed; verify a test with two small hand-made run JSONs
-- [ ] 5.3 Load the `dataviz` skill, then add `Mills/bench/html.js` and the `report <run.json>` command (design §10): strength charts, speed charts, compare charts, light and dark, no network; `--no-html` switches it off; verify tests that the page contains one SVG per chart and no `http` URL, then open a small run's page once in light and dark (one screenshot each) to judge legibility
+- [x] 5.1 Results housekeeping (design §9): every run writes `<mode>-<timestamp>.{json,md,html}` to `Mills/bench/results/` and prunes it to the 10 newest runs; `--save <name>` writes `Mills/bench/reports/<name>/` with `COMMANDS.md`, refusing an existing name without `--force`; verify tests: 12 runs leave 10, a non-run file in `results/` survives, saving twice without `--force` fails
+- [x] 5.2 `--compare <name>` (spec → Comparison with a saved run): Elo change per bot and speed ratio per bot × stage over the shared setup, differences in setup listed; verify a test with two small hand-made run JSONs
+- [x] 5.3 Load the `dataviz` skill, then add `Mills/bench/html.js` and the `report <run.json>` command (design §10): strength charts, speed charts, compare charts, light and dark, no network; `--no-html` switches it off; verify tests that the page contains one SVG per chart and no `http` URL, then open a small run's page once in light and dark (one screenshot each) to judge legibility
 
 ## 6. Baseline run and docs
 
