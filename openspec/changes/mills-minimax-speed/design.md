@@ -93,6 +93,30 @@ The worker scripts are what the page loads, so a syntax or global-name slip woul
 game. One check: open the game page (local static server), let Light (Iterative 3s) make its
 first move and confirm no console error. No screenshot needed: nothing visual changes.
 
+### 6. Profile of the baseline (task 2.2)
+
+`minimax@d4` on the 40 speed positions, `node --cpu-prof`, self time (10.3 s in total on the
+benchmark machine, under load from a parallel run):
+
+| Self time | Function | Covered by |
+|---:|---|---|
+| 34.1 % | `fastIsArrayInArray` (JSON.stringify per comparison, inline arrow) | 3.2 `Set` duplicate checks |
+| 8.3 % | `fastMinimax` (incl. the inlined JSON player clones) | 3.1 `clonePlayer` |
+| 7.7 % | garbage collector | 3.1, 3.2 (fewer temporary strings) |
+| 5.6 % | `fastEvaluateWindow` | 3.4 |
+| 4.3 % | `fastStage2Score` | 3.4 |
+| 3.5 % | `fastStage1Score` | 3.4 |
+| 3.5 % | `fastEvaluateBoard` | 3.4 |
+| 3.0 % | `isNewMill` | 3.4 |
+| 2.6 % | `fastGetUpdatedMills` | 3.4 (window ids) |
+| 2.6 % | `setCharAt` | 3.2 |
+| 2.2 % | `getCalcedValue` | – |
+| 2.1 % | `getLayer` | – |
+| 1.5 % | `getNeighboursIndexes` | 3.2 |
+
+Order of work from this: 3.2 (duplicate checks first, then `setCharAt` and neighbours), 3.1,
+3.4, 3.3 (time checks matter only for the time-limited bots, not in this profile).
+
 ## Risks / Trade-offs
 
 - [A rewrite changes a tie-break or a cache key subtly] → golden fixture with random-call counts

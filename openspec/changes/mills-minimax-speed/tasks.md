@@ -6,8 +6,8 @@
 
 ## 2. Safety net before touching the bot code
 
-- [ ] 2.1 Add `Mills/bench/make-golden.js` and record `Mills/bench/test/golden-search.json` on the unchanged worker code (design §1: 40 positions × `minimax@d1..d4`, `iterative@d3`; move, type, score, leaf, skip and prune counts, random calls), plus `test/golden.test.js` comparing the current code with it; verify the test passes on the unchanged code and fails after a deliberate one-line change to a move-ordering rule (reverted)
-- [ ] 2.2 Profile `minimax@d4` on the 40 positions with `node --cpu-prof` and list the top functions by self time in `design.md` (short table); verify the list exists and the order of work in group 3 follows it
+- [x] 2.1 Add `Mills/bench/make-golden.js` and record `Mills/bench/test/golden-search.json` on the unchanged worker code (design §1: 40 positions × `minimax@d1..d4`, `iterative@d3`; move, type, score, leaf, skip and prune counts, random calls), plus `test/golden.test.js` comparing the current code with it; verify the test passes on the unchanged code and fails after a deliberate one-line change to a move-ordering rule (reverted)
+- [x] 2.2 Profile `minimax@d4` on the 40 positions with `node --cpu-prof` and list the top functions by self time in `design.md` (short table); verify the list exists and the order of work in group 3 follows it
 
 ## 3. Behaviour-preserving speed-ups (golden test after each)
 
