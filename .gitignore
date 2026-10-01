@@ -4,3 +4,4 @@ node_modules/
 .eslintcache
 personalsite/
 .vscode/
+Mills/bench/results/

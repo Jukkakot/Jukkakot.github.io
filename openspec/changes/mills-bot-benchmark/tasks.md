@@ -2,19 +2,19 @@
 
 ## 1. Referee and seeded random
 
-- [ ] 1.1 Add `Mills/bench/rng.js` (mulberry32, seed → `random()`) and `Mills/bench/referee.js` (state, legal moves per stage, apply move with `Game.js` turn and mill bookkeeping, loss checks, move cap); verify with `node --test Mills/bench/` covering: placing to moving switch, flying at 3 chips, new mill → eat mode without a turn, removal not from a mill unless all are in mills, mill `uniqNum` = owner's turns, re-formed mill counts as new, loss by 2 chips, loss by blocking (both check points), illegal move rejected, same seed → same sequence
-- [ ] 1.2 Add `.gitignore` entry `Mills/bench/results/`; verify `git check-ignore Mills/bench/results/x.json` succeeds
+- [x] 1.1 Add `Mills/bench/rng.js` (mulberry32, seed → `random()`) and `Mills/bench/referee.js` (state, legal moves per stage, apply move with `Game.js` turn and mill bookkeeping, loss checks, move cap); verify with `node --test "Mills/bench/test/*.test.js"` covering: placing to moving switch, flying at 3 chips, new mill → eat mode without a turn, removal not from a mill unless all are in mills, mill `uniqNum` = owner's turns, re-formed mill counts as new, loss by 2 chips, loss by blocking (both check points), illegal move rejected, same seed → same sequence
+- [x] 1.2 Add `.gitignore` entry `Mills/bench/results/`; verify `git check-ignore Mills/bench/results/x.json` succeeds
 
 ## 2. Sandbox and bot registry
 
-- [ ] 2.1 Add `Mills/bench/sandbox.js`: `vm` context with `self`/`importScripts`/quiet `console` (errors counted)/seeded `Math`, loads `Mills/workers/WorkerHelpers.js` unchanged, exposes `chooseMove(state, options)` that sets the globals as `handleGetMove` does and returns move, type, time, leaf count, depth; verify a test that runs `minimax@d1` on the start position returns a legal placing move and that `git diff --stat Mills/workers` is empty
-- [ ] 2.2 Add `Mills/bench/bots.js` (name parsing and the option table from design §2, refusing unsupported budgets); verify tests for every in-game option name and for the `mcts@i800` refusal message
-- [ ] 2.3 Cross-check the referee against the worker: replay 5 seeded `minimax@d1` vs `random` games and compare each board and eat mode with what the worker's own helpers produce; verify a test that passes, and record any rule difference found in this file and `design.md` before moving on
+- [x] 2.1 Add `Mills/bench/sandbox.js`: `vm` context with `self`/`importScripts`/quiet `console` (errors counted)/seeded `Math`, loads `Mills/workers/WorkerHelpers.js` unchanged, exposes `chooseMove(state, options)` that sets the globals as `handleGetMove` does and returns move, type, time, leaf count, depth; verify a test that runs `minimax@d1` on the start position returns a legal placing move and that `git diff --stat Mills/workers` is empty
+- [x] 2.2 Add `Mills/bench/bots.js` (name parsing and the option table from design §2, refusing unsupported budgets); verify tests for every in-game option name and for the `mcts@i800` refusal message
+- [x] 2.3 Cross-check the referee against the worker: replay 5 seeded `minimax@d1` vs `random` games and compare each board and eat mode with what the worker's own helpers produce; verify a test that passes, and record any rule difference found in this file and `design.md` before moving on
 
 ## 3. Strength mode
 
-- [ ] 3.1 Add `Mills/bench/tournament.js` (schedule per kit convention, game loop with move cap, results) and `Mills/bench/report.js` (Bradley–Terry Elo with `random` = 1000, Wilson 95 % interval, standings, pairing table, timing, illegal-move and error counts, setup block with commit and Node version); verify tests: schedule shape, Elo of a known 2-bot result, interval bounds
-- [ ] 3.2 Add `Mills/bench/bench.js` CLI (`strength`, flags `--games --seed --cap --jobs`) with `worker_threads` jobs and JSON output to `Mills/bench/results/`; verify `node Mills/bench/bench.js strength random minimax@d1 --games 4 --jobs 1` and `--jobs 2` print identical standings, and a test asserting the same
+- [x] 3.1 Add `Mills/bench/tournament.js` (schedule per kit convention, game loop with move cap, results) and `Mills/bench/report.js` (Bradley–Terry Elo with `random` = 1000, Wilson 95 % interval, standings, pairing table, timing, illegal-move and error counts, setup block with commit and Node version); verify tests: schedule shape, Elo of a known 2-bot result, interval bounds
+- [x] 3.2 Add `Mills/bench/bench.js` CLI (`strength`, flags `--games --seed --cap --jobs`) with `worker_threads` jobs and JSON output to `Mills/bench/results/`; verify `node Mills/bench/bench.js strength random minimax@d1 --games 4 --jobs 1` and `--jobs 2` print identical standings, and a test asserting the same
 
 ## 4. Speed mode
 
@@ -32,4 +32,4 @@
 - [ ] 6.1 Trial run: time one `minimax@d4` vs `mcts@i5000` game pair and one `iterative@d6` game; decide per design §11 whether d6 bots join the strength baseline; record the decision and timings for `reports/baseline/COMMANDS.md`
 - [ ] 6.2 Benchmark run (the baseline): run the strength and speed commands from design §11 with `--save baseline` on a clean tree at the current bot code; commit `Mills/bench/reports/baseline/` (JSON, Markdown, HTML, `COMMANDS.md` with commands, commit, CPU, Node); verify `git diff --stat Mills/workers Mills/classes Mills/sketch.js Mills/index.html` is empty
 - [ ] 6.3 Add a short "Benchmark" section to `Mills/OVERVIEW.md` (what it is, the commands incl. `--save`/`--compare`/`report`, where saved runs live, depth/iteration budgets are repeatable, time budgets are not); verify the documented commands run as written
-- [ ] 6.4 Note in the `mills-improvement-plan` memory that the baseline exists and later changes use `--compare baseline` and save their own run as `--save <change-name>`; verify `node --test Mills/bench/` passes and `openspec validate mills-bot-benchmark --strict` is clean
+- [ ] 6.4 Note in the `mills-improvement-plan` memory that the baseline exists and later changes use `--compare baseline` and save their own run as `--save <change-name>`; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-bot-benchmark --strict` is clean
