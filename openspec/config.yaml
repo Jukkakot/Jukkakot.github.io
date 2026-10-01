@@ -2,11 +2,11 @@ schema: spec-driven
 
 # Project context (shown to AI when creating artifacts)
 context: |
-  Repo: personal site (React, personalsite/) + small Node backend (backend/).
-  Current focus: the Mills game (Nine Men's Morris) in personalsite/public/Mills/.
+  Repo: static games site on GitHub Pages (plain HTML, each game in its own root folder).
+  Current focus: the Mills game (Nine Men's Morris) in Mills/.
   Mills is plain browser JS with no build step: p5.js 0.9 for drawing/input, a Web Worker
   (workers/WorkerHelpers.js + MinmaxWorker.js + MCTSWorker.js) for the bots.
-  Overview: personalsite/public/Mills/OVERVIEW.md.
+  Overview: Mills/OVERVIEW.md.
   Goal: improve the bots (minimax speed/strength, a working MCTS) and code quality,
   measured against a recorded benchmark baseline.
 

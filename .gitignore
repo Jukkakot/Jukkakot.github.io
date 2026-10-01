@@ -2,3 +2,5 @@
 backend/JSON/
 node_modules/
 .eslintcache
+personalsite/
+.vscode/

@@ -40,7 +40,7 @@ double taps or text selection on buttons.
 
 ### Requirement: Static hosting, no build step
 
-The game SHALL run as static files from `personalsite/public/Mills/` (served by the personal
+The game SHALL run as static files from `Mills/` (served by the games
 site on GitHub Pages), with p5.js 0.9 and axios loaded from CDNs and plain `<script>` tags.
 
 #### Scenario: Open the page
