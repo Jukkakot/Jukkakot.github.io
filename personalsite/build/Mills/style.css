@@ -1,0 +1,42 @@
+html, body{
+    margin: 0;
+    padding: 0;
+    background-color: #646464;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overscroll-behavior: contain;
+    /* background-image: url("./resources/img/background1.png"); */
+  }
+  canvas{
+    display: block;
+  }
+  button {
+    font-family: 'Holtwood One SC', serif;
+    cursor:pointer;
+    border: none;
+    background-size: cover;
+  }
+  button:hover {
+    filter: brightness(70%);
+  }
+  #restartButton,#randomStateButton{
+    background: transparent  url("./resources/img/woodenButton.png") no-repeat center top;
+    background-size: cover;
+  }
+  #suggestionButton {
+    background: transparent  url("./resources/img/blueButton.png") no-repeat center top;
+    background-size: cover;
+  }
+  #pDarkButton {
+    background: transparent  url("./resources/img/darkButton.png") no-repeat center top;
+    background-size: cover;
+  }
+  #pLightButton {
+    background: transparent  url("./resources/img/lightButton.png") no-repeat center top;
+    background-size: cover;
+  }
+  #audioButton {
+    background: transparent  url("./resources/img/audioOnButton.png") no-repeat center top;
+    background-size: cover;
+  }

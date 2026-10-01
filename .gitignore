@@ -1,1 +1,4 @@
 .idea/
+backend/JSON/
+node_modules/
+.eslintcache
