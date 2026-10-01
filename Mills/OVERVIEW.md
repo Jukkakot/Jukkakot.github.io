@@ -80,6 +80,25 @@ Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. 
 - Keys: `h` lists all shortcuts.
 - Optional backend (not in this folder) stores per-move timing and game results.
 
+## Benchmark (`bench/`)
+
+A Node-only tool that plays the real bot code (`workers/WorkerHelpers.js`, loaded unchanged
+into a `vm` sandbox) against each other with a rules referee. The game page never loads it.
+
+- Strength: `node Mills/bench/bench.js strength random minimax@d1 minimax@d4 --games 20 --jobs 4`
+  plays every pairing, each seed once from each side, and reports Elo (`random` = 1000).
+- Speed: `node Mills/bench/bench.js speed minimax@d4 iterative@500ms` times one move on each of
+  the 40 fixed positions in `bench/positions.json`, per game stage.
+- Bot names carry their budget: `@d<n>` depth, `@i<n>` iterations, `@<n>ms` time. Depth and
+  iteration runs are repeatable on any machine; time-limited runs depend on the machine.
+- Every run writes `<mode>-<timestamp>.{json,md,html}` to `bench/results/` (git-ignored, 10
+  newest kept). `--save <name>` also stores it in `bench/reports/<name>/` (committed, with
+  `COMMANDS.md`); `--compare <name>` shows the change against a saved run;
+  `node Mills/bench/bench.js report <run.json> [--compare <name>]` rebuilds the HTML page.
+- The recorded baseline is `bench/reports/baseline/`; a bot change runs with
+  `--compare baseline` and saves its own run as `--save <change-name>`.
+- Tests: `node --test "Mills/bench/test/*.test.js"`.
+
 ## Known weak spots (at the time of writing, 2026-10)
 
 - **MCTS:** wins are always counted for the bot, also at the opponent's nodes, so selection

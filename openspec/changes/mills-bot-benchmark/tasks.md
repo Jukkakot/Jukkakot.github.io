@@ -29,7 +29,7 @@
 
 ## 6. Baseline run and docs
 
-- [ ] 6.1 Trial run: time one `minimax@d4` vs `mcts@i5000` game pair and one `iterative@d6` game; decide per design §11 whether d6 bots join the strength baseline; record the decision and timings for `reports/baseline/COMMANDS.md`
-- [ ] 6.2 Benchmark run (the baseline): run the strength and speed commands from design §11 with `--save baseline` on a clean tree at the current bot code; commit `Mills/bench/reports/baseline/` (JSON, Markdown, HTML, `COMMANDS.md` with commands, commit, CPU, Node); verify `git diff --stat Mills/workers Mills/classes Mills/sketch.js Mills/index.html` is empty
+- [x] 6.1 Trial run: time one `minimax@d4` vs `mcts@i5000` game pair and one `iterative@d6` game; decide per design §11 whether d6 bots join the strength baseline; record the decision and timings for `reports/baseline/COMMANDS.md`
+- [ ] 6.2 Benchmark run (the baseline): run the strength and speed commands from design §11 with `--save baseline` (and the five-bot strength run as `--save baseline-mcts`, §11) on a clean tree at the current bot code; commit `Mills/bench/reports/baseline/` (JSON, Markdown, HTML, `COMMANDS.md` with commands, commit, CPU, Node); verify `git diff --stat Mills/workers Mills/classes Mills/sketch.js Mills/index.html` is empty
 - [ ] 6.3 Add a short "Benchmark" section to `Mills/OVERVIEW.md` (what it is, the commands incl. `--save`/`--compare`/`report`, where saved runs live, depth/iteration budgets are repeatable, time budgets are not); verify the documented commands run as written
 - [ ] 6.4 Note in the `mills-improvement-plan` memory that the baseline exists and later changes use `--compare baseline` and save their own run as `--save <change-name>`; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-bot-benchmark --strict` is clean

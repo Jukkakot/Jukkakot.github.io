@@ -177,6 +177,15 @@ and commit):
   seed 1, cap 200 (200 games). `minimax@d6` / `iterative@d6` join if a trial shows the whole run
   stays under about an hour on this machine; otherwise they are left out of strength and only
   timed in speed mode. The choice is written into `reports/baseline/COMMANDS.md`.
+- Trial result (task 6.1): MCTS takes about 11 s per move, so its 80 games need about 80 min
+  with 4 jobs; the d6 bots stay out of strength. The strength baseline is saved as two runs so
+  that later changes can repeat the fast part in minutes: `baseline` = `random minimax@d1
+  minimax@d4 iterative@d4` (120 games) and `baseline-mcts` = the five bots including
+  `mcts@i5000`. A first full five-bot run (20 games per pairing) was stopped by the 2-hour limit
+  on background commands at 168/200 games: MCTS games took about 9 CPU-minutes each, twice the
+  trial's estimate. Following the risk rule below (fewer MCTS games, never fewer iterations),
+  `baseline-mcts` plays 6 games per pairing (60 games, 24 with MCTS). The speed run is saved
+  under `baseline`.
 - Speed: every in-game option (`random`, `minimax@d1/d4/d6`, `iterative@500ms/1000ms/3000ms`,
   `iterative@d4/d6`, `mcts@i5000`) on all 40 positions. `iterative@5000ms/10000ms` are left out:
   they only show depth reached and would take more than 10 minutes on their own. They can be

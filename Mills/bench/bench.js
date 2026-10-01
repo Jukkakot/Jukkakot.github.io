@@ -34,6 +34,11 @@ function parseArgs(argv) {
     return args
 }
 
+// Quotes an argument for the recorded command line so it can be pasted back into a shell.
+function shellQuote(a) {
+    return /^[\w@.\/:=,+-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`
+}
+
 function git(cmd) {
     try { return execSync(`git ${cmd}`, { cwd: REPO, env: { ...process.env, GIT_PAGER: 'cat' } }).toString().trim() } catch { return '' }
 }
@@ -41,7 +46,7 @@ function git(cmd) {
 function baseSetup(mode, bots, jobs, argv) {
     return {
         mode, bots, jobs,
-        command: `node Mills/bench/bench.js ${argv.join(' ')}`,
+        command: `node Mills/bench/bench.js ${argv.map(shellQuote).join(' ')}`,
         commit: git('rev-parse --short HEAD') || 'unknown',
         dirty: git('status --porcelain -- Mills/workers') !== '',
         node: process.version,
