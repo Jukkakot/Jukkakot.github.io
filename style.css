@@ -114,6 +114,23 @@ header p {
   white-space: nowrap;
 }
 
+/* A game in the making: linked to its repo until it is deployed. */
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: 2px;
+}
+
+.card.soon img {
+  opacity: 0.72;
+}
+
 footer {
   padding: 48px 0 40px;
   color: var(--muted);
