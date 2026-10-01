@@ -23,6 +23,14 @@ to watch autoplay in the browser, which is slow, random and leaves no record.
   jobs with identical results).
 - **Speed mode:** every bot on a fixed, committed set of test positions from all game stages:
   time per move, searched nodes, depth reached by time-limited bots.
+- **Visual report:** a run is also rendered as one self-contained HTML page (inline SVG, no
+  dependencies, light and dark): Elo ladder, head-to-head matrix, outcome bars, strength vs
+  thinking time, time per game stage. Rendering is cheap (from the JSON), so it is on by default
+  and can be switched off; it can also be rendered later from any run's JSON. Given a saved run,
+  the page also compares before/after.
+- **No pile-up of results:** raw runs go to a git-ignored folder that keeps only the latest runs.
+  A run worth keeping (the baseline, a change's before/after) is saved by name into a committed
+  folder on request.
 - **Recorded baseline:** the strength and speed reports of the current bots, committed, so later
   changes compare against them.
 - No change to bot behaviour, game rules or the UI. **No visual effect on the Mills UI**: no file

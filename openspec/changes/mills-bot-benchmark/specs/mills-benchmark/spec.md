@@ -102,9 +102,49 @@ numbers are comparable.
 ### Requirement: Reports and recorded baseline
 
 Each run SHALL print a Markdown report and write a JSON file with every game or position result
-to a folder that git ignores. The baseline, the strength and speed reports of the bots as they
-were before any bot change, SHALL be committed with the exact commands that produced it, so
-later changes can re-run them and compare.
+to a folder that git ignores. That folder SHALL keep only the 10 latest runs; older ones are
+removed automatically. A run SHALL be kept permanently only when asked by name (`--save <name>`),
+which stores its JSON, Markdown and HTML report in a committed folder under that name. The
+baseline, the strength and speed reports of the bots as they were before any bot change, SHALL
+be saved this way with the exact commands that produced it, so later changes can re-run them and
+compare.
+
+#### Scenario: Results do not pile up
+- **WHEN** a twelfth run finishes without `--save`
+- **THEN** the git-ignored results folder holds the 10 latest runs and no committed file changes
+
+#### Scenario: Saving a run
+- **WHEN** a run is started with `--save baseline`
+- **THEN** its JSON, Markdown and HTML reports are stored in the committed reports folder under `baseline`
+
+### Requirement: Visual report
+
+Each run SHALL also produce a self-contained HTML page (no network, no dependencies) unless
+switched off with `--no-html`; any earlier run's JSON SHALL be renderable into the page later.
+The page SHALL follow the system's light or dark setting. A strength run SHALL show: an Elo
+ladder with intervals, a head-to-head matrix of score shares, outcome bars per pairing (wins,
+losses, capped; how games ended) and strength against the median thinking time per move
+measured during the tournament. A speed run SHALL show time per move per game stage for each bot
+and the depth reached by time-limited bots.
+
+#### Scenario: Turning the page off
+- **WHEN** a run is started with `--no-html`
+- **THEN** only the Markdown and JSON are written
+
+#### Scenario: Rendering later
+- **WHEN** the report command is given a run's JSON file
+- **THEN** it writes that run's HTML page without playing any games
+
+### Requirement: Comparison with a saved run
+
+A run started with `--compare <name>` SHALL compare itself with that saved run, in the Markdown
+and the HTML page: per bot the Elo change, and per bot and stage the speed ratio (for example
+"3.2× faster"), counting only bots, seeds, positions and budgets both runs share. Differences in
+setup SHALL be listed instead of compared.
+
+#### Scenario: Before and after a speed change
+- **WHEN** a speed run of `minimax@d4` is started with `--compare baseline`
+- **THEN** the report shows the ratio of its median times to the baseline's per stage
 
 #### Scenario: Comparing a bot change
 - **WHEN** a later change re-runs the baseline commands

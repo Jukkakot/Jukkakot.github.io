@@ -114,7 +114,7 @@ kept so the set can be inspected or rebuilt, but the baseline always uses the co
 
 ### 7. Reports
 
-Markdown to stdout; JSON to `Mills/bench/results/<mode>-<timestamp>.json` (git-ignored).
+Markdown to stdout and, with JSON and HTML, into the results folder (§9).
 Strength: setup block, standings by Elo, pairing table (share ± 95 % Wilson interval, W/L/capped,
 average plies), move timing per bot (mean/max ms), illegal-move and `console.error` counts.
 Elo: Bradley–Terry with minorization-maximization and one virtual draw per pairing (same method as
@@ -126,19 +126,57 @@ leaf positions per move, depth reached for `@ms` bots).
 ```
 node Mills/bench/bench.js strength <bot> <bot> ... [--games 20] [--seed 1] [--cap 200] [--jobs N]
 node Mills/bench/bench.js speed <bot> ... [--positions Mills/bench/positions.json] [--jobs 1]
+    common flags: [--save <name>] [--compare <name>] [--no-html]
+node Mills/bench/bench.js report <run.json> [--compare <name>]   # HTML from an existing run
 ```
+
+### 9. Where results live
+
+- `Mills/bench/results/` (git-ignored): every run as `<mode>-<timestamp>.{json,md,html}`. After
+  each run, all but the 10 newest runs are deleted (by timestamp in the name; nothing else in
+  the folder is touched).
+- `Mills/bench/reports/<name>/` (committed): written only with `--save <name>`: `<mode>.json`,
+  `<mode>.md`, `<mode>.html`, plus `COMMANDS.md` with the exact command, commit, CPU and Node.
+  Saving a name that exists asks for `--force`, so a saved run is never overwritten by accident.
+  Intended names: `baseline`, then one per bot change (`<change-name>`), the change's "after".
+- `--compare <name>` reads `reports/<name>/<mode>.json`.
+
+### 10. Visual report
+
+`Mills/bench/html.js` turns a run's JSON (and an optional compare run) into one HTML string:
+hand-written inline SVG, no chart library, no fonts or scripts from the network, so a saved
+page opens offline forever. Neutral palette (from the `dataviz` skill, loaded before writing
+it), colours as CSS custom properties on `:root`, swapped under `prefers-color-scheme: dark`. One
+colour per bot kept across all charts. Charts are static (a `<title>` tooltip per mark at most);
+"it does not need to be fancy": correctness and legibility over polish.
+
+Charts per mode (spec → Visual report):
+- strength: Elo ladder (point + interval whiskers, 1000 line), head-to-head matrix (cell = row
+  bot's share, diverging around 50 %), stacked outcome bars per pairing (win by 2 chips / win by
+  blocking / capped / losses), Elo vs median ms per move (log x).
+- speed: small multiples per stage, one horizontal bar per bot (median, tick for max; log
+  scale), and a depth-reached table for `@ms` bots.
+- compare: Elo slope (before → after) and speed-ratio bars per bot × stage.
+
+Rendering is milliseconds, so it is on by default; `--no-html` exists for scripted runs.
+
+- Alternative: a charting library from a CDN. Rejected: saved pages would break offline and the
+  repo has no dependencies.
+- Alternative: publishing each report as a claude.ai artifact. Not by default; a saved report
+  can be published by hand when worth sharing.
 
 Tests: `node --test Mills/bench/` (referee rules, PRNG determinism, registry parsing, a tiny
 strength run being identical with 1 and 2 jobs).
 
-### 9. The baseline run
+### 11. The baseline run
 
-Recorded in `Mills/bench/BASELINE.md` (report plus exact commands and commit):
+Saved with `--save baseline` into `Mills/bench/reports/baseline/` (reports plus exact commands
+and commit):
 
 - Strength: `random minimax@d1 minimax@d4 iterative@d4 mcts@i5000`, 20 games per pairing,
   seed 1, cap 200 (200 games). `minimax@d6` / `iterative@d6` join if a trial shows the whole run
   stays under about an hour on this machine; otherwise they are left out of strength and only
-  timed in speed mode. The choice is written into `BASELINE.md`.
+  timed in speed mode. The choice is written into `reports/baseline/COMMANDS.md`.
 - Speed: every in-game option (`random`, `minimax@d1/d4/d6`, `iterative@500ms/1000ms/3000ms`,
   `iterative@d4/d6`, `mcts@i5000`) on all 40 positions. `iterative@5000ms/10000ms` are left out:
   they only show depth reached and would take more than 10 minutes on their own. They can be
