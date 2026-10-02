@@ -54,7 +54,7 @@ function createSandbox(seed) {
         DEBUG = false
         NODELAY = true
         __result = fastFindBestMove(__options)
-        __stats = { leaves: leafNodeCount + skipCount, depth: depthCount.length - 1 }
+        __stats = { leaves: leafNodeCount + skipCount, depth: depthCount.length - 1, ttHits: ttHitCount }
     `)
 
     // Returns { type, move, ms, leaves, depth, data } or { error } when the bot gave no move.
@@ -83,6 +83,7 @@ function createSandbox(seed) {
             ms,
             leaves: options.mcts ? data.playoutCount : options.random ? 0 : stats.leaves,
             depth: options.mcts || options.random ? null : stats.depth,
+            ttHits: options.mcts || options.random ? null : stats.ttHits,
             newErrors: errors.count - errorsBefore
         }
     }

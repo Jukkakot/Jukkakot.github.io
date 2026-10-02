@@ -9,6 +9,7 @@ function fastFindBestMove(options) {
     //Resetting counters 
     leafNodeCount = 0
     checkedBoards.clear()
+    ttReset()
     skipCount = 0
     depthCount = []
     pruneCount = 0
@@ -163,6 +164,7 @@ function fastFindBestMove(options) {
             "skip %:", Math.floor(100 * skipCount / (leafNodeCount + skipCount)),
             "boards", checkedBoards.size,
             "pruned", pruneCount,
+            "tt hits", ttHitCount,
             // "top" + TOPX, topCount, "else", elseCount, "total", topCount + elseCount,
             "\nprevbestmove", prevBestMove
         )
@@ -180,6 +182,7 @@ function fastFindBestMove(options) {
                 skipped: skipCount,
                 pruned: pruneCount,
                 skipPercent: Math.floor(100 * skipCount / leafNodeCount),
+                ttHits: ttHitCount,
             }
         }
     } else {
@@ -205,7 +208,37 @@ function fastFindBestMove(options) {
     console.log("Time finding the move", moveData.time, "ms")
     return { move: [move, type], moveData: moveData }
 }
+//Alpha-beta search with the transposition table around it: a stored score is used only at the
+//same remaining depth (win scores scale with it), a stored best move is tried first otherwise.
+//The root and the eat ply right after it (depth === startDepthNum) and leaves are left as they are.
 function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
+    if (!TT_ENABLED || depth <= 0 || depth === startDepthNum) {
+        return fastMinimaxNode(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing)
+    }
+    let key = ttKey(board, player, oppPlayer, eatMode, isMaximizing)
+    let entry = ttTable.get(key)
+    if (entry !== undefined && entry.depth === depth &&
+        (entry.flag === 0 || (entry.flag === 1 && entry.value >= beta) || (entry.flag === 2 && entry.value <= alpha))) {
+        ttHitCount++
+        return [entry.move, entry.value, entry.type]
+    }
+    let result = fastMinimaxNode(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing,
+        entry !== undefined ? entry.move : undefined)
+    //A search cut short by the time limit is not a real depth-`depth` value
+    if (iterativeEndTime !== undefined && Date.now() >= iterativeEndTime) return result
+    if (entry !== undefined ? depth >= entry.depth : ttTable.size < TT_MAX_ENTRIES) {
+        let value = result[1]
+        ttTable.set(key, {
+            depth: depth,
+            value: value,
+            flag: value <= alpha ? 2 : value >= beta ? 1 : 0,
+            move: result[0],
+            type: result[2]
+        })
+    }
+    return result
+}
+function fastMinimaxNode(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing, firstMove) {
     //Calcing depth count
     if (!depthCount.includes(depth)) depthCount.push(depth)
 
@@ -234,6 +267,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         let bestMove
         let movesObject = fastGetMoves(board, player, oppPlayer, eatMode, isMaximizing, depth)
         let moves = movesObject.moves
+        if (firstMove !== undefined) moves = ttMoveFirst(moves, firstMove)
         let type = movesObject.type
 
         if (moves.length === 0) {
@@ -294,6 +328,7 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         let bestMove
         let movesObject = fastGetMoves(board, oppPlayer, player, eatMode, isMaximizing, depth)
         let moves = movesObject.moves
+        if (firstMove !== undefined) moves = ttMoveFirst(moves, firstMove)
         let type = movesObject.type
 
         if (moves.length === 0) {

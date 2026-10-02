@@ -98,6 +98,10 @@ today (the existing golden test runs with it false and must still pass unchanged
 - Memory: one `iterative@10000ms` search on each of the 10 quick positions in one process; the heap
   after a forced GC between moves stays under 200 MB above the start. Over it: halve
   `TT_MAX_ENTRIES` and re-check, record the final value here.
+- Result (task 3.3): the 10 quick positions with `iterative@10000ms` (depth 7–12) filled at most
+  121 015 entries; heap growth at most 80 MB (table and leaf cache together, before GC). Under
+  the limit, so `TT_MAX_ENTRIES` stays 500 000; the game's longest option (10 s) stays far below
+  the cap.
 
 ### 6. Measurement
 

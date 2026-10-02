@@ -5,6 +5,14 @@ let checkedBoards = new Map()
 let skipCount, depthCount, leafNodeCount, startDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
 
 let iterativeEndTime
+//Transposition table: positions reached again within one move's search (cleared every move)
+//TT_ENABLED is only switched off by the benchmark and its tests
+let TT_ENABLED = true
+const TT_MAX_ENTRIES = 500000
+let ttTable = new Map()
+let ttHitCount = 0
+//Per player char: root mill fastId -> fastUniqId, for the key
+let ttRootMills = {}
 let prevBestMove
 let prevBestMoves
 let startMoveType
@@ -135,6 +143,36 @@ function clonePlayer(p) {
     if (p.mills) c.mills = p.mills.map(m => ({ ...m }))
     if (p.movableDots) c.movableDots = p.movableDots.slice()
     return c
+}
+function ttReset() {
+    ttTable.clear()
+    ttHitCount = 0
+    ttRootMills = {}
+    for (let p of [workerGame.playerLight, workerGame.playerDark]) {
+        ttRootMills[p.char] = new Map((p.mills || []).map(m => [m.fastId, m.fastUniqId]))
+    }
+}
+//One char per mill: same mill as at the root (R) or formed in the search (S), upper case = new
+function ttMillCode(player) {
+    let root = ttRootMills[player.char]
+    let code = ""
+    for (let m of player.mills) {
+        let same = root !== undefined && root.get(m.fastId) === m.fastUniqId
+        code += same ? (m.new ? "R" : "r") : (m.new ? "S" : "s")
+    }
+    return code
+}
+//Everything the search below a position depends on (see design of mills-transposition-table)
+function ttKey(board, player, oppPlayer, eatMode, isMaximizing) {
+    return board + "abcd"[(eatMode ? 2 : 0) + (isMaximizing ? 1 : 0)] + player.chipsToAdd + oppPlayer.chipsToAdd +
+        ttMillCode(player) + "|" + ttMillCode(oppPlayer)
+}
+//Moves the given move to the front; the rest keep their order
+function ttMoveFirst(moves, move) {
+    let i = typeof move === "number" ? moves.indexOf(move)
+        : moves.findIndex(m => m[0] === move[0] && m[1] === move[1])
+    if (i <= 0) return moves
+    return [moves[i], ...moves.slice(0, i), ...moves.slice(i + 1)]
 }
 function toFastMills(player) {
     if (!player.mills || player.mills.length == 0) return []
