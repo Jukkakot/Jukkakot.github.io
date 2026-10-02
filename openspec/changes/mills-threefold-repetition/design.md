@@ -78,7 +78,12 @@ saved runs (no `repetition` games) render as before with 0 repetitions.
   folder for the user.
 - Pixel identity: the same script on the old code (a git worktree of the commit before) and the
   new code takes screenshots of the start screen, a placing position, a mill ("Mill!") and a won
-  game set with `setState`; all four pairs must be byte-identical PNGs (animations waited out).
+  game set with `setState`; all four pairs must be pixel-identical (animations waited out).
+- How it was done (tasks 2.1, 2.4): the fps counter (top right) changes every frame and the
+  removable chips pulse, so each screenshot stops the p5 loop, sets `ANGLE = 0` and draws one
+  frame, and the compare masks the fps box (640–735 × 0–32 px). Two runs of the old code were
+  identical that way; old vs new: all four identical. The Holtwood font is blocked in the cloud
+  sandbox, so both sides use the same fallback font.
 
 ### 7. Measurement
 

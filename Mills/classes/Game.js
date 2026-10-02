@@ -17,6 +17,9 @@ class Game {
         this.turnNum = 0
         this.eatMode = false
         this.winner
+        //Draw by threefold repetition (WMD): counts of positions after completed turns
+        this.isDraw = false
+        this.positionCounts = new Map()
         //Storage for the suggested dot(s) so its easy to clear afterwards
         this.suggestion
 
@@ -35,6 +38,18 @@ class Game {
 
         this.startTime = new Date().getTime()
         this.startDate = Date()
+
+        this.countPosition()
+    }
+    isOver() {
+        return this.winner !== undefined || this.isDraw
+    }
+    //Position for the repetition rule: board, player to move and both players' chips still to place
+    countPosition() {
+        let key = this.stringify() + this.turn.char + this.playerLight.chipsToAdd + this.playerDark.chipsToAdd
+        let count = (this.positionCounts.get(key) || 0) + 1
+        this.positionCounts.set(key, count)
+        return count
     }
     stringify(board = this.dots) {
         let str = ""
@@ -70,6 +85,10 @@ class Game {
         oppPlayer.setState(state.oppPlayer)
 
         this.turnNum = player.turns + oppPlayer.turns
+        //A jumped-to state starts a new repetition count
+        this.isDraw = false
+        this.positionCounts = new Map()
+        this.countPosition()
 
         if (state.winner) {
             let winner = state.winner.char === player.char ? player : oppPlayer
@@ -217,9 +236,17 @@ class Game {
         push()
         textAlign(CENTER)
         textSize(circleSize * 2.5)
-        stroke(this.winner.color)
+        if (this.isDraw) {
+            stroke(this.playerDark.color)
+        } else {
+            stroke(this.winner.color)
+        }
         fill(color(255, 255, 255))
-        text(this.winner.name + " won!", 0, -circleSize)
+        if (this.isDraw) {
+            text("Draw!", 0, -circleSize)
+        } else {
+            text(this.winner.name + " won!", 0, -circleSize)
+        }
         pop()
     }
     drawTurn() {
@@ -270,11 +297,11 @@ class Game {
         this.drawStartChips()
         this.drawEatenChips()
 
-        if (AUTOPLAY && !this.winner) {
+        if (AUTOPLAY && !this.isOver()) {
             this.drawAutoplay()
         }
 
-        if (this.winner) {
+        if (this.isOver()) {
             this.drawWinner()
         } else {
             this.drawTurn()
@@ -370,7 +397,7 @@ class Game {
         this.playerDark.startChips.forEach(chip => chip.draw())
     }
     click() {
-        if (this.turn.options.autoPlay || this.winner) return
+        if (this.turn.options.autoPlay || this.isOver()) return
         let dot = this.getDot(mX, mY)
         if (!dot) {
             //unhighlight everything
@@ -524,6 +551,11 @@ class Game {
             this.setWinner(oppPlayer)
             return
         }
+        //Third time the same position with the same player to move: draw
+        if (this.countPosition() >= 3) {
+            this.setDraw()
+            return
+        }
         if (this.turn.options.autoPlay) {
             this.findBestMove("findMove")
         }
@@ -602,7 +634,47 @@ class Game {
             }
             sendData(gameData, "game")
         }
+        this.finishGame()
+    }
+    setDraw() {
+        this.isDraw = true
 
+        this.initWorker()
+
+        loadingGif.hide()
+        LOADING = false
+
+        let totalTurns = this.playerLight.turns + this.playerDark.turns
+        let gameTime = new Date().getTime() - this.startTime
+        console.log("Draw by threefold repetition!",
+            "total turns:", totalTurns,
+            "chip counts:", this.playerLight.char, this.playerLight.chipCount, this.playerDark.char, this.playerDark.chipCount,
+            "game lasted for", gameTime / 1000, "s")
+        if (SENDDATA) {
+            const gameData = {
+                draw: true,
+                players: {
+                    playerLight: this.playerLight.getData(),
+                    playerDark: this.playerDark.getData(),
+                },
+                game: {
+                    gameTime: gameTime,
+                    averageTurnTime: Number((gameTime / totalTurns).toFixed(3)),
+                    totalTurns: totalTurns,
+                    autoPlay: AUTOPLAY,
+                    maxChipCount: MAXCHIPCOUNT,
+                    gameSettings: this.settings,
+                    board: this.stringify(),
+                    startDate: this.startDate,
+                    endDate: Date()
+                }
+            }
+            sendData(gameData, "game")
+        }
+        this.finishGame()
+    }
+    //Game over screen: big Restart button, other buttons hidden, autoplay restarts
+    finishGame() {
         restartButton.size(circleSize * 15, circleSize * 6)
         restartButton.position(cnv.position().x + width / 2 - restartButton.width / 2, cnv.position().y + height * 0.53)
         restartButton.style('font-size', circleSize * 1.5 + "px")

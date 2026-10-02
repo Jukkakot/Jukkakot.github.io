@@ -325,7 +325,7 @@ function windowResized() {
 
 	loadingGif.size(circleSize * 3, circleSize)
 	loadingGif.position(cnv.position().x + cnv.width / 2 - loadingGif.position().width / 2, cnv.position().y + cnv.height / 2 - circleSize * 3)
-	if (!game.winner) {
+	if (!game.isOver()) {
 		restartButton.position(cnv.position().x, cnv.position().y)
 		restartButton.size(buttonWidth, buttonHeight)
 		restartButton.style('font-size', circleSize * 0.6 + "px")
@@ -454,7 +454,7 @@ function updateButtons() {
 	pLightButton.html(game.playerLight.options.text)
 	// game.settings.difficulty === 4 ? difficultyButton.html("Difficulty: Easy") : difficultyButton.html("Difficulty: Hard")
 	AUTOPLAY = game.playerLight.options.autoPlay && game.playerDark.options.autoPlay
-	if (AUTOPLAY && game.winner == undefined) {
+	if (AUTOPLAY && !game.isOver()) {
 		autoPlayButton.style("visibility", "visible")
 		autoPlayButton.style('background', "transparent  url('./resources/img/redButton.png') no-repeat center top")
 		autoPlayButton.style("background-size", "cover")
