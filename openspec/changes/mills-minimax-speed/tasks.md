@@ -20,9 +20,9 @@
 ## 4. Measurement against the baseline
 
 - [x] 4.1 Benchmark run (speed): the baseline speed command with `--compare baseline --save mills-minimax-speed`; verify the report shows the ratios and record whether the 2× goal for `minimax@d4`/`d6` was met in `design.md`
-- [ ] 4.2 Benchmark run (strength): both baseline strength commands with `--compare baseline` / `--compare baseline-mcts`, saved as `mills-minimax-speed` / `mills-minimax-speed-mcts`; verify the reports say every shared game is identical (any difference: fix the code, never accept it)
+- [x] 4.2 Benchmark run (strength): both baseline strength commands with `--compare baseline` / `--compare baseline-mcts`, saved as `mills-minimax-speed` / `mills-minimax-speed-mcts`; verify the reports say every shared game is identical (any difference: fix the code, never accept it)
 
 ## 5. Game check and docs
 
 - [x] 5.1 Serve the repo with a static server, open `Mills/index.html`, let Light (Iterative 3s) play its first move; verify a chip appears on the board (DOM/state query) and the console shows no errors
-- [ ] 5.2 Update `Mills/OVERVIEW.md`: remove the "JSON clone is the biggest cost" weak spot, note the speed-up and where the numbers are (`reports/mills-minimax-speed/`), list the quirks left on purpose; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-minimax-speed --strict` is clean
+- [x] 5.2 Update `Mills/OVERVIEW.md`: remove the "JSON clone is the biggest cost" weak spot, note the speed-up and where the numbers are (`reports/mills-minimax-speed/`), list the quirks left on purpose; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-minimax-speed --strict` is clean
