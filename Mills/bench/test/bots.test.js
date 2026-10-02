@@ -80,7 +80,7 @@ test('weights in the move options apply to that search only, the rest keep their
     const partial = weights()
     assert.equal(partial.same, false)
     assert.equal(partial.w.movableChip, 7)
-    assert.deepEqual({ ...partial.w, movableChip: 50 }, defaultEvalWeights())
+    assert.deepEqual({ ...partial.w, movableChip: defaultEvalWeights().movableChip }, defaultEvalWeights())
     sandbox.chooseMove(state, parseBot('minimax@d1').options)
     assert.equal(weights().same, true)
 })

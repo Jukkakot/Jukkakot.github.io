@@ -1,24 +1,24 @@
-//Evaluation weights (the 2021 values = weight set v0, plus the three fixes switched off).
+//Evaluation weights: the tuned set t1 (= bench weight set v1; v0 = the 2021 values).
 //A search may override some of them with options.evalWeights (the benchmark does; the game never).
 const EVAL_WEIGHTS = {
-    placingNeighbour: 1,
-    placingBlockOppMill: 400,
-    placingBlockOppMillMoving: 400,
+    placingNeighbour: 29,
+    placingBlockOppMill: 453,
+    placingBlockOppMillMoving: 381,
     placingAlmostMill: 100,
-    placingMill: 250,
-    placingSafeOpenMill: 300,
-    movableChip: 50,
-    chipTaken: 1000,
-    doubleMill: 3500,
-    safeOpenMill: 1500,
-    mill: 1500,
-    oppMillStuck: 400,
-    blockOppMillFlying: 400,
-    blockOppMillMoving: 400,
-    newMillOwn: 3000,
-    newMillOpp: 4500,
-    chipTakenPlacing: 0,
-    flyingThreat: 0,
+    placingMill: 239,
+    placingSafeOpenMill: 305,
+    movableChip: 62,
+    chipTaken: 1018,
+    doubleMill: 3221,
+    safeOpenMill: 1725,
+    mill: 1364,
+    oppMillStuck: 361,
+    blockOppMillFlying: 376,
+    blockOppMillMoving: 423,
+    newMillOwn: 3079,
+    newMillOpp: 4189,
+    chipTakenPlacing: 1035,
+    flyingThreat: 984,
 }
 let evalWeights = EVAL_WEIGHTS
 let iterativeMoveScores = {}

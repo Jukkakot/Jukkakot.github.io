@@ -206,3 +206,16 @@ Neither better nor worse: `h1` alone does not pass (§5).
 the run −0.006 (last 100: −0.003, final moving average of 20: +0.075): no clear direction. Largest
 moves from h1: placingNeighbour 1 → 29, doubleMill 3500 → 3221, safeOpenMill 1500 → 1725,
 newMillOpp 4500 → 4189, mill 1500 → 1364; the rest within ±13 %.
+
+### Acceptance (200 games each, `--seed 1 --cap 200 --jobs 5`)
+
+| Pairing | Share of first | 95 % interval | W–L–D |
+|---|---:|---|---|
+| `minimax@d4:t1` vs `minimax@d4:v0` | 60.8 % | 53.8–67.3 % | 102–59–39 |
+| `minimax@d2:t1` vs `minimax@d2:v0` | 54.8 % | 47.8–61.5 % | 49–30–121 |
+| `minimax@d4:t1` vs `minimax@d4:h1` | 60.5 % | 53.6–67.0 % | 102–60–38 |
+
+`t1` passes (d4 lower bound 53.8 % > 50 %, d2 54.8 % ≥ 50 %) and beats `h1` at d4, so **`t1` is
+the new default** (`EVAL_WEIGHTS`, copied to `weights/v1.json`). The deciding d4 run is saved in
+`bench/reports/mills-eval-tuning/`. Interesting: the tune run's r stayed near 0, yet the small
+weight moves (above all placingNeighbour 1 → 29) gave a clear gain at depths 2 and 4.
