@@ -49,6 +49,10 @@ best move as the first move to try otherwise. This SHALL NOT change the score of
 move: a fixed-depth search SHALL give the same score as a search without this reuse. Nothing
 SHALL be reused from one move's search to the next.
 
+The search SHALL know the threefold repetition rule: a position after a completed turn that
+would occur for the third time, counting the game so far and the moves searched on the way to
+it, SHALL be scored as a draw, unless it is won or lost.
+
 #### Scenario: Only one legal move
 - **WHEN** the player has exactly one legal move
 - **THEN** it is played without searching
@@ -60,6 +64,14 @@ SHALL be reused from one move's search to the next.
 #### Scenario: Time-limited search goes deeper
 - **WHEN** a time-limited bot searches the benchmark's test positions with reuse
 - **THEN** its median depth reached is higher than without reuse, on the same machine
+
+#### Scenario: Avoiding a draw when ahead
+- **WHEN** the bot's best move would repeat a position for the third time and the bot has another move it scores better than a draw
+- **THEN** it plays that other move
+
+#### Scenario: Taking a draw when behind
+- **WHEN** every move scores worse than a draw except one that repeats a position for the third time
+- **THEN** the bot plays the repeating move
 
 ### Requirement: Board evaluation
 
