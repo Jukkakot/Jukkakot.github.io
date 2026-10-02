@@ -840,6 +840,7 @@ function getCalcedValue(board, player, oppPlayer) {
     if (calcedValue != undefined) {
         // calcedValue += 3500 * player.mills.filter(m => m.new).length
         // calcedValue -= 4000 * oppPlayer.mills.filter(m => m.new).length
+        //Both players' new mills count, as in fastNewEvaluateBoard (a window is one player's mill at most)
         for (let window of millWindows) {
             if (isNewMill(board, window, player)) calcedValue += evalWeights.newMillOwn
             else if (isNewMill(board, window, oppPlayer)) calcedValue -= evalWeights.newMillOpp

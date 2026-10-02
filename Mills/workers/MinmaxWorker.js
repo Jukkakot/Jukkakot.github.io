@@ -19,7 +19,6 @@ const EVAL_WEIGHTS = {
     newMillOpp: 4500,
     chipTakenPlacing: 0,
     flyingThreat: 0,
-    exactCachedNewMills: 0,
 }
 let evalWeights = EVAL_WEIGHTS
 let iterativeMoveScores = {}
@@ -490,14 +489,17 @@ function fastEvaluateBoard(board, player, oppPlayer) {
         scoreObject.moveableDots = moveableDots
     }
 
-    if (getStage(player) !== 1) {
+    //Opponent chip count diff (search root minus now) is the amount of chips player has eaten
+    //(good thing) [0,9]. While placing it counts material (chips on board plus still to place);
+    //when moving it counts chips on board, as in 2021 (v0), also while the opponent still places.
+    let placing = getStage(player) === 1
+    let chipWeight = placing ? evalWeights.chipTakenPlacing : evalWeights.chipTaken
+    if (chipWeight !== 0) {
         let workerOppPlayer = player.char === workerGame.playerLight.char ? workerGame.playerDark : workerGame.playerLight
-
-        //[0,9]
-        //opponent chip count diff is the amount of chips player has eaten (good thing)
         let oppChipCountDiff = workerOppPlayer.chipCount - oppPlayer.chipCount
+        if (placing) oppChipCountDiff += workerOppPlayer.chipsToAdd - oppPlayer.chipsToAdd
 
-        boardValue += oppChipCountDiff * evalWeights.chipTaken
+        boardValue += oppChipCountDiff * chipWeight
         scoreObject.chipCountDiff = oppChipCountDiff
     }
 
@@ -519,8 +521,10 @@ function fastEvaluateWindow(board, window, player, oppPlayer, scoreObject) {
         case (2):
             return fastStage2Score(board, window, player, oppPlayer, scoreObject)
         case (3):
-            //Trying out just using the stage 2 scoring for stage 3 aswel
-            return fastStage2Score(board, window, player, oppPlayer, scoreObject)
+            //Stage 2 scoring plus the flying threat: two own chips and an empty point in a line
+            //is a mill the flying player can complete from anywhere
+            return fastStage2Score(board, window, player, oppPlayer, scoreObject) +
+                fastFlyingThreat(board, window, player, scoreObject)
         default:
             console.error("Player has won or lost?", player)
     }
@@ -632,6 +636,18 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
     }
 
     return value
+}
+function fastFlyingThreat(board, window, player, scoreObject) {
+    if (evalWeights.flyingThreat === 0) return 0
+    let own = 0
+    let empty = 0
+    for (let dot of window) {
+        if (board[dot] == player.char) own++
+        else if (board[dot] == EMPTYDOT) empty++
+    }
+    if (own !== 2 || empty !== 1) return 0
+    scoreObject.update("flyingThreat")
+    return evalWeights.flyingThreat
 }
 // function fastStage3Score(board, window, player, oppPlayer, scoreObject) {
 //     let value = 0

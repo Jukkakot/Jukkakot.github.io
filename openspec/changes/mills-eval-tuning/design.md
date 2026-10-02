@@ -71,7 +71,6 @@ Weight names (v0 value):
 | `newMillOpp` | 4500 | fresh and cached path |
 | `chipTakenPlacing` | 0 | **new**, stage 1 |
 | `flyingThreat` | 0 | **new**, stage 3 |
-| `exactCachedNewMills` | 0 | **new switch**: 1 = cached path counts both players' new mills |
 
 Alternative: a weight array indexed by constants. It is faster to read but harder to keep in
 sync with JSON files and reports. Property reads on a stable object are cheap; the speed check
@@ -79,12 +78,16 @@ sync with JSON files and reports. Property reads on a stable object are cheap; t
 
 ### 2. The three hand fixes
 
-- **Material in every stage:** count material as `chipCount + chipsToAdd` (chips on board plus
+- **Material in every stage:** while placing, count material as `chipCount + chipsToAdd` (chips on board plus
   still to place). Chips taken = opponent's material at the search root (`workerGame`) minus its
-  material now. Stages 2–3 have `chipsToAdd = 0`, so the value is identical to today. The weight
+  material now. *(Apply finding: when the evaluated player moves or flies, the term stays today's
+  `chipCount` difference. The opponent may still be placing its last chip then, and counting its
+  chips in hand changed a golden decision, so `v0` would not reproduce 2021.)* The weight
   is `chipTaken` when the evaluated player is moving or flying, and `chipTakenPlacing` when it
   is placing. `v0` has `chipTakenPlacing = 0`, which gives today's behaviour.
-- **Cached = fresh:** with `exactCachedNewMills = 1`, `getCalcedValue` adds `newMillOwn` for
+- **Cached = fresh:** *(Apply finding: no change needed. The `else if` is per window, and a window
+  is never both players' mill, so the cached path already counts both players' new mills; a test
+  proves cached = fresh. The planned switch `exactCachedNewMills` was dropped.)* Planned: with `exactCachedNewMills = 1`, `getCalcedValue` adds `newMillOwn` for
   every own new mill **and** subtracts `newMillOpp` for every opponent new mill, as the fresh
   path does. With 0 it keeps the `else if`.
 - **Flying threat:** in stage 3, each window with 2 own chips and 1 empty point adds
@@ -92,7 +95,7 @@ sync with JSON files and reports. Property reads on a stable object are cheap; t
   moving-stage features stay as they are.
 
 Hand-fixed starting set `h1` = `v0` plus `chipTakenPlacing 1000`, `flyingThreat 1000`,
-`exactCachedNewMills 1`.
+(`exactCachedNewMills` dropped, see above).
 
 ### 3. Benchmark: weight sets in bot names
 
@@ -113,8 +116,7 @@ the records, so `golden-search.json` stays byte-identical and keeps proving `v0`
 `node Mills/bench/bench.js tune --from h1 --depth 3 --iterations <n> --pairs 4 --seed 1 --cap 200 --jobs 5 [--resume] [--save t1]`
 
 - Tunable weights and their ranges/steps live in `bench/tune.js` (`TUNABLE`). That is every
-  numeric weight in the table except `exactCachedNewMills` (a switch, fixed at the start set's
-  value). Each has `min` (0), `max` (4 × its h1 value, at least 4000) and `step` R = max(20,
+  weight in the table. Each has `min` (0), `max` (4 × its h1 value, at least 4000) and `step` R = max(20,
   10 % of its h1 value).
 - Iteration k (0-based): Δ ∈ {−1, +1}ⁿ from an RNG seeded by `seed` and k. Perturbation
   c_k = 1 / (k + 1)^0.101 (in units of R). θ± = round(θ ± c_k·Δ·R). It plays `pairs` game pairs
@@ -130,7 +132,7 @@ the records, so `golden-search.json` stays byte-identical and keeps proving `v0`
   k, θ, and the history (k, r, θ). `--resume` reads it and continues from k + 1 with the same
   arguments (a mismatch is refused). The console shows k, r, a moving average of r and elapsed
   time.
-- `--save <set>` writes the rounded final θ (plus the switch) to `bench/weights/<set>.json`.
+- `--save <set>` writes the rounded final θ to `bench/weights/<set>.json`.
 - `playGame` gets `openingPlies` (default 0, so existing modes are unchanged) and per-side
   `evalWeights` objects (the tuner passes θ± directly, without files). `runner.js` passes both
   through.
