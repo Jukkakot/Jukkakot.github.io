@@ -3,7 +3,8 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
-const { parseBot, GAME_NAMES } = require('../bots')
+const vm = require('node:vm')
+const { parseBot, defaultEvalWeights, GAME_NAMES, WEIGHTS_DIR } = require('../bots')
 const { createSandbox } = require('../sandbox')
 const R = require('../referee')
 
@@ -50,4 +51,36 @@ test('same seed, same choice', () => {
     const a = createSandbox(7).chooseMove(state, opts).move
     const b = createSandbox(7).chooseMove(state, opts).move
     assert.equal(a, b)
+})
+
+test('a weight set suffix loads weights/<set>.json; bad suffixes are refused', () => {
+    const bot = parseBot('minimax@d4:v0')
+    assert.equal(bot.name, 'minimax@d4:v0')
+    assert.equal(bot.gameName, 'Minmax 4')
+    assert.equal(bot.options.difficulty, 4)
+    assert.equal(bot.options.evalWeights.newMillOpp, 4500)
+    assert.equal(parseBot('minimax@d4').options.evalWeights, undefined)
+    assert.throws(() => parseBot('minimax@d4:nosuch'), /no weight set "nosuch"/)
+    assert.throws(() => parseBot('mcts@i5000:v0'), /only minimax and iterative/)
+    assert.throws(() => parseBot('random:v0'), /only minimax and iterative/)
+    const file = path.join(WEIGHTS_DIR, 'zz-test-unknown.json')
+    fs.writeFileSync(file, JSON.stringify({ mill: 1, notAWeight: 2 }))
+    try {
+        assert.throws(() => parseBot('minimax@d2:zz-test-unknown'), /unknown weights: notAWeight/)
+    } finally {
+        fs.unlinkSync(file)
+    }
+})
+
+test('weights in the move options apply to that search only, the rest keep their defaults', () => {
+    const sandbox = createSandbox(1)
+    const state = R.newGame()
+    const weights = () => vm.runInContext('({ w: { ...evalWeights }, same: evalWeights === EVAL_WEIGHTS })', sandbox.context)
+    sandbox.chooseMove(state, { ...parseBot('minimax@d1').options, evalWeights: { movableChip: 7 } })
+    const partial = weights()
+    assert.equal(partial.same, false)
+    assert.equal(partial.w.movableChip, 7)
+    assert.deepEqual({ ...partial.w, movableChip: 50 }, defaultEvalWeights())
+    sandbox.chooseMove(state, parseBot('minimax@d1').options)
+    assert.equal(weights().same, true)
 })

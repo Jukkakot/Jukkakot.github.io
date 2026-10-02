@@ -17,7 +17,8 @@ function searchRecord(position, index, bot, { tt = false } = {}) {
     const sb = createSandbox(index + 1)
     vm.runInContext(`TT_ENABLED = ${tt}`, sb.context)
     vm.runInContext('__randomCalls = 0; { const r = Math.random; Math.random = () => { __randomCalls++; return r() } }', sb.context)
-    const r = sb.chooseMove(position.state, parseBot(bot).options)
+    // v0 = the 2021 evaluation; the records keep the plain bot name
+    const r = sb.chooseMove(position.state, parseBot(bot + ':v0').options)
     const data = vm.runInContext('({ score: String(__result.moveData.data.score), leaves: leafNodeCount, skipped: skipCount, pruned: pruneCount, depth: depthCount.length - 1 })', sb.context)
     return { position: index, bot, type: r.type, move: r.move, ...data, random: sb.context.__randomCalls, errors: sb.errors.count }
 }

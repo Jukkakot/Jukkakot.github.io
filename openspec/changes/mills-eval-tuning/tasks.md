@@ -1,11 +1,11 @@
 ## 1. Before-measurement
 
-- [ ] 1.1 On the unchanged code, run the quick speed set: `node Mills/bench/bench.js speed minimax@d4 iterative@d4 iterative@1000ms --positions Mills/bench/positions-quick.json --jobs 1 --save mills-eval-tuning-before`. Verify: `bench/reports/mills-eval-tuning-before/` exists with `COMMANDS.md`.
+- [x] 1.1 On the unchanged code, run the quick speed set: `node Mills/bench/bench.js speed minimax@d4 iterative@d4 iterative@1000ms --positions Mills/bench/positions-quick.json --jobs 1 --save mills-eval-tuning-before`. Verify: `bench/reports/mills-eval-tuning-before/` exists with `COMMANDS.md`.
 
 ## 2. Weight set (behaviour unchanged)
 
-- [ ] 2.1 Add `EVAL_WEIGHTS` and the per-search `evalWeights` (design §1) and replace every evaluation literal, including the 3000/4500 in `getCalcedValue`, with weight reads. The three new entries are 0. Verify: `node --test "Mills/bench/test/*.test.js"` passes unchanged (the golden fixture proves identical decisions).
-- [ ] 2.2 Add `Mills/bench/weights/v0.json` (all weights, today's values). Teach `parseBot` the `:<set>` suffix: load the file, refuse a missing set, unknown keys, and a suffix on `random`/`mcts`; use the name without the suffix for `GAME_NAMES`. Make `golden.js` run with `v0` weights while keeping the record bot names. Tests in `bots.test.js`: suffix parsed, missing set refused, unknown key refused, suffix on `mcts` refused. Plus a worker test: partial weights in the options apply to that search only. Verify: all tests pass, and `golden-search.json` is unchanged (`git diff --stat`).
+- [x] 2.1 Add `EVAL_WEIGHTS` and the per-search `evalWeights` (design §1) and replace every evaluation literal, including the 3000/4500 in `getCalcedValue`, with weight reads. The three new entries are 0. Verify: `node --test "Mills/bench/test/*.test.js"` passes unchanged (the golden fixture proves identical decisions).
+- [x] 2.2 Add `Mills/bench/weights/v0.json` (all weights, today's values). Teach `parseBot` the `:<set>` suffix: load the file, refuse a missing set, unknown keys, and a suffix on `random`/`mcts`; use the name without the suffix for `GAME_NAMES`. Make `golden.js` run with `v0` weights while keeping the record bot names. Tests in `bots.test.js`: suffix parsed, missing set refused, unknown key refused, suffix on `mcts` refused. Plus a worker test: partial weights in the options apply to that search only. Verify: all tests pass, and `golden-search.json` is unchanged (`git diff --stat`).
 
 ## 3. Hand fixes
 

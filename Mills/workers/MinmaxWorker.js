@@ -1,3 +1,27 @@
+//Evaluation weights (the 2021 values = weight set v0, plus the three fixes switched off).
+//A search may override some of them with options.evalWeights (the benchmark does; the game never).
+const EVAL_WEIGHTS = {
+    placingNeighbour: 1,
+    placingBlockOppMill: 400,
+    placingBlockOppMillMoving: 400,
+    placingAlmostMill: 100,
+    placingMill: 250,
+    placingSafeOpenMill: 300,
+    movableChip: 50,
+    chipTaken: 1000,
+    doubleMill: 3500,
+    safeOpenMill: 1500,
+    mill: 1500,
+    oppMillStuck: 400,
+    blockOppMillFlying: 400,
+    blockOppMillMoving: 400,
+    newMillOwn: 3000,
+    newMillOpp: 4500,
+    chipTakenPlacing: 0,
+    flyingThreat: 0,
+    exactCachedNewMills: 0,
+}
+let evalWeights = EVAL_WEIGHTS
 let iterativeMoveScores = {}
 function fastFindBestMove(options) {
     if (workerGame.winner) {
@@ -15,6 +39,7 @@ function fastFindBestMove(options) {
     pruneCount = 0
     iterativeEndTime = undefined
     prevBestMove = {}
+    evalWeights = options.evalWeights ? { ...EVAL_WEIGHTS, ...options.evalWeights } : EVAL_WEIGHTS
     let moveData = {
         options: options,
     }
@@ -415,12 +440,12 @@ function fastNewEvaluateBoard(board, player, oppPlayer) {
     const playerEval = fastEvaluateBoard(board, player, oppPlayer)
     let playerVal = playerEval.value
     const playerNewMillCount = playerEval.scoreObject["newMill"] || 0
-    playerVal += 3000 * playerNewMillCount
+    playerVal += evalWeights.newMillOwn * playerNewMillCount
 
     const oppEval = fastEvaluateBoard(board, oppPlayer, player)
     let oppVal = oppEval.value
     const oppNewMillCount = oppEval.scoreObject["newMill"] || 0
-    oppVal += 4500 * oppNewMillCount
+    oppVal += evalWeights.newMillOpp * oppNewMillCount
 
     const checkBoardVal = playerEval.value - oppEval.value
     const boardStr = addInfo(board, player, oppPlayer)
@@ -455,13 +480,13 @@ function fastEvaluateBoard(board, player, oppPlayer) {
     if (getStage(player) === 1) {
         //Giving points for each neighbour dot of players dots
         for (let dot of fastGetPlayerDots(board, player)) {
-            boardValue += getNeighboursIndexes(dot).length
+            boardValue += evalWeights.placingNeighbour * getNeighboursIndexes(dot).length
         }
         scoreObject.neighbours = boardValue
     } else if (getStage(player) === 2) {
         //Adding 25 points for each moveable dot
         let moveableDots = fastGetMoveableDots(board, player).length
-        boardValue += moveableDots * 50
+        boardValue += moveableDots * evalWeights.movableChip
         scoreObject.moveableDots = moveableDots
     }
 
@@ -472,7 +497,7 @@ function fastEvaluateBoard(board, player, oppPlayer) {
         //opponent chip count diff is the amount of chips player has eaten (good thing)
         let oppChipCountDiff = workerOppPlayer.chipCount - oppPlayer.chipCount
 
-        boardValue += oppChipCountDiff * 1000
+        boardValue += oppChipCountDiff * evalWeights.chipTaken
         scoreObject.chipCountDiff = oppChipCountDiff
     }
 
@@ -515,24 +540,24 @@ function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
     //blocking opp mill stage 1
     if (oppStage === 1 && oppCount === 2 && pieceCount === 1) {
         scoreObject.update("blockOppMill")
-        value += 400
+        value += evalWeights.placingBlockOppMill
     }
     //blocking opp mill stage 2
     if (oppStage === 2 && oppCount === 2 && pieceCount === 1 &&
         getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
             !oppDots.some(chip => chip == dot))) {
         scoreObject.update("blockOppMillStage2")
-        value += 400
+        value += evalWeights.placingBlockOppMillMoving
     }
     //almost mill
     if (oppStage == 1 && pieceCount === 2 && emptyCount === 1) {
         scoreObject.update("almostMill")
-        value += 100
+        value += evalWeights.placingAlmostMill
     }
     //mill
     if (pieceCount === 3) {
         scoreObject.update("mill")
-        value += 250
+        value += evalWeights.placingMill
     }
     //making safe open mill with last chip
     //opponent being stage 2 means that player is placing its last chip
@@ -541,7 +566,7 @@ function fastStage1Score(board, window, player, oppPlayer, scoreObject) {
             !playerDots.some(dot => dot == chip))) {
         //"safe" Open mill as in opponent player cant block it on next move 
         scoreObject.update("safeOpenMill")
-        value += 300
+        value += evalWeights.placingSafeOpenMill
     }
 
     return value
@@ -567,7 +592,7 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
             !playerDots.some(pDot => pDot == dot) &&
             player.mills.some(mill => mill.fastDots.some(chip => chip == dot)))) {
         scoreObject.update("doubleMill")
-        value += 3500
+        value += evalWeights.doubleMill
     }
 
     //"safe" Open mill as in opponent player cant block it on next move 
@@ -576,26 +601,26 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
         getNeighboursIndexes(emptyDots[0]).some(chip => board[chip] == player.char &&
             !playerDots.some(dot => dot == chip))) {
         scoreObject.update("safeOpenMill")
-        value += 1500
+        value += evalWeights.safeOpenMill
     }
 
     //mill
     if (pieceCount === 3) {
         scoreObject.update("mill")
-        value += 1500
+        value += evalWeights.mill
     }
 
     //Opponent mill is blocked from opening
     if (oppStage === 2 && oppCount === 3 &&
         oppDots.every(dot => getNeighboursIndexes(dot).every(chip => board[chip] != EMPTYDOT))) {
         scoreObject.update("blockOppMillStuck")
-        value += 400
+        value += evalWeights.oppMillStuck
     }
 
     //blocking opp mill stage 3
     if (oppStage === 3 && oppCount === 2 && pieceCount === 1) {
         scoreObject.update("blockOppMillStage3")
-        value += 400
+        value += evalWeights.blockOppMillFlying
     }
 
     //blocking opp mill stage 2
@@ -603,7 +628,7 @@ function fastStage2Score(board, window, player, oppPlayer, scoreObject) {
         getNeighboursIndexes(playerDots[0]).some(dot => board[dot] == oppPlayer.char &&
             !oppDots.some(chip => chip == dot))) {
         scoreObject.update("blockOppMillStage2")
-        value += 400
+        value += evalWeights.blockOppMillMoving
     }
 
     return value
