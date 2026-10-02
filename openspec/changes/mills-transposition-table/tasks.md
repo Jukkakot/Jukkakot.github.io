@@ -2,7 +2,7 @@
 
 ## 1. Before measurement
 
-- [ ] 1.1 On the unchanged code, run the quick speed command of design §6.1 (`--save mills-transposition-table-before`); verify `Mills/bench/reports/mills-transposition-table-before/COMMANDS.md` exists and `git diff --stat Mills/workers` is empty
+- [x] 1.1 On the unchanged code, run the quick speed command of design §6.1 (`--save mills-transposition-table-before`); verify `Mills/bench/reports/mills-transposition-table-before/COMMANDS.md` exists and `git diff --stat Mills/workers` is empty
 
 ## 2. Switch and test harness
 
