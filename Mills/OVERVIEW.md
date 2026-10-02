@@ -95,8 +95,10 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   newest kept). `--save <name>` also stores it in `bench/reports/<name>/` (committed, with
   `COMMANDS.md`); `--compare <name>` shows the change against a saved run;
   `node Mills/bench/bench.js report <run.json> [--compare <name>]` rebuilds the HTML page.
-- The recorded baseline is `bench/reports/baseline/`; a bot change runs with
-  `--compare baseline` and saves its own run as `--save <change-name>`.
+- The recorded baseline is `bench/reports/baseline/` (fast strength run and speed run) plus
+  `bench/reports/baseline-mcts/` (strength with MCTS, fewer games); the exact commands are in
+  their `COMMANDS.md`. A bot change re-runs them with `--compare baseline` /
+  `--compare baseline-mcts` and saves its own run as `--save <change-name>`.
 - Tests: `node --test "Mills/bench/test/*.test.js"`.
 
 ## Known weak spots (at the time of writing, 2026-10)
