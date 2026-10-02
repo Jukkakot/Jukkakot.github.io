@@ -23,7 +23,7 @@
 ## 5. Tuning run
 
 - [x] 5.1 Time a 10-iteration run (`tune --from h1 --depth 3 --pairs 4 --seed 1 --cap 200 --jobs 5 --iterations 10`). Choose the iteration count for at most ~2 h. Write the command into `bench/reports/mills-eval-tuning/COMMANDS.md`.
-- [ ] 5.2 Run the full tune in the background, with `--save t1`. Verify: `weights/t1.json` exists. The final moving average of r is noted in design Results. Commit `t1.json` and `COMMANDS.md`.
+- [x] 5.2 Run the full tune in the background, with `--save t1`. Verify: `weights/t1.json` exists. The final moving average of r is noted in design Results. Commit `t1.json` and `COMMANDS.md`.
 
 ## 6. Acceptance and new defaults
 

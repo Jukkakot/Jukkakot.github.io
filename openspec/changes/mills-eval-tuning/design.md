@@ -199,3 +199,10 @@ milestone: milestone 1 was just done.
 | `minimax@d2:h1` vs `minimax@d2:v0` | 52.5 % | 45.6–59.3 % | 46–36–118 |
 
 Neither better nor worse: `h1` alone does not pass (§5).
+
+### Tune run (`t1`)
+
+480 iterations, `--from h1 --depth 3 --pairs 4 --seed 1 --cap 200 --jobs 5`, 6833 s. Mean r over
+the run −0.006 (last 100: −0.003, final moving average of 20: +0.075): no clear direction. Largest
+moves from h1: placingNeighbour 1 → 29, doubleMill 3500 → 3221, safeOpenMill 1500 → 1725,
+newMillOpp 4500 → 4189, mill 1500 → 1364; the rest within ±13 %.

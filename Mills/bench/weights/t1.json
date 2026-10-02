@@ -1,0 +1,20 @@
+{
+    "placingNeighbour": 29,
+    "placingBlockOppMill": 453,
+    "placingBlockOppMillMoving": 381,
+    "placingAlmostMill": 100,
+    "placingMill": 239,
+    "placingSafeOpenMill": 305,
+    "movableChip": 62,
+    "chipTaken": 1018,
+    "doubleMill": 3221,
+    "safeOpenMill": 1725,
+    "mill": 1364,
+    "oppMillStuck": 361,
+    "blockOppMillFlying": 376,
+    "blockOppMillMoving": 423,
+    "newMillOwn": 3079,
+    "newMillOpp": 4189,
+    "chipTakenPlacing": 1035,
+    "flyingThreat": 984
+}
