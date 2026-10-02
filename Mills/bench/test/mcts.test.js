@@ -41,15 +41,18 @@ test('MCTS takes an immediate win', () => {
 })
 
 // Positions where only one move does not let Dark close a mill with its reply (found by random
-// play; the code before the rewrite gave the mill away in each of them).
+// play; the code before the rewrite gave the mill away in each of them). deep: a mill-giving move
+// that minimax@d4/d6 and iterative@d8 all prefer, so a bot with the evaluation may play it too.
 const NO_MILL = [
     { board: '0L0LDL00LLD0DLDDLLLD00D0', safe: [3, 11] },
-    { board: 'LLD0L00LLLDD00DD0DLDL0LD', safe: [4, 3] }
+    { board: 'LLD0L00LLLDD00DD0DLDL0LD', safe: [4, 3], deep: [4, 5] }
 ]
 
 test('MCTS does not give away a mill; same seed, same move', () => {
     for (const bot of BOTS) {
-        for (const { board, safe } of NO_MILL) {
+        const p = bot.options.mctsPlayout
+        const usesEval = !(p && p.policy === 'random' && p.cutoff === 0)
+        for (const { board, safe, deep } of NO_MILL) {
             const s = position(board)
             const legal = R.legalMoves(s).moves
             const givesMill = m => {
@@ -59,7 +62,8 @@ test('MCTS does not give away a mill; same seed, same move', () => {
             }
             assert.deepEqual(legal.filter(m => !givesMill(m)), [safe], board)
             const a = createSandbox(1).chooseMove(s, bot.options)
-            assert.deepEqual(a.move, safe, `${bot.name} ${board}`)
+            const accepted = usesEval && deep ? [safe, deep] : [safe]
+            assert.ok(accepted.some(m => JSON.stringify(m) === JSON.stringify(a.move)), `${bot.name} ${board}: ${JSON.stringify(a.move)}`)
             assert.ok(a.leaves > 0 && a.leaves <= bot.options.mctsIterations, `playoutCount ${a.leaves}`)
             const b = createSandbox(1).chooseMove(s, bot.options)
             assert.deepEqual(b.move, a.move, `${bot.name} ${board}`)

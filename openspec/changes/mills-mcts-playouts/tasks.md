@@ -13,9 +13,9 @@
 
 ## 3. Selection
 
-- [ ] 3.1 Benchmark run: design §6.1 step 1 (cost per iteration) and step 2 (playout method); record the table and the winner in design §Results
-- [ ] 3.2 Benchmark run: design §6.1 step 3 (cutoff length and scale), only if a cutoff variant won; record results and chosen values
-- [ ] 3.3 Benchmark run: design §6.2; set `MCTS_ITERATIONS`, `MCTS_DEFAULT_PLAYOUT` (and `MCTS_EVAL_SCALE`) to the chosen values; verify the speed run's overall median ≤ the old bot's and tests pass (the `mcts@i5000` references in tests updated to the default name where they mean "the game's MCTS")
+- [x] 3.1 Benchmark run: design §6.1 step 1 (cost per iteration) and step 2 (playout method); record the table and the winner in design §Results
+- [x] 3.2 Benchmark run: design §6.1 step 3 (cutoff length and scale), only if a cutoff variant won; record results and chosen values
+- [x] 3.3 Benchmark run: design §6.2; set `MCTS_ITERATIONS`, `MCTS_DEFAULT_PLAYOUT` (and `MCTS_EVAL_SCALE`) to the chosen values; verify the speed run's overall median ≤ the old bot's and tests pass (the `mcts@i5000` references in tests updated to the default name where they mean "the game's MCTS")
 
 ## 4. Goal check and milestone 2
 

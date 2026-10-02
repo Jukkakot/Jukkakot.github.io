@@ -155,3 +155,53 @@ changes, the comparison table shows the MCTS row as new; record the old row's nu
 unchanged worker code (`reports/mills-mcts-playouts-before`). After the code change
 `mcts@i5000:random` chose the same move on all 10 quick positions; overall median 11 845 ms vs
 11 743 ms before.
+
+**§6.1 step 1, cost per iteration** (quick positions, 2000 iterations, overall median ms):
+random 4998, heur 2453, cut12 564, heurcut12 565. Iterations for ≈ 2 s per move: random 1000,
+heur 1500, cut12 7000, heurcut12 7000.
+
+**§6.1 step 2, playout method** (`reports/mills-mcts-playouts-select`, 10 games per pairing):
+
+| Bot | Elo | Score | Median ms/move |
+|---|---:|---:|---:|
+| minimax@d4 | 1624 | 87 % | 48 |
+| mcts@i7000:heurcut12 | 1515 | 74 % | 2428 |
+| mcts@i7000:cut12 | 1425 | 62 % | 2150 |
+| mcts@i1500:heur | 1337 | 50 % | 1360 |
+| mcts@i1000:random | 1070 | 17 % | 1776 |
+| minimax@d1 | 1000 | 10 % | 0.75 |
+
+Winner: **heuristic policy + cutoff** (90 Elo ahead of cut12). heurcut12 took 2/10 from
+`minimax@d4`; random took 0/10.
+
+**§6.1 step 3, cutoff length** (`reports/mills-mcts-playouts-cutoff`; cost at 2000 iterations:
+heurcut6 359 ms, heurcut24 1164 ms → 11 000 / 7000 / 3500 iterations):
+
+| Bot | Elo (minimax@d4 = 1000) | Score | Median ms/move |
+|---|---:|---:|---:|
+| mcts@i11000:heurcut6 | 773 | 45 % | 2506 |
+| mcts@i3500:heurcut24 | 729 | 37 % | 2156 |
+| mcts@i7000:heurcut12 | 711 | 33 % | 2472 |
+
+Chosen length: **6** (62 Elo ahead of 12).
+
+**§6.1 step 3, scale** (`reports/mills-mcts-playouts-scale`, heurcut6, 11 000 iterations):
+
+| Bot | Elo (minimax@d4 = 1000) | Score | Median ms/move |
+|---|---:|---:|---:|
+| mcts@i11000:heurcut6s1000 | 901 | 57 % | 2585 |
+| mcts@i11000:heurcut6 (s2000) | 849 | 47 % | 2673 |
+| mcts@i11000:heurcut6s4000 | 713 | 22 % | 2656 |
+
+Chosen scale: **1000** (52 Elo ahead of 2000). In-game playout: heuristic, cutoff 6, scale 1000.
+
+**§6.2 In-game iteration count.** Full `positions.json`, `mcts@i2000:heurcut6s1000`: overall
+median 344 ms → 0.172 ms per iteration → N = 63 000. Verify runs (overall median, old bot
+10 968 ms): 63 000 → 11 219 ms (over), 62 000 → 10 961 ms, 61 000 → 10 861 ms. Chosen
+**N = 61 000**: 62 000 was under by only 7 ms, within run-to-run noise. Phases: placing early
+9.2 s, placing late 12.9 s, moving 13.6 s, flying 4.9 s (old bot: 14.3 / 11.3 / 9.7 / 1.2 s).
+
+Test note: in the second `NO_MILL` position (`mcts.test.js`) the new default plays [4,5], which
+lets Dark close a mill; `minimax@d4`, `minimax@d6` and `iterative@d8` all choose [4,5] as well,
+so the test accepts that move for bots that use the evaluation and still requires the only safe
+move from the random-playout bot.

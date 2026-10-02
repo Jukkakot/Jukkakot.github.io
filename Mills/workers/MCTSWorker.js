@@ -1,10 +1,10 @@
 //In-game defaults; a search may override them with options.mctsIterations / mctsPlayout /
 //mctsEvalScale (only the benchmark does)
-const MCTS_ITERATIONS = 5000
+const MCTS_ITERATIONS = 61000
 //policy: 'random' | 'heuristic'; cutoff: plies before the position is scored (0 = play to the end)
-const MCTS_DEFAULT_PLAYOUT = { policy: 'random', cutoff: 0 }
+const MCTS_DEFAULT_PLAYOUT = { policy: 'heuristic', cutoff: 6 }
 //Evaluation → reward: 1 / (1 + exp(-value / scale))
-const MCTS_EVAL_SCALE = 2000
+const MCTS_EVAL_SCALE = 1000
 const exploration = 1.41
 //A playout longer than this many plies counts as a draw
 const MCTS_PLAYOUT_CAP = 200
