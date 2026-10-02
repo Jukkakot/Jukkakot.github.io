@@ -219,3 +219,14 @@ newMillOpp 4500 → 4189, mill 1500 → 1364; the rest within ±13 %.
 the new default** (`EVAL_WEIGHTS`, copied to `weights/v1.json`). The deciding d4 run is saved in
 `bench/reports/mills-eval-tuning/`. Interesting: the tune run's r stayed near 0, yet the small
 weight moves (above all placingNeighbour 1 → 29) gave a clear gain at depths 2 and 4.
+
+### Light check (new defaults)
+
+- Quick speed vs `mills-eval-tuning-before` (median ratio, above 1 = faster now): minimax@d4
+  1.17× overall (placing-early 1.14×, moving 0.92×, flying 0.90×), iterative@d4 1.00×. No
+  slowdown above 10 %, so the local-const mitigation is not needed.
+- Fast strength vs `baseline` (20 games): minimax@d1 1007 → 1091, minimax@d4 1613 → 1515,
+  iterative@d4 1605 → 1592. Both depth-4 bots still beat `random` every game, so their Elo here
+  rests on few informative games; the 200-game head-to-heads above are the measurement.
+- `iterative@1000ms` vs `iterative@1000ms:v0`, 40 games: 67.5 % (52.0–79.9 %), 27–13. Leaves
+  per move 16 799 vs 18 395: the slower evaluation costs a little, the better one wins.

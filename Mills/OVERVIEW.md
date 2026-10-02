@@ -74,13 +74,24 @@ Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. 
   `TT_ENABLED = false` turns it off (tests only). Results: `bench/reports/mills-transposition-table/`
   (`iterative@d6` 63 % fewer leaves, about 2× faster; `iterative@1000ms` one ply deeper).
 
-**Evaluation** (`fastNewEvaluateBoard` = own score − opponent score), hand-tuned weights per stage:
+**Evaluation** (`fastNewEvaluateBoard` = own score − opponent score). Every weight comes from
+`EVAL_WEIGHTS` at the top of `MinmaxWorker.js`; a search may override some with
+`options.evalWeights` (only the benchmark does). Features (weight names in brackets):
 
-- Stage 1: mobility (neighbour count), mill 250, almost-mill 100, blocking opponent 400,
-  "safe open mill" with the last chip 300.
-- Stage 2/3: movable chips × 50, chips eaten × 1000, mill 1500, safe open mill 1500,
-  double mill ("syhky") 3500, blocking / opponent mill stuck 400.
-- New mill bonus: +3000 own, −4500 opponent (opponent weighted heavier = defensive).
+- Stage 1: mobility per free neighbour (`placingNeighbour`), mill (`placingMill`), almost-mill
+  (`placingAlmostMill`), blocking the opponent (`placingBlockOppMill`, `…Moving`), "safe open mill"
+  with the last chip (`placingSafeOpenMill`), chips taken counted as material = on board + still
+  to place (`chipTakenPlacing`).
+- Stage 2/3: movable chips (`movableChip`), chips taken (`chipTaken`), mill, safe open mill,
+  double mill ("syhky", `doubleMill`), blocks / opponent mill stuck. Stage 3 adds the flying
+  threat: two own chips and an empty point in a line (`flyingThreat`).
+- New mill bonus: own (`newMillOwn`) and opponent (`newMillOpp`, heavier = defensive). The cached
+  leaf path adds the same bonuses, so cached = fresh (test in `bench/test/eval.test.js`).
+- Weight sets (2026-10, `mills-eval-tuning`): `v0` = the 2021 hand weights (the golden test runs
+  with it), `h1` = v0 + the two new terms, `t1` = SPSA-tuned from h1 (480 iterations at depth 3).
+  **The default is t1** (= `bench/weights/v1.json`): 60.8 % against v0 at depth 4 (200 games,
+  interval 53.8–67.3 %), 54.8 % at depth 2, 60.5 % against h1 at depth 4. The biggest change is
+  mobility while placing (1 → 29 per free neighbour).
 
 ### MCTS (`MCTSWorker.js`)
 
@@ -160,6 +171,10 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   against the timed minimax bots.
 - Search state lives in globals (`startDepthNum`, `prevBestMoves`, …) shared by all bot
   types; it works now, but it is easy to break.
+- **Evaluation:** the SPSA run's per-iteration signal stayed near zero (8 games per iteration),
+  so t1 is one noisy step, not an optimum; more games per iteration or a second run from t1
+  could gain more. While moving, chips taken compare chips on board only, so in the turn where
+  the opponent places its last chip the term is off by one (kept: it is what v0 does).
 
 ## Search speed (2026-10, `mills-minimax-speed`)
 
