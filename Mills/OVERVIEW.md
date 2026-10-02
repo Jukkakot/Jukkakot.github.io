@@ -39,7 +39,7 @@ flowchart LR
   as `gameHistory`, and `fastMinimax` scores a third occurrence (history + search path,
   `repKey`) as a draw (0) unless it is won or lost; skipped while a player still places, since
   nothing can repeat then. Such path-dependent results are not stored in the transposition
-  table. MCTS does not know the rule.
+  table. MCTS scores a third occurrence in its tree and playouts as a draw (0.5).
 
 ## Bots (OPTIONS in sketch.js)
 
@@ -84,10 +84,20 @@ Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. 
 
 ### MCTS (`MCTSWorker.js`)
 
-- UCT selection (`c = 1.41`), expand one unplayed move, random playout to the end, backprop.
-- Transposition sharing: a node for an already-seen position copies its wins/visits (`nodesMap`).
-- A position won for the bot is marked `wins = Infinity` (also for its parent).
-- Final move = root child with the most visits.
+Rewritten in 2026-10 (`mills-mcts-fix`); `MCTSFindBestMove` is the entry point.
+
+- UCT selection (`c = 1.41`), expand one untried move (random order), random playout, backprop.
+- A node's `value` sums rewards from the view of the player who moved into it (rewards: 1 win,
+  0 loss, 0.5 draw for the root player), so each side picks its own best replies.
+- Exact terminals: win/loss (`fastCheckWin`), no legal move (loss for the side to move), and a
+  third occurrence of a position (`repKey` count 2 in `gameHistory`, after the placing stage) = draw.
+- Playouts stop after 200 plies (`MCTS_PLAYOUT_CAP`) and count as a draw.
+- Final move = root child with the most visits (ties: higher average value).
+- `Node`, `playMove` and `generateRandomState` serve only the random game state generator.
+- Tests: `bench/test/mcts.test.js` (immediate win, no mill given away, repeatable, generator).
+- Milestone 1: Elo 1299 (was 1179), beats `minimax@d1` and `random` every game, still loses
+  every game to the depth-4 bots. About 11 s per move (moving stage 2× faster than before;
+  early placing slower, because the old search barely ran there).
 
 ## Other features
 
@@ -117,7 +127,9 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   `bench/reports/baseline-mcts/` (strength with MCTS, fewer games); the exact commands are in
   their `COMMANDS.md`. A milestone (after a few bot changes) re-runs them with
   `--compare baseline` / `--compare baseline-mcts` and saves as `--save milestone-<n>`. That
-  full set takes about an hour; a single change uses the light check below.
+  full set takes about an hour; a single change uses the light check below. Latest:
+  `bench/reports/milestone-1/` and `milestone-1-mcts/` (results in the archived
+  `mills-mcts-fix` design).
 - Light check per change: `node Mills/bench/bench.js speed <affected bots> --positions
   Mills/bench/positions-quick.json --save <change>-before` on the old code, the same with
   `--compare <change>-before` on the new code, plus the fast strength command
@@ -127,11 +139,9 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
 
 ## Known weak spots (at the time of writing, 2026-10)
 
-- **MCTS:** wins are always counted for the bot, also at the opponent's nodes, so selection
-  assumes the opponent helps the bot. Usually the result is flipped at every other level
-  (negamax style).
-- **MCTS:** the final choice compares `child[args]` (visits) against `maxWins = child.wins`,
-  so the picked move is not reliably the most visited one.
+- **MCTS:** playouts are purely random, which is weak in Mills; evaluation-guided playouts or
+  a time budget are possible next steps. The tree is not reused between moves. Early placing
+  takes about 14 s per move (playouts run to the 200-ply cap).
 - A January 2025 rewrite attempt (single shared worker, MCTS rewrite) is kept in
   `git stash` ("2025-01 AI experiments"). It is not part of the baseline, and its MCTS never ran playouts.
 - **MCTS:** a fixed 5000 iterations, not a time limit, so it is hard to compare fairly

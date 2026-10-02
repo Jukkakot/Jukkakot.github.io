@@ -95,3 +95,13 @@ the same machine where it matters (noted below). Saved: `Mills/bench/reports/mil
   (`iterative@d4` 1455–1624 now); 15/120 games identical, the rest differ because the
   transposition table and the repetition rule change move choices. Draws: 25 (18 capped,
   7 repetition). No illegal moves.
+- **§6.2 Speed** (40 positions, `--compare baseline`): MCTS median **10.97 s** per move
+  against the baseline's 10.2 s: **goal missed** overall. By stage (baseline / now): placing-early
+  0.83 s / 14.3 s, placing-late 16.5 s / 11.3 s, moving 19.7 s / 9.7 s, flying 2.2 s / 1.2 s. The
+  early-placing baseline was cheap only because the old search barely ran there: on the first
+  placing-early position the old code built 15 nodes with playouts of 1 ply on average (0.3 s);
+  the new one builds 5000 nodes with 138-ply playouts (14.3 s). In the stages where the old
+  search did run, the new one is 1.5–2× faster, and on the same machine (8 moving positions,
+  i5-8600K) old 20–59 s against new 7–16 s per move. Minimax bots: `minimax@d6` 1.55× and
+  `iterative@d6` 2.62× faster than the baseline (different machine; leaves per move are the
+  machine-independent measure, in the saved report).

@@ -8,10 +8,10 @@
 ## 2. Milestone 1
 
 - [x] 2.1 Benchmark run (strength, MCTS): design §6.1; record Elo, score against `minimax@d1` and goals in `design.md`
-- [ ] 2.2 Benchmark run (speed): design §6.2; record MCTS time per move against the baseline
+- [x] 2.2 Benchmark run (speed): design §6.2; record MCTS time per move against the baseline
 - [x] 2.3 Benchmark run (strength, fast): design §6.3; record the Elo of all bots against the baseline (first milestone since the baseline: speed-up, transposition table, repetition)
 
 ## 3. Game check and docs
 
 - [x] 3.1 Browser: Light set to MCTS plays its first move with no console errors; "Generate gamestate" still works
-- [ ] 3.2 `Mills/OVERVIEW.md`: MCTS section and weak spots updated, milestone pointer; verify `node --test "Mills/bench/test/*.test.js"` and `openspec validate mills-mcts-fix --strict`
+- [x] 3.2 `Mills/OVERVIEW.md`: MCTS section and weak spots updated, milestone pointer; verify `node --test "Mills/bench/test/*.test.js"` and `openspec validate mills-mcts-fix --strict`
