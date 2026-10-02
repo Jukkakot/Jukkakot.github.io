@@ -30,6 +30,11 @@ flowchart LR
 - Stage per player (`getStage`): 1 = placing (`chipsToAdd > 0`), 2 = moving,
   3 = flying (3 chips left). "Eat mode" (remove a chip after a mill) is handled as its own
   move type `eating`, and the same player moves again.
+- Draw by threefold repetition (WMD): `Game.countPosition` counts board + player to move +
+  both `chipsToAdd` after every completed turn (not in eat mode); the third occurrence calls
+  `setDraw()` ("Draw!", Dark wood outline). A loss found in the same turn change comes first.
+  `isOver()` is the game-over check (win or draw); `setState` starts a new count. The bots do
+  not know the rule yet. The benchmark referee applies it too (ending `repetition`).
 
 ## Bots (OPTIONS in sketch.js)
 

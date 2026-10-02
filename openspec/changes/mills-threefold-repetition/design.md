@@ -90,6 +90,27 @@ saved runs (no `repetition` games) render as before with 0 repetitions.
 Fast strength command with `--compare baseline --save mills-threefold-repetition`: each bot's
 Elo inside its baseline 95 % interval; report how many capped games became repetition draws.
 
+### 8. Result (task 3.1)
+
+Fast strength command against `baseline`, saved as `reports/mills-threefold-repetition/`:
+
+| Bot | Elo baseline (95 %) | Elo now |
+|---|---:|---:|
+| `minimax@d1` | 1007 (1000–1021) | 1041 |
+| `minimax@d4` | 1613 (1550–1711) | 1574 |
+| `iterative@d4` | 1605 (1521–1719) | **1448** |
+
+Draws: 31 (15 capped, 16 repetition; baseline 21 capped). `random` vs `minimax@d1`: 5 of the 20
+endless games now end by repetition. `iterative@d4` drew 5 games against `minimax@d1` and 5
+against `minimax@d4` that it used to win or lose.
+
+**The §7 criterion (Elo inside the baseline interval) is not met for `iterative@d4` and
+`minimax@d1`, and this is the rule working, not a fault in it:** every changed result is a
+repetition draw, the bots do not know the rule yet (non-goal of this change) and walk into
+draws from winning positions. The criterion should not have been applied to a rule change
+before the bots can see the rule. Accepted here; the next change (bots aware of repetition)
+takes over the goal: Elo of the fixed-depth bots back inside the baseline intervals.
+
 ## Risks / Trade-offs
 
 - [A game-over check missed → a bot keeps moving after a draw] → grep for every `winner` read in

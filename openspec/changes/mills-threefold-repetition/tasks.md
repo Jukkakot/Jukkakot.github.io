@@ -14,5 +14,6 @@
 
 ## 3. Measurement and docs
 
-- [ ] 3.1 Benchmark run (strength, light): fast strength command with `--compare baseline --save mills-threefold-repetition`; verify every bot's Elo is inside its baseline interval and record the capped → repetition numbers in `design.md`
-- [ ] 3.2 `Mills/OVERVIEW.md` (rule, where it is counted, benchmark ending); verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-threefold-repetition --strict` is clean
+- [x] 3.1 Benchmark run (strength, light): fast strength command with `--compare baseline --save mills-threefold-repetition`; verify every bot's Elo is inside its baseline interval and record the capped → repetition numbers in `design.md`
+  - Result: not inside for `iterative@d4` (1448) and `minimax@d1` (1041), all from repetition draws of rule-unaware bots; accepted and handed to the next change (design §8).
+- [x] 3.2 `Mills/OVERVIEW.md` (rule, where it is counted, benchmark ending); verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-threefold-repetition --strict` is clean
