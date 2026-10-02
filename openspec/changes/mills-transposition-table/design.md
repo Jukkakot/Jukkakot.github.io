@@ -119,6 +119,25 @@ Light per-change check (`CLAUDE.md`); the full baseline set is left to the next 
    inside its baseline 95 % interval (identical games are not expected: tie-breaks see other move
    orders). A drop outside the interval is a bug to find, not accepted.
 
+### 7. Results (tasks 4.1, 4.2)
+
+Quick speed run against `mills-transposition-table-before` (10 positions, one job):
+
+| Bot | Leaves/move before | after | Median ms before | after | Ratio |
+|---|---:|---:|---:|---:|---:|
+| `minimax@d4` | 1 663 | 1 425 | 63.5 | 49.2 | 1.29× |
+| `minimax@d6` | 43 603 | 25 756 (−41 %) | 498 | 393 | 1.27× |
+| `iterative@d6` | 46 884 | 17 298 (−63 %) | 853 | 435 | 1.96× |
+| `iterative@1000ms` | depth 6 (4–8) | depth 7 (5–9) | – | – | – |
+
+All goals met (≥ 30 % / ≥ 50 % fewer leaves, no fixed-depth bot slower; per stage the lowest
+ratio is 0.99×, within noise; deeper median depth).
+
+Strength, fast command against `baseline` (Elo, baseline 95 % interval): `minimax@d1` 1015
+(1000–1021), `minimax@d4` 1650 (1550–1711), `iterative@d4` 1529 (1521–1719): all inside.
+20/120 games identical, as expected with other tie-break orders. `iterative@d4`'s −76 comes
+mostly from its near coin-flip pairing with `minimax@d4`.
+
 ## Risks / Trade-offs
 
 - [Key misses something the search depends on → wrong cutoffs] → score test over 200 records;

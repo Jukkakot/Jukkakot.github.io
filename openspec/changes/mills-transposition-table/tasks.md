@@ -17,10 +17,10 @@
 
 ## 4. Measurement (light check)
 
-- [ ] 4.1 Benchmark run (speed, light): design §6.2 with `--compare mills-transposition-table-before --save mills-transposition-table`; record in `design.md` whether each goal was met
-- [ ] 4.2 Benchmark run (strength, light): design §6.3; verify each fixed-depth bot's Elo is inside its baseline interval and record the numbers in `design.md`
+- [x] 4.1 Benchmark run (speed, light): design §6.2 with `--compare mills-transposition-table-before --save mills-transposition-table`; record in `design.md` whether each goal was met
+- [x] 4.2 Benchmark run (strength, light): design §6.3; verify each fixed-depth bot's Elo is inside its baseline interval and record the numbers in `design.md`
 
 ## 5. Game check and docs
 
-- [ ] 5.1 Serve the repo, open `Mills/index.html`, let Light (Iterative 3s) play its first move; verify a chip appears and the console shows no errors except blocked external fonts
-- [ ] 5.2 `Mills/OVERVIEW.md`: the table under Minimax (what is reused, per move, the switch), results pointer `reports/mills-transposition-table/`; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-transposition-table --strict` is clean
+- [x] 5.1 Serve the repo, open `Mills/index.html`, let Light (Iterative 3s) play its first move; verify a chip appears and the console shows no errors except blocked external fonts
+- [x] 5.2 `Mills/OVERVIEW.md`: the table under Minimax (what is reused, per move, the switch), results pointer `reports/mills-transposition-table/`; verify `node --test "Mills/bench/test/*.test.js"` passes and `openspec validate mills-transposition-table --strict` is clean

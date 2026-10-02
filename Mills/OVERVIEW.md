@@ -55,6 +55,14 @@ Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. 
 - Iterative deepening re-sorts the root moves by the previous depth's scores; a depth that
   runs out of time is thrown away.
 - Ties are broken randomly (`RANDOMMOVES`), so bot-vs-bot games don't repeat.
+- Transposition table (`ttTable`, per move search, cleared with the leaf cache): a position
+  reached again by another move order reuses its score when searched to the same remaining depth
+  (win scores scale with depth) and otherwise tries its best move first. The key (`ttKey`) is
+  board, side, eat mode, chips to place and each mill's identity relative to the root (same
+  mill or re-formed, new or not). Root and leaves are not touched; nothing is stored after the
+  time limit cut a search. Same chosen-move score as without it (golden test);
+  `TT_ENABLED = false` turns it off (tests only). Results: `bench/reports/mills-transposition-table/`
+  (`iterative@d6` 63 % fewer leaves, about 2× faster; `iterative@1000ms` one ply deeper).
 
 **Evaluation** (`fastNewEvaluateBoard` = own score − opponent score), hand-tuned weights per stage:
 
