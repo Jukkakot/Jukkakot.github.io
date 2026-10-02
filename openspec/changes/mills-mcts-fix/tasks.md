@@ -7,9 +7,9 @@
 
 ## 2. Milestone 1
 
-- [ ] 2.1 Benchmark run (strength, MCTS): design §6.1; record Elo, score against `minimax@d1` and goals in `design.md`
+- [x] 2.1 Benchmark run (strength, MCTS): design §6.1; record Elo, score against `minimax@d1` and goals in `design.md`
 - [ ] 2.2 Benchmark run (speed): design §6.2; record MCTS time per move against the baseline
-- [ ] 2.3 Benchmark run (strength, fast): design §6.3; record the Elo of all bots against the baseline (first milestone since the baseline: speed-up, transposition table, repetition)
+- [x] 2.3 Benchmark run (strength, fast): design §6.3; record the Elo of all bots against the baseline (first milestone since the baseline: speed-up, transposition table, repetition)
 
 ## 3. Game check and docs
 

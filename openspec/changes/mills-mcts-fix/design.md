@@ -78,3 +78,20 @@ Results and whether each goal was met are recorded here; misses are reported, no
 - [Playout cap 200 hides slow wins] → accepted; draws keep the search neutral there.
 - [Random playouts are weak in Mills] → expected; heuristic playouts are a later option.
 - [Generator breaks] → kept on its own code path, tested.
+
+## Results (milestone 1, 2026-10-02)
+
+Runs on an i5-8600K (6 threads); the baselines ran on a cloud Xeon, so times are compared on
+the same machine where it matters (noted below). Saved: `Mills/bench/reports/milestone-1-mcts/`
+(strength with MCTS) and `Mills/bench/reports/milestone-1/` (fast strength, speed).
+
+- **§6.1 Strength, MCTS** (60 games): MCTS Elo **1299** (interval 1299–1301), baseline 1179
+  (1179–1180): **goal met**. Against `minimax@d1` MCTS won **6/6** (baseline: all capped):
+  **goal met**. It beat `random` 6/6 and still lost every game against `minimax@d4` and
+  `iterative@d4` (0/12). Other bots: `minimax@d4` 1616 (+28), `iterative@d4` 1580 (+64),
+  `minimax@d1` 1000 (−93: its capped draws against MCTS in the baseline are now losses).
+- **§6.3 Strength, fast** (120 games, `--compare baseline`): `minimax@d4` 1640 (baseline 1613,
+  +27), `iterative@d4` 1535 (1605, −71), `minimax@d1` 1015 (1007, +7). Intervals overlap
+  (`iterative@d4` 1455–1624 now); 15/120 games identical, the rest differ because the
+  transposition table and the repetition rule change move choices. Draws: 25 (18 capped,
+  7 repetition). No illegal moves.
