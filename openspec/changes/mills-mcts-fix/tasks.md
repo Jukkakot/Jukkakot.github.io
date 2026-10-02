@@ -2,7 +2,7 @@
 
 ## 1. Search
 
-- [ ] 1.1 Rewrite the MCTS search in `MCTSWorker.js` (design §1–§4) behind `MCTSFindBestMove`, keeping `Node`, `playMove`, `generateRandomState`, `getRandomGameState` for the generator; remove the old search functions that nothing uses any more
+- [x] 1.1 Rewrite the MCTS search in `MCTSWorker.js` (design §1–§4) behind `MCTSFindBestMove`, keeping `Node`, `playMove`, `generateRandomState`, `getRandomGameState` for the generator; remove the old search functions that nothing uses any more
 - [ ] 1.2 MCTS tests (design §5) in `Mills/bench/test/mcts.test.js`; verify they pass, and that the "does not give away a mill" test fails on the old code (run it against a worktree of the previous commit)
 
 ## 2. Milestone 1
