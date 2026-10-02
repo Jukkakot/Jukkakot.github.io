@@ -66,6 +66,24 @@ different path, but then the draw count grows and nothing is stored.
    `--compare mills-transposition-table --save mills-bot-repetition`: no median more than 5 %
    slower.
 
+### 6. Results
+
+Strength (task 3.1), fast command against `baseline`, saved as `reports/mills-bot-repetition/`:
+
+| Bot | Baseline (95 %) | Rule only (`mills-threefold-repetition`) | Now |
+|---|---:|---:|---:|
+| `minimax@d1` | 1007 (1000–1021) | 1041 | 1015 |
+| `minimax@d4` | 1613 (1550–1711) | 1574 | 1640 |
+| `iterative@d4` | 1605 (1521–1719) | 1448 | 1535 |
+
+All inside their baseline intervals again. Repetition draws in the d4 pairings: 11 → 5
+(`minimax@d1` vs `iterative@d4` 5 → 1, `minimax@d4` vs `iterative@d4` 5 → 3, `minimax@d1` vs
+`minimax@d4` 1 → 1); `random` vs `minimax@d1` 5 → 2 (both sides near 0, so a draw is fine).
+
+Side finding: `bots.test.js` asserted `git diff Mills/workers` empty, so it failed whenever
+worker code was uncommitted (the "intermittent" failure seen in `mills-transposition-table`). It
+now checks that running the sandbox leaves the worker files unchanged, which was its intent.
+
 ## Risks / Trade-offs
 
 - [Draw = 0 makes a slightly losing bot happy to repeat] → intended (that is the rule's point).

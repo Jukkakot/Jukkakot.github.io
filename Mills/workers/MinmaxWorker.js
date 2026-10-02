@@ -208,10 +208,37 @@ function fastFindBestMove(options) {
     console.log("Time finding the move", moveData.time, "ms")
     return { move: [move, type], moveData: moveData }
 }
+//Repetition rule: a position after a completed turn that would occur for the third time (game
+//history plus the current search path) is a draw (0), unless it is won or lost. The root's own
+//occurrence is already in the game history.
+function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
+    let key
+    if (!eatMode && searchPly > 0) {
+        key = repKey(board, player, oppPlayer, isMaximizing)
+        let seen = (gameHistory.get(key) || 0) + (searchPath.get(key) || 0)
+        if (seen >= 2 && fastCheckWin(board, player, oppPlayer, depth, eatMode) === undefined) {
+            repetitionDrawCount++
+            leafNodeCount++
+            return [undefined, 0]
+        }
+        searchPath.set(key, (searchPath.get(key) || 0) + 1)
+    }
+    searchPly++
+    try {
+        return fastMinimaxTT(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing)
+    } finally {
+        searchPly--
+        if (key !== undefined) {
+            let count = searchPath.get(key) - 1
+            if (count > 0) searchPath.set(key, count)
+            else searchPath.delete(key)
+        }
+    }
+}
 //Alpha-beta search with the transposition table around it: a stored score is used only at the
 //same remaining depth (win scores scale with it), a stored best move is tried first otherwise.
 //The root and the eat ply right after it (depth === startDepthNum) and leaves are left as they are.
-function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
+function fastMinimaxTT(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
     if (!TT_ENABLED || depth <= 0 || depth === startDepthNum) {
         return fastMinimaxNode(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing)
     }
@@ -222,10 +249,13 @@ function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMa
         ttHitCount++
         return [entry.move, entry.value, entry.type]
     }
+    let drawsBefore = repetitionDrawCount
     let result = fastMinimaxNode(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing,
         entry !== undefined ? entry.move : undefined)
     //A search cut short by the time limit is not a real depth-`depth` value
     if (iterativeEndTime !== undefined && Date.now() >= iterativeEndTime) return result
+    //A value that met a repetition draw depends on the path to this position
+    if (repetitionDrawCount !== drawsBefore) return result
     if (entry !== undefined ? depth >= entry.depth : ttTable.size < TT_MAX_ENTRIES) {
         let value = result[1]
         ttTable.set(key, {

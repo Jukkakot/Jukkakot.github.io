@@ -49,6 +49,7 @@ function createSandbox(seed) {
     const search = new vm.Script(`
         MAXDEPTH = __options.maxDepth || 15
         workerGame = __game
+        gameHistory = new Map(__history)
         workerGame.playerDark.mills = toFastMills(workerGame.playerDark)
         workerGame.playerLight.mills = toFastMills(workerGame.playerLight)
         DEBUG = false
@@ -61,6 +62,7 @@ function createSandbox(seed) {
     function chooseMove(state, options) {
         context.__game = toWorkerGame(state)
         context.__options = JSON.parse(JSON.stringify(options))
+        context.__history = Object.entries(state.positions || {})
         context.__result = undefined
         const errorsBefore = errors.count
         const start = performance.now()

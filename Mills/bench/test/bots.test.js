@@ -1,7 +1,7 @@
 'use strict'
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { execSync } = require('node:child_process')
+const fs = require('node:fs')
 const path = require('node:path')
 const { parseBot, GAME_NAMES } = require('../bots')
 const { createSandbox } = require('../sandbox')
@@ -30,6 +30,10 @@ test('unsupported budgets are refused with the supported list', () => {
 })
 
 test('the sandbox runs the unchanged worker code: minimax@d1 places a legal chip', () => {
+    // The worker files are only read, never changed (compared before and after the run).
+    const dir = path.join(__dirname, '..', '..', 'workers')
+    const snapshot = () => fs.readdirSync(dir).map(f => f + ':' + fs.readFileSync(path.join(dir, f), 'utf8')).join('\n')
+    const before = snapshot()
     const sandbox = createSandbox(1)
     const state = R.newGame()
     const result = sandbox.chooseMove(state, parseBot('minimax@d1').options)
@@ -37,8 +41,7 @@ test('the sandbox runs the unchanged worker code: minimax@d1 places a legal chip
     assert.ok(R.isLegal(state, result.type, result.move))
     assert.ok(result.leaves > 0)
     assert.equal(sandbox.errors.count, 0)
-    const repo = path.join(__dirname, '..', '..', '..')
-    assert.equal(execSync('git diff --stat -- Mills/workers', { cwd: repo }).toString(), '')
+    assert.equal(snapshot(), before)
 })
 
 test('same seed, same choice', () => {

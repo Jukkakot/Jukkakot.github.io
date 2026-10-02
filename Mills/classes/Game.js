@@ -204,6 +204,8 @@ class Game {
             game: deepClone(this),
             board: this.stringify(),
             cmd: "multiLookup",
+            //For the repetition rule in the bots' search
+            positionCounts: Array.from(this.positionCounts),
             allOptions: OPTIONS,
             indices: aiIndices,
             DEBUG: DEBUG,
@@ -221,6 +223,8 @@ class Game {
             game: deepClone(this),
             board: this.stringify(),
             cmd: cmd,
+            //For the repetition rule in the bots' search
+            positionCounts: Array.from(this.positionCounts),
             options: options || game.turn.options,
             DEBUG: DEBUG,
             NODELAY: NODELAY

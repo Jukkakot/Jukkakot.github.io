@@ -5,6 +5,12 @@ let checkedBoards = new Map()
 let skipCount, depthCount, leafNodeCount, startDepthNum, topCount = 0, elseCount = 0, pruneCount = 0
 
 let iterativeEndTime
+//Repetition rule: the game's position counts (key -> count, see repKey) for this search,
+//the positions on the current search path, and how many draws the search has met
+let gameHistory = new Map()
+let searchPath = new Map()
+let searchPly = 0
+let repetitionDrawCount = 0
 //Transposition table: positions reached again within one move's search (cleared every move)
 //TT_ENABLED is only switched off by the benchmark and its tests
 let TT_ENABLED = true
@@ -90,6 +96,7 @@ function handleMultiLookup(data) {
         workerGame.fastDots = stringify(workerGame.dots)
         DEBUG = data.DEBUG
         NODELAY = data.NODELAY
+        gameHistory = new Map(data.positionCounts || [])
 
         const bestMoveResult = fastFindBestMove(options)
         let resultData = {
@@ -119,6 +126,7 @@ function handleGetMove(data) {
     workerGame.fastDots = stringify(workerGame.dots)
     DEBUG = data.DEBUG
     NODELAY = data.NODELAY
+    gameHistory = new Map(data.positionCounts || [])
 
     let options = data.options
     const bestMoveResult = fastFindBestMove(options)
@@ -144,7 +152,17 @@ function clonePlayer(p) {
     if (p.movableDots) c.movableDots = p.movableDots.slice()
     return c
 }
+//The repetition rule's position key, as Game.countPosition builds it: board, player to move,
+//Light's and Dark's chips still to place
+function repKey(board, player, oppPlayer, isMaximizing) {
+    let light = player.char === "L" ? player : oppPlayer
+    let dark = light === player ? oppPlayer : player
+    return board + (isMaximizing ? player.char : oppPlayer.char) + light.chipsToAdd + dark.chipsToAdd
+}
 function ttReset() {
+    searchPath.clear()
+    searchPly = 0
+    repetitionDrawCount = 0
     ttTable.clear()
     ttHitCount = 0
     ttRootMills = {}
