@@ -13,5 +13,5 @@
 
 ## 3. Game check and docs
 
-- [ ] 3.1 Browser: Light set to MCTS plays its first move with no console errors; "Generate gamestate" still works
+- [x] 3.1 Browser: Light set to MCTS plays its first move with no console errors; "Generate gamestate" still works
 - [ ] 3.2 `Mills/OVERVIEW.md`: MCTS section and weak spots updated, milestone pointer; verify `node --test "Mills/bench/test/*.test.js"` and `openspec validate mills-mcts-fix --strict`
