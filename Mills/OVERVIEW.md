@@ -14,7 +14,7 @@ flowchart LR
     G -- "postMessage(findMove / suggestion /<br/>randomGameStage / multiLookup)" --> WH
     subgraph Web Worker
         WH[WorkerHelpers.js<br/>dispatcher + fast board helpers,<br/>move generation, caches] --> MM[MinmaxWorker.js<br/>alpha-beta, iterative deepening,<br/>evaluation]
-        WH --> MC[MCTSWorker.js<br/>UCT tree search,<br/>random playouts]
+        WH --> MC[MCTSWorker.js<br/>UCT tree search,<br/>heuristic playouts + eval cutoff]
     end
     WH -- "move + moveData" --> G
     G -. "SENDDATA (key t)" .-> B[(backend localhost:3001/api<br/>game stats)]
@@ -50,7 +50,7 @@ flowchart LR
 | Minmax 1 / 4 / 6 | Fixed-depth alpha-beta |
 | Iterative 0.5s … 10s | Iterative deepening with a time limit (max depth 15) |
 | Iterative D 4 / D 6 | Iterative deepening to a fixed depth |
-| MCTS | Monte Carlo tree search, 5000 iterations |
+| MCTS | Monte Carlo tree search, 61 000 iterations, heuristic playouts cut off after 6 plies |
 
 Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. Multi-lookup
 (key `o`) runs several bots on the same position to compare their choices.
@@ -97,18 +97,29 @@ Both players' bot can be chosen separately, so bot-vs-bot autoplay is possible. 
 
 Rewritten in 2026-10 (`mills-mcts-fix`); `MCTSFindBestMove` is the entry point.
 
-- UCT selection (`c = 1.41`), expand one untried move (random order), random playout, backprop.
+- UCT selection (`c = 1.41`), expand one untried move (random order), playout, backprop.
 - A node's `value` sums rewards from the view of the player who moved into it (rewards: 1 win,
   0 loss, 0.5 draw for the root player), so each side picks its own best replies.
 - Exact terminals: win/loss (`fastCheckWin`), no legal move (loss for the side to move), and a
   third occurrence of a position (`repKey` count 2 in `gameHistory`, after the placing stage) = draw.
-- Playouts stop after 200 plies (`MCTS_PLAYOUT_CAP`) and count as a draw.
+- Playouts (`mctsPlayout`, changed in `mills-mcts-playouts`): the move policy is `random` or
+  `heuristic` (`mctsPolicyMove`: close an own mill, else block an opponent's two-in-a-row, else
+  random; a removal prefers a chip of an opponent's open two). With a cutoff k > 0 the playout
+  stops after k plies (not during a removal) and the position is scored with the minimax
+  evaluation, `1 / (1 + exp(-value / scale))` (`mctsCutoffReward`). Without a cutoff, playouts
+  stop after 200 plies (`MCTS_PLAYOUT_CAP`) and count as a draw.
+- In-game defaults (top of the file): `MCTS_ITERATIONS = 61000`, `MCTS_DEFAULT_PLAYOUT =
+  heuristic, cutoff 6`, `MCTS_EVAL_SCALE = 1000`, chosen by the benchmark at about the old bot's
+  11 s per move. A search may override them (`options.mctsIterations`, `mctsPlayout`,
+  `mctsEvalScale`); only the benchmark does.
 - Final move = root child with the most visits (ties: higher average value).
 - `Node`, `playMove` and `generateRandomState` serve only the random game state generator.
-- Tests: `bench/test/mcts.test.js` (immediate win, no mill given away, repeatable, generator).
-- Milestone 1: Elo 1299 (was 1179), beats `minimax@d1` and `random` every game, still loses
-  every game to the depth-4 bots. About 11 s per move (moving stage 2× faster than before;
-  early placing slower, because the old search barely ran there).
+- Tests: `bench/test/mcts.test.js` (immediate win, no mill given away, repeatable, playout
+  policy, cutoff reward, generator).
+- Milestone 1 (random playouts, 5000 iterations): Elo 1299, lost every game to the depth-4 bots.
+- `mills-mcts-playouts`: at ~2 s per move the heuristic + cutoff playout was about 450 Elo above
+  random playouts; the new default beat the milestone-1 MCTS 20–0. Milestone 2: Elo 1420, between `minimax@d4` (1379)
+  and `iterative@d4` (1492); beat `minimax@d4` 3–2 in 6 games.
 
 ## Other features
 
@@ -128,7 +139,9 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   plays every pairing, each seed once from each side, and reports Elo (`random` = 1000).
 - Speed: `node Mills/bench/bench.js speed minimax@d4 iterative@500ms` times one move on each of
   the 40 fixed positions in `bench/positions.json`, per game stage.
-- Bot names carry their budget: `@d<n>` depth, `@i<n>` iterations, `@<n>ms` time. Depth and
+- Bot names carry their budget: `@d<n>` depth, `@i<n>` iterations (MCTS, any n; in game
+  `mcts@i61000`), `@<n>ms` time. An MCTS name may end in a playout suffix: `:random`, `:heur`,
+  `:cut<k>`, `:heurcut<k>`, a cut optionally with `s<scale>` (`mcts@i7000:heurcut12s1000`). Depth and
   iteration runs are repeatable on any machine; time-limited runs depend on the machine.
 - Weight sets: a minimax/iterative name may end in `:<set>` (`minimax@d4:v0`), which searches
   with the evaluation weights in `bench/weights/<set>.json` (a partial or full object; unknown
@@ -151,8 +164,8 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   their `COMMANDS.md`. A milestone (after a few bot changes) re-runs them with
   `--compare baseline` / `--compare baseline-mcts` and saves as `--save milestone-<n>`. That
   full set takes about an hour; a single change uses the light check below. Latest:
-  `bench/reports/milestone-1/` and `milestone-1-mcts/` (results in the archived
-  `mills-mcts-fix` design).
+  `bench/reports/milestone-2/` and `milestone-2-mcts/` (results in the archived
+  `mills-mcts-playouts` design; milestone 1 in `mills-mcts-fix`).
 - Light check per change: `node Mills/bench/bench.js speed <affected bots> --positions
   Mills/bench/positions-quick.json --save <change>-before` on the old code, the same with
   `--compare <change>-before` on the new code, plus the fast strength command
@@ -162,12 +175,12 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
 
 ## Known weak spots (at the time of writing, 2026-10)
 
-- **MCTS:** playouts are purely random, which is weak in Mills; evaluation-guided playouts or
-  a time budget are possible next steps. The tree is not reused between moves. Early placing
-  takes about 14 s per move (playouts run to the 200-ply cap).
+- **MCTS:** it leans on the minimax evaluation (cutoff) and needs ~11 s for a move that
+  `minimax@d4` finds in well under 0.1 s; in a sharp, tactical game like Mills alpha-beta is the
+  better fit. The tree is not reused between moves; moving-stage moves take about 14 s.
 - A January 2025 rewrite attempt (single shared worker, MCTS rewrite) is kept in
   `git stash` ("2025-01 AI experiments"). It is not part of the baseline, and its MCTS never ran playouts.
-- **MCTS:** a fixed 5000 iterations, not a time limit, so it is hard to compare fairly
+- **MCTS:** a fixed iteration count, not a time limit, so it is hard to compare fairly
   against the timed minimax bots.
 - Search state lives in globals (`startDepthNum`, `prevBestMoves`, …) shared by all bot
   types; it works now, but it is easy to break.

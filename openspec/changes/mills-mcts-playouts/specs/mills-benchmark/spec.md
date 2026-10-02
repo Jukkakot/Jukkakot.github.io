@@ -8,7 +8,7 @@ Bots SHALL be named by kind plus a budget, in the game kit's notation: `random`,
 any n from 1 to 1 000 000). Each in-game bot option SHALL have a benchmark name: Random =
 `random`, Minmax 1/4/6 = `minimax@d1/d4/d6`, Iterative 0.5s/1s/3s/5s/10s =
 `iterative@500ms/1000ms/3000ms/5000ms/10000ms`, Iterative D 4/D 6 = `iterative@d4/d6`, MCTS =
-`mcts@i<n>` with the in-game iteration count. A budget the current code cannot honour SHALL be
+`mcts@i61000` (the in-game iteration count). A budget the current code cannot honour SHALL be
 refused with a message, not silently changed.
 
 A minimax or iterative bot name MAY end in `:<set>` (for example `minimax@d4:v0`). The bot then

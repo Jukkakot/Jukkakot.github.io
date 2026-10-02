@@ -205,3 +205,26 @@ Test note: in the second `NO_MILL` position (`mcts.test.js`) the new default pla
 lets Dark close a mill; `minimax@d4`, `minimax@d6` and `iterative@d8` all choose [4,5] as well,
 so the test accepts that move for bots that use the evaluation and still requires the only safe
 move from the random-playout bot.
+
+**§6.3 Goal check** (`reports/mills-mcts-playouts`, 20 games): `mcts@i61000` against
+`mcts@i5000:random` **20–0 (100 %)**, 18 by chips, 2 by blocking. Goal (≥ 70 %) met.
+
+**§6.4 Milestone 2** (`reports/milestone-2`, `reports/milestone-2-mcts`; i5-8600K, same machine
+as milestone 1):
+
+| Run | Elo (`random` = 1000) |
+|---|---|
+| Fast strength, 20 games | iterative@d4 1592, minimax@d4 1515, minimax@d1 1091 (bots unchanged) |
+| MCTS strength, 6 games | iterative@d4 1492, **mcts@i61000 1420**, minimax@d4 1379, minimax@d1 1017 |
+
+MCTS goal met: Elo 1420, above milestone 1's 1299 (old row, `mcts@i5000`: Elo 1299, 0/6 against
+both depth-4 bots). The new MCTS beat `minimax@d4` 3–2 (one draw) and took 2 of 6 against
+`iterative@d4`; it won every game against `random` and `minimax@d1`. Speed: overall median
+10 842 ms (old 10 968 ms); placing early 9.1 s, placing late 13.0 s, moving 13.9 s, flying
+4.9 s. In the strength run (4 jobs) its median was 14.4 s per move.
+
+**§5.1 Browser check.** Light set to MCTS played its first move (61 000 playouts) with no
+console errors; "Generate gamestate" works; no UI file changed. The search took 1.4 s in Chrome
+against 9.6 s for the same position in the Node `vm` sandbox: the benchmark sandbox is several
+times slower than the browser, so in-game MCTS moves are much faster than the benchmark times
+(the old bot was measured the same way, so the "not slower than before" comparison holds).

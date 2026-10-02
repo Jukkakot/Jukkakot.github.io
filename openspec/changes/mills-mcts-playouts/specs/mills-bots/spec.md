@@ -16,9 +16,10 @@ A search SHALL support these playout methods:
   by then (and no removal is pending), the position SHALL be scored with the minimax evaluation
   mapped monotonically to a value strictly between loss (0) and win (1).
 
-The in-game option SHALL use the playout method and iteration count chosen by the benchmark
-(recorded in the change's design and in `Mills/OVERVIEW.md`), with a median time per move not
-above the earlier 5000-iteration random-playout bot on the same machine. A search MAY be given
+The in-game option SHALL use the playout method and iteration count chosen by the benchmark:
+heuristic moves with a cutoff after 6 plies (evaluation mapped with scale 1000) and 61 000
+iterations per move (recorded in the change's design and in `Mills/OVERVIEW.md`), with a median
+time per move not above the earlier 5000-iteration random-playout bot on the same machine. A search MAY be given
 another iteration count or playout method (only the benchmark does).
 
 #### Scenario: MCTS move

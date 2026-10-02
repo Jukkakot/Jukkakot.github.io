@@ -19,10 +19,10 @@
 
 ## 4. Goal check and milestone 2
 
-- [ ] 4.1 Benchmark run: design §6.3 (`--save mills-mcts-playouts`); record the score against the goal (≥ 70 %), follow §6.3's rule if missed
-- [ ] 4.2 Benchmark run: milestone 2, design §6.4 (`milestone-2`, `milestone-2-mcts`, each with `COMMANDS.md`); record Elo of every bot and the MCTS goal in design §Results
+- [x] 4.1 Benchmark run: design §6.3 (`--save mills-mcts-playouts`); record the score against the goal (≥ 70 %), follow §6.3's rule if missed
+- [x] 4.2 Benchmark run: milestone 2, design §6.4 (`milestone-2`, `milestone-2-mcts`, each with `COMMANDS.md`); record Elo of every bot and the MCTS goal in design §Results
 
 ## 5. Game check and docs
 
-- [ ] 5.1 Browser: Light set to MCTS plays its first move with no console errors and in about the measured time; "Generate gamestate" still works; nothing on screen differs
-- [ ] 5.2 Fill the chosen playout method and iteration count into the delta spec `specs/mills-bots/spec.md` (replace "chosen by the benchmark" with the values) and the benchmark spec's MCTS game name; update `Mills/OVERVIEW.md` (MCTS section, benchmark names, weak spots, milestone pointer); verify `openspec validate mills-mcts-playouts --strict`
+- [x] 5.1 Browser: Light set to MCTS plays its first move with no console errors and in about the measured time; "Generate gamestate" still works; nothing on screen differs
+- [x] 5.2 Fill the chosen playout method and iteration count into the delta spec `specs/mills-bots/spec.md` (replace "chosen by the benchmark" with the values) and the benchmark spec's MCTS game name; update `Mills/OVERVIEW.md` (MCTS section, benchmark names, weak spots, milestone pointer); verify `openspec validate mills-mcts-playouts --strict`
