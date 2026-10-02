@@ -38,18 +38,16 @@ in time at fixed depth, so key cost is part of the design.
   (Web Worker) and `bench/` change. The page and its texts stay the same; bots may answer
   sooner, but the 500 ms minimum pace stays.
 
-Measurement against the benchmark baseline:
-- Before any code change, a time-limited strength run on the current code is saved as
-  `transposition-table-before` (`random minimax@d4 iterative@1000ms`, 20 games per pairing).
-- Speed: the baseline speed command with `--compare mills-minimax-speed` (the latest saved run),
-  saved as `--save mills-transposition-table`. Goals: searched positions per move at least 30 %
-  fewer for `minimax@d6` and 50 % fewer for `iterative@d6`; median time not worse for any
-  fixed-depth bot; deeper median depth for `iterative@1000ms`.
-- Strength: the `baseline` strength command with `--compare baseline` (Elo of each fixed-depth
-  bot within its baseline 95 % interval) and the `transposition-table-before` command again
-  with `--compare transposition-table-before` (Elo of `iterative@1000ms` not lower).
+Measurement (light per-change check, `CLAUDE.md`; the full set waits for a milestone):
 - Correctness: a test that the table-on search gives the golden fixture's score for every
-  fixed-depth record.
+  fixed-depth record, and the existing golden test with the table off.
+- Speed: quick speed run (`positions-quick.json`) of `minimax@d4 minimax@d6 iterative@d6
+  iterative@1000ms`, before the code change (`--save mills-transposition-table-before`) and after
+  (`--compare mills-transposition-table-before`). Goals: searched positions per move at least
+  30 % fewer for `minimax@d6` and 50 % fewer for `iterative@d6`; no fixed-depth bot slower;
+  deeper median depth for `iterative@1000ms`.
+- Strength: the fast strength command with `--compare baseline` (each fixed-depth bot's Elo
+  within its baseline 95 % interval).
 
 ## Capabilities
 
@@ -65,5 +63,5 @@ Measurement against the benchmark baseline:
 - `Mills/workers/MinmaxWorker.js` (`fastMinimax` gets the table, `fastFindBestMove` clears it),
   `Mills/workers/WorkerHelpers.js` (table helpers, key).
 - `Mills/bench/golden.js`, tests (table off for the existing fixture, score check with it on).
-- Saved runs `Mills/bench/reports/transposition-table-before/`,
+- Saved runs `Mills/bench/reports/mills-transposition-table-before/` and
   `Mills/bench/reports/mills-transposition-table/`; `Mills/OVERVIEW.md`.

@@ -95,24 +95,25 @@ today (the existing golden test runs with it false and must still pass unchanged
 - Score test, table on: the same 200 records re-run with the table on; every record's `score`
   equals the fixture's (moves and counters may differ). A failure means the key or the bounds
   are wrong; never update the fixture to make it pass.
-- Memory: one `iterative@10000ms` search on each of the 40 positions in one process; the heap
+- Memory: one `iterative@10000ms` search on each of the 10 quick positions in one process; the heap
   after a forced GC between moves stays under 200 MB above the start. Over it: halve
   `TT_MAX_ENTRIES` and re-check, record the final value here.
 
 ### 6. Measurement
 
-1. Before code: `strength random minimax@d4 iterative@1000ms --games 20 --seed 1 --jobs 4
-   --save transposition-table-before` (time-limited, so the same machine and job count are used
-   after).
-2. Speed: the baseline speed command (`reports/baseline/COMMANDS.md`) with
-   `--compare mills-minimax-speed --save mills-transposition-table`. Goals: leaves per move
-   (all positions) ≥ 30 % fewer for `minimax@d6`, ≥ 50 % fewer for `iterative@d6`; no fixed-depth
-   bot's median time worse than in `mills-minimax-speed` by more than 5 % (noise); median depth of
-   `iterative@1000ms` higher. A missed goal is reported in this file, not forced.
-3. Strength: the `baseline` command with `--compare baseline`: each fixed-depth bot's Elo inside
-   its baseline 95 % interval (identical games are not expected: tie-breaks see other move
-   orders). The before command again with `--compare transposition-table-before`:
-   `iterative@1000ms` Elo not lower. A drop outside the interval is a bug to find, not accepted.
+Light per-change check (`CLAUDE.md`); the full baseline set is left to the next milestone.
+
+1. Before code: `speed minimax@d4 minimax@d6 iterative@d6 iterative@1000ms --positions
+   Mills/bench/positions-quick.json --jobs 1 --save mills-transposition-table-before`.
+2. After: the same command with `--compare mills-transposition-table-before --save
+   mills-transposition-table`. Goals: leaves per move (all quick positions) ≥ 30 % fewer for
+   `minimax@d6`, ≥ 50 % fewer for `iterative@d6`; no fixed-depth bot's median time worse by more
+   than 5 % (noise); median depth of `iterative@1000ms` higher. A missed goal is reported in this
+   file, not forced.
+3. Strength: `strength random minimax@d1 minimax@d4 iterative@d4 --games 20 --seed 1 --cap 200
+   --jobs 4 --compare baseline --save mills-transposition-table`: each fixed-depth bot's Elo
+   inside its baseline 95 % interval (identical games are not expected: tie-breaks see other move
+   orders). A drop outside the interval is a bug to find, not accepted.
 
 ## Risks / Trade-offs
 

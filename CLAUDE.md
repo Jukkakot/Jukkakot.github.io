@@ -7,8 +7,16 @@
   internally only if the rendered result stays identical. If a change seems to need a visual
   change, stop and ask the user.
 - Mills logic stays in this project; it is not moved into a shared game kit.
-- Work goes through OpenSpec (`openspec/`). Bot changes are measured against the recorded
-  benchmark baseline before and after.
+- Work goes through OpenSpec (`openspec/`). Bot changes are measured in two sizes (commands in
+  `Mills/OVERVIEW.md` → Benchmark):
+  - **Per change (light, ~5 min):** correctness tests (`node --test "Mills/bench/test/*.test.js"`),
+    the fast strength command with `--compare baseline`, and a quick speed run on
+    `bench/positions-quick.json` with only the bots the change affects, before and after the
+    code change (`--save <change>-before`, then `--compare <change>-before`). Enough to show the
+    change helps and breaks nothing; no full speed or MCTS runs.
+  - **Milestone (full, ~1 h):** after a few bot changes, or when MCTS code changes: the full
+    baseline commands (`reports/baseline*/COMMANDS.md`) with `--compare baseline` /
+    `--compare baseline-mcts`, saved as `--save milestone-<n>`.
 - Overview of the code: `Mills/OVERVIEW.md`.
 - Bot measurement follows the game kit's tournament conventions (`../../ProcessingProjects/game-kit`,
   `packages/bots`): budgets in bot names (`@d<n>` depth, `@i<n>` iterations, `@<n>ms` time; only

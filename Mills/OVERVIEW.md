@@ -97,8 +97,14 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   `node Mills/bench/bench.js report <run.json> [--compare <name>]` rebuilds the HTML page.
 - The recorded baseline is `bench/reports/baseline/` (fast strength run and speed run) plus
   `bench/reports/baseline-mcts/` (strength with MCTS, fewer games); the exact commands are in
-  their `COMMANDS.md`. A bot change re-runs them with `--compare baseline` /
-  `--compare baseline-mcts` and saves its own run as `--save <change-name>`.
+  their `COMMANDS.md`. A milestone (after a few bot changes) re-runs them with
+  `--compare baseline` / `--compare baseline-mcts` and saves as `--save milestone-<n>`. That
+  full set takes about an hour; a single change uses the light check below.
+- Light check per change: `node Mills/bench/bench.js speed <affected bots> --positions
+  Mills/bench/positions-quick.json --save <change>-before` on the old code, the same with
+  `--compare <change>-before` on the new code, plus the fast strength command
+  (`random minimax@d1 minimax@d4 iterative@d4 --games 20 --seed 1 --cap 200 --jobs 4`) with
+  `--compare baseline`. `positions-quick.json` is every fourth speed position (10).
 - Tests: `node --test "Mills/bench/test/*.test.js"`.
 
 ## Known weak spots (at the time of writing, 2026-10)

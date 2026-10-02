@@ -2,7 +2,7 @@
 
 ## 1. Before measurement
 
-- [ ] 1.1 On the unchanged code, run `node Mills/bench/bench.js strength random minimax@d4 iterative@1000ms --games 20 --seed 1 --cap 200 --jobs 4 --save transposition-table-before` (design §6.1); verify `Mills/bench/reports/transposition-table-before/COMMANDS.md` exists and `git diff --stat Mills/workers` is empty
+- [ ] 1.1 On the unchanged code, run the quick speed command of design §6.1 (`--save mills-transposition-table-before`); verify `Mills/bench/reports/mills-transposition-table-before/COMMANDS.md` exists and `git diff --stat Mills/workers` is empty
 
 ## 2. Switch and test harness
 
@@ -13,12 +13,12 @@
 
 - [ ] 3.1 `ttKey` with the per-search root-mill lookup (design §2) and a unit test: two move orders reaching the same position give the same key; a mill re-formed in the search gives a different key from the root's mill in the same window; eat mode and side change the key
 - [ ] 3.2 Cutoff, ordering and store in `fastMinimax` (design §3: exact-depth cutoffs, best move first, no store after time-out, replace on deeper or equal depth, entry cap, skip at `depth === startDepthNum` and leaves); enable the score test; verify the table-off golden test and the table-on score test both pass
-- [ ] 3.3 Memory check (design §5): `iterative@10000ms` on all 40 positions in one process, heap growth under 200 MB after forced GC; record the result and the final `TT_MAX_ENTRIES` in `design.md`
+- [ ] 3.3 Memory check (design §5): `iterative@10000ms` on the 10 quick positions in one process, heap growth under 200 MB after forced GC; record the result and the final `TT_MAX_ENTRIES` in `design.md`
 
-## 4. Measurement against the baseline
+## 4. Measurement (light check)
 
-- [ ] 4.1 Benchmark run (speed): baseline speed command with `--compare mills-minimax-speed --save mills-transposition-table`; record in `design.md` whether each goal of design §6.2 was met
-- [ ] 4.2 Benchmark run (strength): `baseline` command with `--compare baseline --save mills-transposition-table` and the before command with `--compare transposition-table-before --save mills-transposition-table-time`; verify each fixed-depth bot's Elo is inside its baseline interval and `iterative@1000ms` is not lower; record the numbers in `design.md`
+- [ ] 4.1 Benchmark run (speed, light): design §6.2 with `--compare mills-transposition-table-before --save mills-transposition-table`; record in `design.md` whether each goal was met
+- [ ] 4.2 Benchmark run (strength, light): design §6.3; verify each fixed-depth bot's Elo is inside its baseline interval and record the numbers in `design.md`
 
 ## 5. Game check and docs
 

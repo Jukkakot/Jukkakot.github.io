@@ -18,3 +18,8 @@ test('committed speed positions: classes, eat mode, undecided, more than one mov
         assert.ok(R.legalMoves(state).moves.length > 1)
     }
 })
+
+test('quick positions are every fourth speed position', () => {
+    const quick = require('../positions-quick.json')
+    assert.deepEqual(quick, positions.filter((_, i) => i % 4 === 1))
+})
