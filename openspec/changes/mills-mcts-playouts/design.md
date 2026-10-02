@@ -150,5 +150,8 @@ changes, the comparison table shows the MCTS row as new; record the old row's nu
 
 ## Results
 
-(filled in during implementation: §6.0 identity check, §6.1 tables and choices, N, §6.3 score,
-milestone 2 numbers)
+**§6.0 Identity check.** The speed JSON did not record the chosen move, so `runSpeedTask`
+(`bench/game.js`) now stores `type` and `move`; the before-run was then repeated on the
+unchanged worker code (`reports/mills-mcts-playouts-before`). After the code change
+`mcts@i5000:random` chose the same move on all 10 quick positions; overall median 11 845 ms vs
+11 743 ms before.

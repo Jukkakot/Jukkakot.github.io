@@ -2,14 +2,14 @@
 
 ## 1. Before
 
-- [ ] 1.1 Before any code edit: run design §6.0's before command (`--save mills-mcts-playouts-before`); verify `Mills/bench/reports/mills-mcts-playouts-before/` exists and lists 10 positions
+- [x] 1.1 Before any code edit: run design §6.0's before command (`--save mills-mcts-playouts-before`); verify `Mills/bench/reports/mills-mcts-playouts-before/` exists and lists 10 positions
 
 ## 2. Worker and benchmark names
 
-- [ ] 2.1 `MCTSWorker.js`: options (design §1), random path unchanged (§2), heuristic policy with `POINT_WINDOWS` (§3), evaluation cutoff with `MCTS_EVAL_SCALE` / `options.mctsEvalScale` (§4); `MinmaxWorker.js` passes `options`. Defaults stay `5000` / random for now. Verify: `node --test "Mills/bench/test/*.test.js"` passes unchanged
-- [ ] 2.2 `bench/bots.js`: names and suffixes of design §5, `MCTS_ITERATIONS` read from the worker; verify with the `bots.test.js` cases of design §7
-- [ ] 2.3 MCTS tests of design §7 (policy, cutoff reward, existing tests for default, `:random`, immediate win for `:heurcut12`); verify all tests pass
-- [ ] 2.4 Identity check (design §6.0): after-run with `mcts@i5000:random` chooses the same move on every quick position as the before-run; record in design §Results
+- [x] 2.1 `MCTSWorker.js`: options (design §1), random path unchanged (§2), heuristic policy with `POINT_WINDOWS` (§3), evaluation cutoff with `MCTS_EVAL_SCALE` / `options.mctsEvalScale` (§4); `MinmaxWorker.js` passes `options`. Defaults stay `5000` / random for now. Verify: `node --test "Mills/bench/test/*.test.js"` passes unchanged
+- [x] 2.2 `bench/bots.js`: names and suffixes of design §5, `MCTS_ITERATIONS` read from the worker; verify with the `bots.test.js` cases of design §7
+- [x] 2.3 MCTS tests of design §7 (policy, cutoff reward, existing tests for default, `:random`, immediate win for `:heurcut12`); verify all tests pass
+- [x] 2.4 Identity check (design §6.0): after-run with `mcts@i5000:random` chooses the same move on every quick position as the before-run; record in design §Results
 
 ## 3. Selection
 

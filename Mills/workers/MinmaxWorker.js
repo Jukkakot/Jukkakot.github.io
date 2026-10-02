@@ -145,7 +145,7 @@ function fastFindBestMove(options) {
             }
             console.log(type, "start moves", startMoveObj.moves, "sorted moves", prevBestMoves)
         } else if (options.mcts) {
-            let mctsResult = MCTSFindBestMove(board, player, oppPlayer, workerGame.eatMode, options.args)
+            let mctsResult = MCTSFindBestMove(board, player, oppPlayer, workerGame.eatMode, options.args, options)
             result = mctsResult.result
             let mctsData = mctsResult.data
 

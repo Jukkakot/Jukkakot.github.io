@@ -1,7 +1,23 @@
-const iterations = 5000
+//In-game defaults; a search may override them with options.mctsIterations / mctsPlayout /
+//mctsEvalScale (only the benchmark does)
+const MCTS_ITERATIONS = 5000
+//policy: 'random' | 'heuristic'; cutoff: plies before the position is scored (0 = play to the end)
+const MCTS_DEFAULT_PLAYOUT = { policy: 'random', cutoff: 0 }
+//Evaluation → reward: 1 / (1 + exp(-value / scale))
+const MCTS_EVAL_SCALE = 2000
 const exploration = 1.41
-//A random playout longer than this many plies counts as a draw
+//A playout longer than this many plies counts as a draw
 const MCTS_PLAYOUT_CAP = 200
+//POINT_WINDOWS[i]: for both mill windows through point i, the window's other two points. Built on
+//first use: this file is imported before WorkerHelpers.js defines millWindows.
+let POINT_WINDOWS
+function pointWindows() {
+    if (!POINT_WINDOWS) {
+        POINT_WINDOWS = Array.from({ length: 24 }, (_, i) =>
+            millWindows.filter(w => w.includes(i)).map(w => w.filter(p => p !== i)))
+    }
+    return POINT_WINDOWS
+}
 
 let randomGameTurns
 let mctsNodeCount = 0
@@ -162,7 +178,12 @@ function playMove(node, index) {
 }
 //Monte Carlo tree search (UCT). A node's value sums rewards from the view of the player who made
 //the move into it; rewards are from the root player's view: 1 win, 0 loss, 0.5 draw.
-function MCTSFindBestMove(board, player, oppPlayer, eatMode, args = "visits") {
+function MCTSFindBestMove(board, player, oppPlayer, eatMode, args = "visits", options = {}) {
+    const iterations = options.mctsIterations || MCTS_ITERATIONS
+    const playout = {
+        ...(options.mctsPlayout || MCTS_DEFAULT_PLAYOUT),
+        scale: options.mctsEvalScale || MCTS_EVAL_SCALE
+    }
     randomGameTurns = []
     mctsNodeCount = 0
     const root = mctsNode(undefined, undefined, {
@@ -188,7 +209,7 @@ function MCTSFindBestMove(board, player, oppPlayer, eatMode, args = "visits") {
                 node = child
             }
             //Playout and backpropagation
-            let reward = node.terminal !== undefined ? node.terminal : mctsPlayout(node)
+            let reward = node.terminal !== undefined ? node.terminal : mctsPlayout(node, playout)
             for (let n = node; n !== undefined; n = n.parent) {
                 n.visits++
                 if (n.parent !== undefined) n.value += n.parent.rootToMove ? reward : 1 - reward
@@ -298,23 +319,71 @@ function mctsBestChild(node) {
     }
     return best
 }
-//Random moves from the node's position until it is decided or the cap is reached (draw)
-function mctsPlayout(node) {
+//Moves from the node's position until it is decided, the cutoff is reached (scored with the
+//evaluation) or the cap is reached (draw). playout: { policy, cutoff, scale }
+function mctsPlayout(node, playout = { ...MCTS_DEFAULT_PLAYOUT, scale: MCTS_EVAL_SCALE }) {
     let state = { board: node.board, me: clonePlayer(node.me), opp: clonePlayer(node.opp), eatMode: node.eatMode, rootToMove: node.rootToMove }
+    const heuristic = playout.policy === 'heuristic'
     for (let ply = 0; ply < MCTS_PLAYOUT_CAP; ply++) {
         let terminal = mctsTerminal(state, false)
         if (terminal !== undefined) {
             randomGameTurns.push(ply)
             return terminal
         }
+        if (playout.cutoff > 0 && ply >= playout.cutoff && !state.eatMode) {
+            randomGameTurns.push(ply)
+            return mctsCutoffReward(state, playout.scale)
+        }
         let movesObj = mctsMoves(state)
         if (movesObj.moves.length === 0) {
             randomGameTurns.push(ply)
             return state.rootToMove ? 0 : 1
         }
-        let move = movesObj.moves[Math.floor(Math.random() * movesObj.moves.length)]
+        let move
+        if (heuristic) {
+            let mover = state.rootToMove ? state.me : state.opp
+            let other = state.rootToMove ? state.opp : state.me
+            move = mctsPolicyMove(state.board, movesObj.moves, movesObj.type, mover.char, other.char)
+        } else {
+            move = movesObj.moves[Math.floor(Math.random() * movesObj.moves.length)]
+        }
         mctsApply(state, state, move, movesObj.type)
     }
     randomGameTurns.push(MCTS_PLAYOUT_CAP)
     return 0.5
+}
+//Heuristic playout move: close an own mill, else block an opponent's two-in-a-row, else random.
+//A removal prefers a chip of an opponent's two-in-a-row (the window's third point empty).
+function mctsPolicyMove(board, moves, type, me, opp) {
+    const windows = pointWindows()
+    let first = []
+    let second = []
+    for (let move of moves) {
+        if (type === "eating") {
+            if (windows[move].some(([a, b]) =>
+                (board[a] === opp && board[b] === EMPTYDOT) || (board[a] === EMPTYDOT && board[b] === opp))) {
+                first.push(move)
+            }
+            continue
+        }
+        let from = Array.isArray(move) ? move[0] : -1
+        let to = Array.isArray(move) ? move[1] : move
+        let closes = false
+        let blocks = false
+        for (let [a, b] of windows[to]) {
+            if (board[a] === me && board[b] === me && a !== from && b !== from) closes = true
+            else if (board[a] === opp && board[b] === opp) blocks = true
+        }
+        if (closes) first.push(move)
+        else if (blocks) second.push(move)
+    }
+    let pick = first.length > 0 ? first : second.length > 0 ? second : moves
+    return pick[Math.floor(Math.random() * pick.length)]
+}
+//Reward of an undecided position from the evaluation: root player's view, strictly in (0, 1)
+function mctsCutoffReward(state, scale = MCTS_EVAL_SCALE) {
+    state.me.chipCount = fastGetPlayerDots(state.board, state.me).length
+    state.opp.chipCount = fastGetPlayerDots(state.board, state.opp).length
+    let value = fastNewEvaluateBoard(state.board, state.me, state.opp)
+    return 1 / (1 + Math.exp(-value / scale))
 }

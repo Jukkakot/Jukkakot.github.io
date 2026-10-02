@@ -62,6 +62,7 @@ function runSpeedTask({ bot, position, index }) {
     return {
         bot, index, cls: position.cls, eatMode: position.state.eatMode,
         ms: Math.round(choice.ms * 100) / 100,
+        type: choice.type ?? null, move: choice.move ?? null,
         leaves: choice.leaves ?? null, depth: choice.depth ?? null,
         legal, error: choice.error || null, errors: sandbox.errors.count
     }

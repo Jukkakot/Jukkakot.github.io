@@ -1,20 +1,33 @@
 'use strict'
 // Benchmark bot names (game kit notation: kind@budget) → the option objects the game sends
 // to the worker (OPTIONS in sketch.js). A minimax/iterative name may end in :<set>, which loads
-// the evaluation weight set weights/<set>.json into options.evalWeights.
+// the evaluation weight set weights/<set>.json into options.evalWeights. An MCTS name may end in
+// a playout suffix (:random, :heur, :cut<k>, :heurcut<k>).
 
 const fs = require('node:fs')
 const path = require('node:path')
 
-const MCTS_ITERATIONS = 5000 // the constant in workers/MCTSWorker.js
 const MAX_DEPTH = 15
+const MAX_MCTS_ITERATIONS = 1000000
+const MAX_CUTOFF = 200
+
+// Reads a constant of the worker code from a sandbox (no mirrored copies here).
+let workerContext = null
+function workerConstant(expr) {
+    if (!workerContext) workerContext = require('./sandbox').createSandbox(1).context
+    return require('node:vm').runInContext(expr, workerContext)
+}
+
+const MCTS_ITERATIONS = workerConstant('MCTS_ITERATIONS')
+const PLAYOUT_SUFFIXES = ':random, :heur, :cut<k>, :heurcut<k> (k 1-200; a cut may end in s<scale>, e.g. :cut12s1000)'
 
 const SUPPORTED = [
     'random',
     'minimax@d<n>          fixed depth n (1-15); in game: Minmax 1/4/6',
     'iterative@d<n>        iterative deepening to depth n (1-15); in game: Iterative D 4/D 6',
     'iterative@<n>ms       iterative deepening with a time limit; in game: Iterative 0.5s-10s',
-    `mcts@i${MCTS_ITERATIONS}            MCTS (only ${MCTS_ITERATIONS} iterations: a constant in the bot code)`,
+    `mcts@i<n>             MCTS with n iterations (1-${MAX_MCTS_ITERATIONS}); in game: MCTS = mcts@i${MCTS_ITERATIONS}`,
+    `mcts@i<n>:<playout>   playout ${PLAYOUT_SUFFIXES}; none = the in-game playout`,
     '<minimax/iterative>:<set>  with the weight set Mills/bench/weights/<set>.json'
 ].join('\n  ')
 
@@ -43,16 +56,36 @@ function depthOf(name, budget) {
     return depth
 }
 
+function iterationsOf(name, budget) {
+    const m = /^i(\d+)$/.exec(budget || '')
+    if (!m) refuse(name, 'expected an iteration budget @i<n>')
+    const iterations = Number(m[1])
+    if (iterations < 1 || iterations > MAX_MCTS_ITERATIONS) refuse(name, `iterations must be 1-${MAX_MCTS_ITERATIONS}`)
+    return iterations
+}
+
+// MCTS playout suffix → { mctsPlayout, mctsEvalScale? }.
+function playoutOf(name, suffix) {
+    const m = /^(?:(random)|(heur)|(heur)?cut(\d+)(?:s(\d+))?)$/.exec(suffix)
+    if (!m) refuse(name, `unknown playout suffix ":${suffix}"; MCTS takes ${PLAYOUT_SUFFIXES} (only minimax and iterative take a weight set)`)
+    if (m[1]) return { mctsPlayout: { policy: 'random', cutoff: 0 } }
+    if (m[2]) return { mctsPlayout: { policy: 'heuristic', cutoff: 0 } }
+    const cutoff = Number(m[4])
+    if (cutoff < 1 || cutoff > MAX_CUTOFF) refuse(name, `cutoff must be 1-${MAX_CUTOFF}`)
+    const result = { mctsPlayout: { policy: m[3] ? 'heuristic' : 'random', cutoff } }
+    if (m[5] !== undefined) {
+        if (Number(m[5]) < 1) refuse(name, 'scale must be at least 1')
+        result.mctsEvalScale = Number(m[5])
+    }
+    return result
+}
+
 const WEIGHTS_DIR = path.join(__dirname, 'weights')
 let defaultWeights = null
 
 // The worker's built-in EVAL_WEIGHTS, read once from a sandbox.
 function defaultEvalWeights() {
-    if (!defaultWeights) {
-        const vm = require('node:vm')
-        const { createSandbox } = require('./sandbox')
-        defaultWeights = vm.runInContext('({ ...EVAL_WEIGHTS })', createSandbox(1).context)
-    }
+    if (!defaultWeights) defaultWeights = workerConstant('({ ...EVAL_WEIGHTS })')
     return { ...defaultWeights }
 }
 
@@ -70,8 +103,8 @@ function loadWeightSet(name, set) {
 
 // Parses a bot name; returns { name, kind, options, timeLimited, gameName }.
 function parseBot(name) {
-    const [plain, set, extraSet] = name.split(':')
-    if (extraSet !== undefined) refuse(name, 'one weight set only')
+    const [plain, suffix, extraSuffix] = name.split(':')
+    if (extraSuffix !== undefined) refuse(name, 'one suffix only')
     const [kind, budget, extra] = plain.split('@')
     if (extra !== undefined) refuse(name, 'one budget only')
     let options
@@ -79,6 +112,7 @@ function parseBot(name) {
     switch (kind) {
         case 'random':
             if (budget !== undefined) refuse(name, 'random takes no budget')
+            if (suffix !== undefined) refuse(name, 'random takes no suffix (only minimax and iterative take a weight set)')
             options = { ...base, random: true }
             break
         case 'minimax':
@@ -95,17 +129,17 @@ function parseBot(name) {
             break
         }
         case 'mcts':
-            if (budget !== `i${MCTS_ITERATIONS}`) refuse(name, `MCTS supports only @i${MCTS_ITERATIONS}`)
-            options = { ...base, mcts: true, args: 'visits' }
+            options = { ...base, mcts: true, args: 'visits', mctsIterations: iterationsOf(name, budget) }
+            if (suffix !== undefined) Object.assign(options, playoutOf(name, suffix))
             break
         default:
             refuse(name, `unknown kind "${kind}"`)
     }
-    if (set !== undefined) {
-        if (kind !== 'minimax' && kind !== 'iterative') refuse(name, 'only minimax and iterative take a weight set')
-        options.evalWeights = loadWeightSet(name, set)
+    if (suffix !== undefined && (kind === 'minimax' || kind === 'iterative')) {
+        options.evalWeights = loadWeightSet(name, suffix)
     }
-    const gameName = GAME_NAMES[plain] || null
+    // An MCTS playout suffix makes it a benchmark-only variant, not the in-game option.
+    const gameName = (kind === 'mcts' && suffix !== undefined) ? null : GAME_NAMES[plain] || null
     return { name, kind, options: { ...options, text: gameName || name }, timeLimited, gameName }
 }
 
