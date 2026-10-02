@@ -119,6 +119,18 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   the 40 fixed positions in `bench/positions.json`, per game stage.
 - Bot names carry their budget: `@d<n>` depth, `@i<n>` iterations, `@<n>ms` time. Depth and
   iteration runs are repeatable on any machine; time-limited runs depend on the machine.
+- Weight sets: a minimax/iterative name may end in `:<set>` (`minimax@d4:v0`), which searches
+  with the evaluation weights in `bench/weights/<set>.json` (a partial or full object; unknown
+  weight names are refused). The suffix stays in every report, so
+  `strength minimax@d4:h1 minimax@d4:v0` plays two evaluations head-to-head. `v0` = the 2021
+  weights, `h1` = v0 plus the hand fixes, `t1` = tuner output, `v1` = the accepted default.
+- Tune: `node Mills/bench/bench.js tune --from h1 --depth 3 --iterations <n> --pairs 4 --seed 1
+  --cap 200 --jobs 5 [--save <set>]` searches the weights by self-play (SPSA, `bench/tune.js`:
+  ranges and steps in `TUNABLE`). Each iteration plays `minimax@d<depth>` θ+ vs θ−, each seed
+  from both sides after 4 random opening plies. Same arguments → same weights, whatever the job
+  count. Progress goes to stderr; `bench/results/tune-<seed>.json` (git-ignored) is written after
+  every iteration, and `--resume` continues it (the arguments must match; `--iterations` may grow).
+  `--save <set>` writes the final weights to `bench/weights/<set>.json`.
 - Every run writes `<mode>-<timestamp>.{json,md,html}` to `bench/results/` (git-ignored, 10
   newest kept). `--save <name>` also stores it in `bench/reports/<name>/` (committed, with
   `COMMANDS.md`); `--compare <name>` shows the change against a saved run;
@@ -148,9 +160,6 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   against the timed minimax bots.
 - Search state lives in globals (`startDepthNum`, `prevBestMoves`, …) shared by all bot
   types; it works now, but it is easy to break.
-- The cached-value path (`getCalcedValue`) adds the new-mill bonuses with `else if` while a
-  fresh evaluation counts both players' new mills; kept as is so the speed-up (below) changes no
-  decision.
 
 ## Search speed (2026-10, `mills-minimax-speed`)
 

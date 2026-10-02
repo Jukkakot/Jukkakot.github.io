@@ -16,9 +16,9 @@
 
 ## 4. Tune mode
 
-- [ ] 4.1 `playGame` / `runner.js`: optional `openingPlies` (random bot plies at the start) and per-side `evalWeights` objects. Existing modes are unchanged. Verify: tests pass; a strength run of `random minimax@d1 --games 4 --seed 1` is unchanged (identical-games check against a run made before the edit).
-- [ ] 4.2 `bench/tune.js` + `tune` command in `bench.js` (design §4): `TUNABLE` ranges/steps, seeded Δ and game seeds, SPSA update, clamping, per-iteration output `bench/results/tune-<seed>.json`, `--resume` (refuses changed arguments), `--save <set>`, and progress lines. Tests (`tune.test.js`, depth 1, 3 iterations, 1 pair): same arguments → same weights with `--jobs 1` and `--jobs 2`; stop after 2 + resume = unbroken run; weights are integers within range, and non-tunable ones are unchanged.
-- [ ] 4.3 Document the tune mode, the `:<set>` suffix and the `weights/` folder in `Mills/OVERVIEW.md` → Benchmark. Verify: the commands in the text run.
+- [x] 4.1 `playGame` / `runner.js`: optional `openingPlies` (random bot plies at the start) and per-side `evalWeights` objects. Existing modes are unchanged. Verify: tests pass; a strength run of `random minimax@d1 --games 4 --seed 1` is unchanged (identical-games check against a run made before the edit).
+- [x] 4.2 `bench/tune.js` + `tune` command in `bench.js` (design §4): `TUNABLE` ranges/steps, seeded Δ and game seeds, SPSA update, clamping, per-iteration output `bench/results/tune-<seed>.json`, `--resume` (refuses changed arguments), `--save <set>`, and progress lines. Tests (`tune.test.js`, depth 1, 3 iterations, 1 pair): same arguments → same weights with `--jobs 1` and `--jobs 2`; stop after 2 + resume = unbroken run; weights are integers within range, and non-tunable ones are unchanged.
+- [x] 4.3 Document the tune mode, the `:<set>` suffix and the `weights/` folder in `Mills/OVERVIEW.md` → Benchmark. Verify: the commands in the text run.
 
 ## 5. Tuning run
 

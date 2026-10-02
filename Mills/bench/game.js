@@ -8,16 +8,24 @@ const { parseBot } = require('./bots')
 const DEFAULT_CAP = 200
 
 // bots: { L: name, D: name }. Returns the game result with per-bot move stats.
-function playGame({ bots, seed, cap = DEFAULT_CAP, onMove }) {
+// openingPlies: the first plies are played by the random bot (not counted in the stats).
+// evalWeights: optional { L, D } weight objects that override the bots' evaluation weights.
+function playGame({ bots, seed, cap = DEFAULT_CAP, onMove, openingPlies = 0, evalWeights }) {
     const sandbox = createSandbox(seed)
     const parsed = { L: parseBot(bots.L), D: parseBot(bots.D) }
+    const randomOptions = parseBot('random').options
+    const options = {}
+    for (const c of ['L', 'D']) {
+        options[c] = evalWeights && evalWeights[c] ? { ...parsed[c].options, evalWeights: evalWeights[c] } : parsed[c].options
+    }
     const stats = {}
     for (const c of ['L', 'D']) stats[c] = { bot: bots[c], moves: 0, times: [], leaves: 0, errors: 0, illegal: null }
     let state = R.newGame()
     let result = null
     while (!result) {
         const c = state.turn
-        const choice = sandbox.chooseMove(state, parsed[c].options)
+        const opening = state.plies < openingPlies
+        const choice = sandbox.chooseMove(state, opening ? randomOptions : options[c])
         const st = stats[c]
         st.errors += choice.newErrors || 0
         if (choice.error || !R.isLegal(state, choice.type, choice.move)) {
@@ -25,9 +33,11 @@ function playGame({ bots, seed, cap = DEFAULT_CAP, onMove }) {
             result = { winner: R.other(c), reason: 'illegal' }
             break
         }
-        st.moves++
-        st.times.push(Math.round(choice.ms * 100) / 100)
-        st.leaves += choice.leaves || 0
+        if (!opening) {
+            st.moves++
+            st.times.push(Math.round(choice.ms * 100) / 100)
+            st.leaves += choice.leaves || 0
+        }
         const before = state
         state = R.applyMove(state, choice.type, choice.move)
         if (onMove) onMove(before, choice, state, sandbox)

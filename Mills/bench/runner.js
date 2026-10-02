@@ -7,7 +7,10 @@ const { Worker, isMainThread, parentPort } = require('node:worker_threads')
 function runTask(kind, task) {
     const { playGame, runSpeedTask } = require('./game')
     if (kind === 'game') {
-        return { ...task, ...playGame({ bots: { L: task.light, D: task.dark }, seed: task.seed, cap: task.cap }) }
+        return { ...task, ...playGame({
+            bots: { L: task.light, D: task.dark }, seed: task.seed, cap: task.cap,
+            openingPlies: task.openingPlies, evalWeights: task.evalWeights
+        }) }
     }
     return runSpeedTask(task)
 }

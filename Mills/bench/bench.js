@@ -5,6 +5,8 @@
 //   node Mills/bench/bench.js speed <bot> ... [--positions <file>] [--jobs 1]
 //     common: [--save <name> [--force]] [--compare <name>] [--no-html] [--notes "<text>"]
 //   node Mills/bench/bench.js report <run.json> [--compare <name>]
+//   node Mills/bench/bench.js tune --iterations <n> [--from h1] [--depth 3] [--pairs 4] [--seed 1] [--cap 200]
+//     [--jobs N] [--resume] [--force] [--save <set>]   (see tune.js)
 
 const fs = require('node:fs')
 const os = require('node:os')
@@ -28,7 +30,7 @@ function parseArgs(argv) {
         const a = argv[i]
         if (!a.startsWith('--')) { args._.push(a); continue }
         const key = a.slice(2)
-        if (['no-html', 'force'].includes(key)) args[key] = true
+        if (['no-html', 'force', 'resume'].includes(key)) args[key] = true
         else args[key] = argv[++i]
     }
     return args
@@ -126,8 +128,9 @@ async function main() {
         process.stderr.write(`HTML: ${out}\n`)
         return
     }
+    if (mode === 'tune') return require('./tune').tuneCli(args)
     if (!['strength', 'speed'].includes(mode) || args._.length === 0) {
-        throw new Error('Usage: bench.js strength|speed <bot> ... | report <run.json>  (see the header of bench.js)')
+        throw new Error('Usage: bench.js strength|speed <bot> ... | report <run.json> | tune ...  (see the header of bench.js)')
     }
     if (mode === 'strength' && args._.length < 2) throw new Error('strength needs at least two bots')
     if (args.save) {
