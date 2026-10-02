@@ -44,7 +44,9 @@ function analyzeStrength(run) {
     const order = [...bots].sort((x, y) => ratings[y] - ratings[x])
     return {
         summary, anchor, perBot, order,
-        capped: games.filter(g => g.winner === null).length,
+        draws: games.filter(g => g.winner === null).length,
+        capped: games.filter(g => g.reason === 'capped').length,
+        repetition: games.filter(g => g.reason === 'repetition').length,
         illegal: games.filter(g => g.reason === 'illegal').length
     }
 }

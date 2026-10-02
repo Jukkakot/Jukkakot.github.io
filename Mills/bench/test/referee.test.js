@@ -17,7 +17,7 @@ function position(board, { turn = 'L', L = {}, D = {}, eatMode = false } = {}) {
         Object.assign(p, { L, D }[c])
         p.mills = R.updatedMills(board, p).map(m => ({ ...m, new: false }))
     }
-    return s
+    return R.resetPositions(s)
 }
 
 function play(s, ...moves) {
@@ -143,4 +143,54 @@ test('same seed gives the same sequence', () => {
     assert.deepEqual(sa, sb)
     assert.notDeepEqual(sa, Array.from({ length: 5 }, c))
     assert.ok(sa.every(x => x >= 0 && x < 1))
+})
+
+// Stage 2: Light 0,2,4,9 (moves 0 <-> 7), Dark 16,18,20,22 (moves 16 <-> 23). No mills.
+const SHUFFLE = 'L0L0L0000L000000D0D0D0D0'
+const shuffle = (s, n) => {
+    for (let i = 0; i < n; i++) {
+        const back = i % 2 === 1
+        s = play(s, ['moving', back ? [7, 0] : [0, 7]], ['moving', back ? [23, 16] : [16, 23]])
+    }
+    return s
+}
+
+test('threefold repetition: draw at the third occurrence, not the second', () => {
+    let s = position(SHUFFLE, { L: { chipsToAdd: 0 }, D: { chipsToAdd: 0 } })
+    s = shuffle(s, 2)
+    assert.equal(s.draw, null, 'second occurrence: game goes on')
+    assert.equal(s.positions[R.positionKey(s)], 2)
+    s = shuffle(s, 2)
+    assert.equal(s.draw, 'repetition')
+    assert.equal(s.winner, null)
+    assert.deepEqual(R.legalMoves(s).moves, [])
+})
+
+test('threefold repetition: the same board with the other player to move is another position', () => {
+    const s = position(SHUFFLE)
+    const t = position(SHUFFLE, { turn: 'D' })
+    assert.notEqual(R.positionKey(s), R.positionKey(t))
+})
+
+test('threefold repetition: positions in eat mode are not counted', () => {
+    // Light closes 0-1-2 by moving 9 -> 1 and is in eat mode: no count until the removal is done.
+    let s = position('L0L0L0000L000000D0D0D0D0')
+    const before = Object.values(s.positions).reduce((a, b) => a + b, 0)
+    s = play(s, ['moving', [9, 1]])
+    assert.equal(s.eatMode, true)
+    assert.equal(Object.values(s.positions).reduce((a, b) => a + b, 0), before)
+    s = play(s, ['eating', 16])
+    assert.equal(Object.values(s.positions).reduce((a, b) => a + b, 0), before + 1)
+})
+
+test('threefold repetition: a loss in the same turn change wins over the draw', () => {
+    // Dark on the outer corners; Light moving 15 -> 7 blocks Dark completely. The resulting
+    // position has been seen twice already, but the loss stands.
+    let s = position('DLDLDLD00000000L00000000')
+    const after = R.positionKey({ ...s, board: 'DLDLDLDL0000000000000000', turn: 'D' })
+    s.positions[after] = 2
+    s = R.applyMove(s, 'moving', [15, 7])
+    assert.equal(s.winner, 'L')
+    assert.equal(s.winReason, 'blocked')
+    assert.equal(s.draw, null)
 })

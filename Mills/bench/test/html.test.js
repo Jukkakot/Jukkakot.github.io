@@ -38,3 +38,10 @@ test('strength compare page shows the identical-games line', async () => {
     const page = html(run, compare(run, { ...run, name: 'baseline' }))
     assert.match(page, /Identical games with &quot;baseline&quot;: 2\/2|Identical games with "baseline": 2\/2/)
 })
+
+test('an older saved run (no repetition draws) still renders, with zero repetitions', () => {
+    const { markdown } = require('../report')
+    const run = require('../reports/baseline/strength.json')
+    assert.match(markdown(run), /Draws: \d+ \(capped \d+, repetition 0\)/)
+    assert.equal(svgCount(html(run)), 4)
+})

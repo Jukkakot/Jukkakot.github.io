@@ -2,8 +2,8 @@
 
 ## 1. Referee
 
-- [ ] 1.1 Position count and repetition draw in `bench/referee.js` and `bench/game.js` (design §5); verify referee tests: draw at the third occurrence not the second, other player to move is another position, eat-mode states not counted, a loss in the same switch wins over the draw
-- [ ] 1.2 `stats.js`, `report.js`, `html.js`: draws with capped / repetition endings (design §5); verify tests: a repetition game counts half a point, the pairing table shows both counts, an old run without repetitions still renders
+- [x] 1.1 Position count and repetition draw in `bench/referee.js` and `bench/game.js` (design §5); verify referee tests: draw at the third occurrence not the second, other player to move is another position, eat-mode states not counted, a loss in the same switch wins over the draw
+- [x] 1.2 `stats.js`, `report.js`, `html.js`: draws with capped / repetition endings (design §5); verify tests: a repetition game counts half a point, the pairing table shows both counts, an old run without repetitions still renders
 
 ## 2. Game
 

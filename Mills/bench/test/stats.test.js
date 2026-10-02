@@ -35,9 +35,17 @@ test('summary counts wins, losses, capped and endings; bootstrap intervals are o
         { pairing: ['a', 'b'], light: 'a', dark: 'b', winner: null, reason: 'capped', plies: 30 }
     ]
     const [p] = S.summarize(['a', 'b'], games).pairings
-    assert.deepEqual([p.wins, p.losses, p.capped, p.points, p.avgPlies], [1, 1, 1, 1.5, 20])
-    assert.deepEqual(p.endings, { chips: 1, blocked: 1, illegal: 0 })
+    assert.deepEqual([p.wins, p.losses, p.draws, p.endings.capped, p.endings.repetition, p.points, p.avgPlies], [1, 1, 1, 1, 0, 1.5, 20])
+    assert.deepEqual(p.endings, { chips: 1, blocked: 1, illegal: 0, capped: 1, repetition: 0 })
     const iv = S.ratingIntervals(['a', 'b'], games, 'a', 50)
     assert.ok(iv.b[0] <= iv.b[1])
     assert.deepEqual(iv, S.ratingIntervals(['a', 'b'], games, 'a', 50))
+})
+
+test('a repetition draw counts half a point and is reported beside capped games', () => {
+    const { summarize, pointsOf } = require('../stats')
+    const g = { pairing: ['a', 'b'], light: 'a', dark: 'b', winner: null, reason: 'repetition', plies: 40 }
+    assert.equal(pointsOf(g, 'a'), 0.5)
+    const p = summarize(['a', 'b'], [g]).pairings[0]
+    assert.deepEqual([p.draws, p.endings.capped, p.endings.repetition, p.points], [1, 0, 1, 0.5])
 })

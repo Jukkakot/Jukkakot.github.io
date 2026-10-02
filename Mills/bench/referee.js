@@ -32,16 +32,34 @@ function newPlayer(char) {
 }
 
 function newGame() {
-    return {
+    return countPosition({
         board: EMPTY.repeat(24),
         players: { L: newPlayer('L'), D: newPlayer('D') },
         turn: 'L',
         eatMode: false,
         winner: null,
         winReason: null,
+        draw: null,
         turnNum: 0,
-        plies: 0
-    }
+        plies: 0,
+        positions: {}
+    })
+}
+
+// Threefold repetition (Game.countPosition): board, player to move and both players' chips
+// still to place, counted after every completed turn. Returns the count.
+function positionKey(s) {
+    return s.board + s.turn + s.players.L.chipsToAdd + s.players.D.chipsToAdd
+}
+function countPosition(s) {
+    const key = positionKey(s)
+    s.positions[key] = (s.positions[key] || 0) + 1
+    return s
+}
+// Starts a new count from the current position (Game.setState).
+function resetPositions(s) {
+    s.positions = {}
+    return countPosition(s)
 }
 
 const other = char => (char === 'L' ? 'D' : 'L')
@@ -110,7 +128,7 @@ function eatableDots(state) {
 // Legal moves of the player to move: { type, moves }. Moves are a dot index (placing,
 // eating) or [from, to] (moving).
 function legalMoves(state) {
-    if (state.winner) return { type: null, moves: [] }
+    if (state.winner || state.draw) return { type: null, moves: [] }
     const player = state.players[state.turn]
     const board = state.board
     if (state.eatMode) return { type: 'eating', moves: eatableDots(state) }
@@ -158,6 +176,8 @@ function switchTurn(s) {
     if (hasLost(s.board, player)) return setWinner(s, opp.char, player)
     s.turn = opp.char
     if (hasLost(s.board, opp)) return setWinner(s, player.char, opp)
+    countPosition(s)
+    if (s.positions[positionKey(s)] >= 3) s.draw = 'repetition'
 }
 
 function setWinner(s, char, loser) {
@@ -197,11 +217,11 @@ function applyMove(state, type, move) {
 
 // The move cap: both players have played `cap` turns without a winner.
 function isCapped(state, cap) {
-    return !state.winner && state.players.L.turns >= cap && state.players.D.turns >= cap
+    return !state.winner && !state.draw && state.players.L.turns >= cap && state.players.D.turns >= cap
 }
 
 module.exports = {
     EMPTY, MILL_WINDOWS, NEIGHBOURS, NAMES,
-    newGame, clone, other, stageOf, playerDots, legalMoves, isLegal, applyMove, isCapped,
+    newGame, clone, other, positionKey, resetPositions, stageOf, playerDots, legalMoves, isLegal, applyMove, isCapped,
     updatedMills, hasLost
 }

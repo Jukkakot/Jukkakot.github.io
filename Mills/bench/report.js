@@ -44,13 +44,13 @@ function strengthMarkdown(run, a) {
                 ms(p.median), ms(p.max), f0(p.leavesPerMove)]
         })
     ))
-    out.push('', `Elo: Bradley–Terry, draws (capped games) half a point, ${a.anchor} = 1000; interval by bootstrap.`, '', '## Pairings', '')
+    out.push('', `Elo: Bradley–Terry, draws (capped or repetition) half a point, ${a.anchor} = 1000; interval by bootstrap.`, '', '## Pairings', '')
     out.push(table(
-        ['Pairing', 'Share of first', '95 % interval', 'W', 'L', 'Capped', 'By chips', 'By blocking', 'Illegal', 'Avg plies'],
+        ['Pairing', 'Share of first', '95 % interval', 'W', 'L', 'Draws (capped / repetition)', 'By chips', 'By blocking', 'Illegal', 'Avg plies'],
         a.summary.pairings.map(p => [`${p.a} vs ${p.b}`, pct(p.share), `${pct(p.interval[0])}–${pct(p.interval[1])}`,
-            p.wins, p.losses, p.capped, p.endings.chips, p.endings.blocked, p.endings.illegal, f0(p.avgPlies)])
+            p.wins, p.losses, `${p.draws} (${p.endings.capped} / ${p.endings.repetition})`, p.endings.chips, p.endings.blocked, p.endings.illegal, f0(p.avgPlies)])
     ))
-    out.push('', `Capped games: ${a.capped}. Games lost by an illegal or missing move: ${a.illegal}.`)
+    out.push('', `Draws: ${a.draws} (capped ${a.capped}, repetition ${a.repetition}). Games lost by an illegal or missing move: ${a.illegal}.`)
     const problems = run.setup.bots.filter(b => a.perBot[b].errors || a.perBot[b].illegal.length)
     if (problems.length) {
         out.push('', '## Bot errors', '')

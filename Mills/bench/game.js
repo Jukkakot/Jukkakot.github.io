@@ -32,6 +32,7 @@ function playGame({ bots, seed, cap = DEFAULT_CAP, onMove }) {
         state = R.applyMove(state, choice.type, choice.move)
         if (onMove) onMove(before, choice, state, sandbox)
         if (state.winner) result = { winner: state.winner, reason: state.winReason }
+        else if (state.draw) result = { winner: null, reason: state.draw }
         else if (R.isCapped(state, cap)) result = { winner: null, reason: 'capped' }
     }
     return {

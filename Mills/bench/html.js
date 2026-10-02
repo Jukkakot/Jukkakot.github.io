@@ -108,7 +108,7 @@ function matrix(a) {
             const s = p.share
             const strength = Math.min(1, Math.abs(s - 0.5) * 2)
             const fill = s >= 0.5 ? 'var(--pos)' : 'var(--neg)'
-            const tip = `${rowBot} vs ${colBot}: ${pct(s)} (${p.wins} W, ${p.losses} L, ${p.capped} capped of ${p.games})`
+            const tip = `${rowBot} vs ${colBot}: ${pct(s)} (${p.wins} W, ${p.losses} L, ${p.draws} draws of ${p.games})`
             body += `<g><title>${esc(tip)}</title>` +
                 `<rect x="${r1(x + 1)}" y="${r1(y + 1)}" width="${r1(cell - 2)}" height="${r1(cell - 2)}" rx="4" fill="var(--mid)"/>` +
                 `<rect x="${r1(x + 1)}" y="${r1(y + 1)}" width="${r1(cell - 2)}" height="${r1(cell - 2)}" rx="4" fill="${fill}" fill-opacity="${(0.15 + 0.7 * strength).toFixed(2)}"/>` +
@@ -118,7 +118,7 @@ function matrix(a) {
     return svg(top + n * cell + 10, body, 'Head-to-head score shares')
 }
 
-// Outcome bars: per pairing, first bot's wins | capped | second bot's wins (100 % stacked).
+// Outcome bars: per pairing, first bot's wins | draws | second bot's wins (100 % stacked).
 function outcomes(run, a) {
     const L = 230, R = W - 10, rowH = 28, top = 6
     const rows = a.summary.pairings.filter(p => p.games)
@@ -131,7 +131,7 @@ function outcomes(run, a) {
             `by chips ${ended(bot, 'chips')}, by blocking ${ended(bot, 'blocked')}, opponent illegal ${ended(bot, 'illegal')}`
         const segs = [
             { n: p.wins, c: 'var(--s1)', tip: tipFor(p.a) },
-            { n: p.capped, c: 'var(--neutral)', tip: `capped ${p.capped}` },
+            { n: p.draws, c: 'var(--neutral)', tip: `draws ${p.draws}: capped ${p.endings.capped}, repetition ${p.endings.repetition}` },
             { n: p.losses, c: 'var(--s2)', tip: tipFor(p.b) }
         ]
         body += `<text x="${L - 10}" y="${y + rowH / 2 + 3}" text-anchor="end" class="ink">${esc(p.a)} <tspan class="muted">vs</tspan> ${esc(p.b)}</text>`
@@ -144,7 +144,7 @@ function outcomes(run, a) {
             x += w
         }
     })
-    const legend = `<div class="legend"><span style="--c:var(--s1)">first bot wins</span><span style="--c:var(--neutral)">capped (draw)</span><span style="--c:var(--s2)">second bot wins</span></div>`
+    const legend = `<div class="legend"><span style="--c:var(--s1)">first bot wins</span><span style="--c:var(--neutral)">draw (capped or repetition)</span><span style="--c:var(--s2)">second bot wins</span></div>`
     return svg(top + rows.length * rowH + 6, body, 'Game outcomes per pairing') + legend
 }
 
@@ -270,7 +270,7 @@ function html(run, comparison) {
     const parts = []
     if (run.mode === 'strength') {
         parts.push(section('Elo ladder', `Bradley–Terry ratings, ${a.anchor} = 1000, 95 % bootstrap intervals.`, eloLadder(a)))
-        parts.push(section('Head to head', 'Row bot\'s score share against the column bot (capped games count half).', matrix(a)))
+        parts.push(section('Head to head', 'Row bot\'s score share against the column bot (draws count half).', matrix(a)))
         parts.push(section('Outcomes', 'Per pairing; hover a segment for how the games ended.', outcomes(run, a)))
         parts.push(section('Strength against thinking time', 'Median time per move measured during the tournament (log scale).', eloVsTime(a)))
     } else {

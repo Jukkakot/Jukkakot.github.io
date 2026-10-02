@@ -31,7 +31,7 @@ function schedule(bots, games, firstSeed) {
     return list
 }
 
-// Points of `bot` in a played game: 1 win, 0.5 capped, 0 loss.
+// Points of `bot` in a played game: 1 win, 0.5 draw (capped or repetition), 0 loss.
 function pointsOf(game, bot) {
     if (game.winner === null) return 0.5
     const winnerBot = game.winner === 'L' ? game.light : game.dark
@@ -53,14 +53,14 @@ function summarize(bots, games) {
         for (let j = i + 1; j < bots.length; j++) {
             const a = bots[i], b = bots[j]
             const gs = games.filter(g => g.pairing[0] === a && g.pairing[1] === b)
-            const p = { a, b, games: gs.length, points: 0, wins: 0, losses: 0, capped: 0, plies: 0, endings: { chips: 0, blocked: 0, illegal: 0 } }
+            const p = { a, b, games: gs.length, points: 0, wins: 0, losses: 0, draws: 0, plies: 0, endings: { chips: 0, blocked: 0, illegal: 0, capped: 0, repetition: 0 } }
             for (const g of gs) {
                 const pts = pointsOf(g, a)
                 p.points += pts
-                if (g.winner === null) p.capped++
+                if (g.winner === null) p.draws++
                 else if (pts === 1) p.wins++
                 else p.losses++
-                if (g.winner !== null) p.endings[g.reason]++
+                p.endings[g.reason]++
                 p.plies += g.plies
             }
             p.share = gs.length ? p.points / gs.length : 0
