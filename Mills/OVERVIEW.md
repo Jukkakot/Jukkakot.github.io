@@ -33,8 +33,13 @@ flowchart LR
 - Draw by threefold repetition (WMD): `Game.countPosition` counts board + player to move +
   both `chipsToAdd` after every completed turn (not in eat mode); the third occurrence calls
   `setDraw()` ("Draw!", Dark wood outline). A loss found in the same turn change comes first.
-  `isOver()` is the game-over check (win or draw); `setState` starts a new count. The bots do
-  not know the rule yet. The benchmark referee applies it too (ending `repetition`).
+  `isOver()` is the game-over check (win or draw); `setState` starts a new count. The benchmark
+  referee applies it too (ending `repetition`).
+- The minimax bots know the rule: `findBestMove` sends `positionCounts`, the worker keeps them
+  as `gameHistory`, and `fastMinimax` scores a third occurrence (history + search path,
+  `repKey`) as a draw (0) unless it is won or lost; skipped while a player still places, since
+  nothing can repeat then. Such path-dependent results are not stored in the transposition
+  table. MCTS does not know the rule.
 
 ## Bots (OPTIONS in sketch.js)
 

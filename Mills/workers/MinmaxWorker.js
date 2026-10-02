@@ -89,6 +89,7 @@ function fastFindBestMove(options) {
 
                 iterativeMoveScores = {}
                 startDepthNum = depth
+                searchAtRoot = true
                 result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
 
                 if (Date.now() >= iterativeEndTime) {
@@ -140,6 +141,7 @@ function fastFindBestMove(options) {
         } else {
             //"Normal" minmax
             let depth = options.difficulty
+            searchAtRoot = true
             result = fastMinimax(board, player, oppPlayer, depth, -Infinity, Infinity, workerGame.eatMode, true)
             move = result[0]
             score = result[1]
@@ -210,30 +212,28 @@ function fastFindBestMove(options) {
 }
 //Repetition rule: a position after a completed turn that would occur for the third time (game
 //history plus the current search path) is a draw (0), unless it is won or lost. The root's own
-//occurrence is already in the game history.
+//occurrence is already in the game history. While a player still has chips to place no position
+//can repeat (the chips in hand go down every turn), so those positions are not looked at.
 function fastMinimax(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing) {
-    let key
-    if (!eatMode && searchPly > 0) {
-        key = repKey(board, player, oppPlayer, isMaximizing)
-        let seen = (gameHistory.get(key) || 0) + (searchPath.get(key) || 0)
-        if (seen >= 2 && fastCheckWin(board, player, oppPlayer, depth, eatMode) === undefined) {
-            repetitionDrawCount++
-            leafNodeCount++
-            return [undefined, 0]
-        }
-        searchPath.set(key, (searchPath.get(key) || 0) + 1)
-    }
-    searchPly++
-    try {
+    if (searchAtRoot) {
+        searchAtRoot = false
         return fastMinimaxTT(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing)
-    } finally {
-        searchPly--
-        if (key !== undefined) {
-            let count = searchPath.get(key) - 1
-            if (count > 0) searchPath.set(key, count)
-            else searchPath.delete(key)
-        }
     }
+    if (eatMode || player.chipsToAdd > 0 || oppPlayer.chipsToAdd > 0) {
+        return fastMinimaxTT(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing)
+    }
+    let key = repKey(board, player, oppPlayer, isMaximizing)
+    let onPath = searchPath.get(key) || 0
+    if ((gameHistory.get(key) || 0) + onPath >= 2 && fastCheckWin(board, player, oppPlayer, depth, eatMode) === undefined) {
+        repetitionDrawCount++
+        leafNodeCount++
+        return [undefined, 0]
+    }
+    searchPath.set(key, onPath + 1)
+    let result = fastMinimaxTT(board, player, oppPlayer, depth, alpha, beta, eatMode, isMaximizing)
+    if (onPath > 0) searchPath.set(key, onPath)
+    else searchPath.delete(key)
+    return result
 }
 //Alpha-beta search with the transposition table around it: a stored score is used only at the
 //same remaining depth (win scores scale with it), a stored best move is tried first otherwise.

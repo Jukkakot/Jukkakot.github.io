@@ -80,6 +80,15 @@ All inside their baseline intervals again. Repetition draws in the d4 pairings: 
 (`minimax@d1` vs `iterative@d4` 5 → 1, `minimax@d4` vs `iterative@d4` 5 → 3, `minimax@d1` vs
 `minimax@d4` 1 → 1); `random` vs `minimax@d1` 5 → 2 (both sides near 0, so a draw is fine).
 
+Speed (task 3.2): the saved quick run against `mills-transposition-table` showed 0.81× for
+`minimax@d4` at first. The check then got cheaper: skipped while a player still places (no
+position can repeat then) and the root marked by a flag instead of a ply counter with
+`try/finally`. Re-run: 0.89× / 0.90× / 0.97× (d4 / d6 / iterative@d6), but even the placing stage,
+where the check does nothing, came out 0.91×, so the saved runs (hours apart) mostly show machine
+noise. Back-to-back A/B, 5 rounds each, old code (commit 2ca5910) vs new, quick positions,
+median of the per-round medians: `minimax@d4` 51.2 → 52.8 ms (+3 %), `minimax@d6` 412 → 416 ms
+(+1 %). Within the 5 % goal.
+
 Side finding: `bots.test.js` asserted `git diff Mills/workers` empty, so it failed whenever
 worker code was uncommitted (the "intermittent" failure seen in `mills-transposition-table`). It
 now checks that running the sandbox leaves the worker files unchanged, which was its intent.

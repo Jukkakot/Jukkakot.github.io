@@ -9,7 +9,8 @@ let iterativeEndTime
 //the positions on the current search path, and how many draws the search has met
 let gameHistory = new Map()
 let searchPath = new Map()
-let searchPly = 0
+//True until the root call of a search has started
+let searchAtRoot = false
 let repetitionDrawCount = 0
 //Transposition table: positions reached again within one move's search (cleared every move)
 //TT_ENABLED is only switched off by the benchmark and its tests
@@ -161,7 +162,7 @@ function repKey(board, player, oppPlayer, isMaximizing) {
 }
 function ttReset() {
     searchPath.clear()
-    searchPly = 0
+    searchAtRoot = false
     repetitionDrawCount = 0
     ttTable.clear()
     ttHitCount = 0

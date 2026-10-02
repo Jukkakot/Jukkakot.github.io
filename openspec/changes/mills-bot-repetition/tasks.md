@@ -12,5 +12,5 @@
 ## 3. Measurement and docs
 
 - [x] 3.1 Benchmark run (strength, light): design §5.1; record Elo and repetition-draw counts in `design.md`
-- [ ] 3.2 Benchmark run (speed, light): design §5.2; record the ratios in `design.md`
-- [ ] 3.3 Browser check: Light (Iterative 3s) plays its first move, no console errors; repetition draw screen still works (the threefold script); `Mills/OVERVIEW.md` updated; verify `node --test "Mills/bench/test/*.test.js"` and `openspec validate mills-bot-repetition --strict`
+- [x] 3.2 Benchmark run (speed, light): design §5.2; record the ratios in `design.md`
+- [x] 3.3 Browser check: Light (Iterative 3s) plays its first move, no console errors; repetition draw screen still works (the threefold script); `Mills/OVERVIEW.md` updated; verify `node --test "Mills/bench/test/*.test.js"` and `openspec validate mills-bot-repetition --strict`
