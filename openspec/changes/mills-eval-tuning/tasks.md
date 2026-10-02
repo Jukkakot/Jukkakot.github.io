@@ -12,7 +12,7 @@
 - [x] 3.1 Material in every stage: `chipCount + chipsToAdd`, weights `chipTaken` / `chipTakenPlacing` (design §2). Test: two placing positions differing by one taken opponent chip score as the spec scenario says when `chipTakenPlacing > 0`, and equal when it is 0. Verify: tests pass, golden unchanged.
 - [x] 3.2 `exactCachedNewMills` in `getCalcedValue` (dropped: the cached path already matches, see design §2). Test: a cached leaf with new mills for both players equals a fresh `fastNewEvaluateBoard`. Verify: tests pass, golden unchanged.
 - [x] 3.3 `flyingThreat` in stage 3 (window with 2 own + 1 empty, scoreObject key `flyingThreat`). Test: a flying position gains `flyingThreat` per such window. Verify: tests pass, golden unchanged.
-- [ ] 3.4 Add `weights/h1.json` (design §2). Benchmark check: `node Mills/bench/bench.js strength minimax@d4:h1 minimax@d4:v0 --games 200 --seed 1 --cap 200 --jobs 5` and the same at d2. Record the shares in a Results section at the end of `design.md`. Commit.
+- [x] 3.4 Add `weights/h1.json` (design §2). Benchmark check: `node Mills/bench/bench.js strength minimax@d4:h1 minimax@d4:v0 --games 200 --seed 1 --cap 200 --jobs 5` and the same at d2. Record the shares in a Results section at the end of `design.md`. Commit.
 
 ## 4. Tune mode
 

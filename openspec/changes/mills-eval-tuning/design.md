@@ -188,3 +188,14 @@ milestone: milestone 1 was just done.
   Their intent must not change. A test that fails for a real reason is a bug to fix.
 - [Long tune run blocks the session] → Run it in the background with `--resume` available. Its
   output is git-ignored until `--save`.
+
+## Results
+
+### Hand fixes (`h1` vs `v0`, 200 games, `--seed 1 --cap 200`)
+
+| Pairing | Share of h1 | 95 % interval | W–L–D |
+|---|---:|---|---|
+| `minimax@d4:h1` vs `minimax@d4:v0` | 49.0 % | 42.2–55.9 % | 72–76–52 |
+| `minimax@d2:h1` vs `minimax@d2:v0` | 52.5 % | 45.6–59.3 % | 46–36–118 |
+
+Neither better nor worse: `h1` alone does not pass (§5).
