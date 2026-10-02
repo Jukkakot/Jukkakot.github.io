@@ -19,7 +19,7 @@
 
 ## 4. Measurement against the baseline
 
-- [ ] 4.1 Benchmark run (speed): the baseline speed command with `--compare baseline --save mills-minimax-speed`; verify the report shows the ratios and record whether the 2× goal for `minimax@d4`/`d6` was met in `design.md`
+- [x] 4.1 Benchmark run (speed): the baseline speed command with `--compare baseline --save mills-minimax-speed`; verify the report shows the ratios and record whether the 2× goal for `minimax@d4`/`d6` was met in `design.md`
 - [ ] 4.2 Benchmark run (strength): both baseline strength commands with `--compare baseline` / `--compare baseline-mcts`, saved as `mills-minimax-speed` / `mills-minimax-speed-mcts`; verify the reports say every shared game is identical (any difference: fix the code, never accept it)
 
 ## 5. Game check and docs

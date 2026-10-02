@@ -135,6 +135,27 @@ Tried in 3.5 and dropped (no measurable gain): character checks instead of `wind
 `fastGetMoveableDots`. What is left is spread over the evaluation itself; a further cut needs
 an incremental evaluation or a transposition table, both outside this change.
 
+### 7. Result against the baseline (task 4.1)
+
+Speed run with the baseline's ten bots, `--compare baseline`, saved as
+`reports/mills-minimax-speed/` (median time per move, all 40 positions, one job):
+
+| Bot | Baseline | Now | Ratio |
+|---|---:|---:|---:|
+| `minimax@d4` | 69.8 ms | 42.1 ms | 1.66× |
+| `minimax@d6` | 780 ms | 480 ms | 1.62× |
+| `iterative@d4` | 93.3 ms | 56.5 ms | 1.65× |
+| `iterative@d6` | 1267 ms | 671 ms | 1.89× |
+| `mcts@i5000` | 10.2 s | 7.7 s | 1.33× |
+
+**The 2× goal for `minimax@d4`/`d6` was not met** (1.66× / 1.62×; per stage 1.4–2.3×). The
+profile run (10.3 s → 4.5 s, 2.3×) was measured on a loaded machine, which flattered the
+JSON-heavy baseline. Behaviour is identical, so the change lands as the design allows; the rest
+of the cost is in the evaluation itself (§6), which a transposition table or an incremental
+evaluation addresses. Time-limited bots: `iterative@500ms` searches 19 119 leaves per move
+instead of 9 081 and its depth range grows from 2–7 to 2–8; `iterative@3000ms` reaches depth 10
+at most (was 8).
+
 ## Risks / Trade-offs
 
 - [A rewrite changes a tie-break or a cache key subtly] → golden fixture with random-call counts

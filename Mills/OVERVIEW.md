@@ -114,5 +114,15 @@ into a `vm` sandbox) against each other with a rules referee. The game page neve
   against the timed minimax bots.
 - Search state lives in globals (`startDepthNum`, `prevBestMoves`, …) shared by all bot
   types; it works now, but it is easy to break.
-- Players are cloned with `JSON.parse(JSON.stringify())` at every node; this is likely the
-  biggest speed cost in minimax.
+- The cached-value path (`getCalcedValue`) adds the new-mill bonuses with `else if` while a
+  fresh evaluation counts both players' new mills; kept as is so the speed-up (below) changes no
+  decision.
+
+## Search speed (2026-10, `mills-minimax-speed`)
+
+Move generation checks duplicates with a `Set`, players are copied with `clonePlayer` instead of
+a JSON round trip, and neighbours, window ids and window counts are precomputed or done in one
+pass. Fixed-depth bots decide exactly as before (checked by `bench/test/golden.test.js` and by
+identical benchmark games); they are 1.6–1.9× faster, and the time-limited bots search about
+twice as many positions. Numbers: `bench/reports/mills-minimax-speed/`. What remains is mostly
+the evaluation itself.
