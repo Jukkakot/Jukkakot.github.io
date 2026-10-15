@@ -66,5 +66,9 @@
   <footer>
     <a href="https://github.com/Jukkakot">github.com/Jukkakot</a>
   </footer>
+  <script>
+    // Makes the page installable as an app (no offline cache; see sw.js).
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
+  </script>
 </body>
 </html>

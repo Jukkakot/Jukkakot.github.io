@@ -1,8 +1,11 @@
 {
   "name": "Pelit – Jukkakot",
   "short_name": "Pelit",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "launch_handler": { "client_mode": ["focus-existing", "auto"] },
   "background_color": "#1e2023",
   "theme_color": "#1e2023",
   "icons": [
